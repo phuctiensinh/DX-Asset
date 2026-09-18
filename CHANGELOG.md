@@ -28,6 +28,14 @@ and this project adheres to Semantic Versioning.
   - IT_ASSET_MANAGER
   - MANAGER
   - EMPLOYEE
+- Added Phase 5A Backend Foundation:
+  - FastAPI app structure, API router v1 (`/api/v1`), CORS middleware, and environment configurations.
+  - Health Check API (`GET /api/v1/health`) with database connection check.
+  - Security module (`app/core/security.py`) for password verification (`bcrypt`) and JWT token creation/decoding.
+  - Authentication APIs (`POST /api/v1/auth/login`, `GET /api/v1/auth/me`).
+  - FastAPI dependencies (`app/api/deps.py`) for `get_current_user` and RBAC role verification (`require_roles`).
+  - Pydantic schemas for authentication and user profiles (`LoginRequest`, `TokenResponse`, `UserResponse`, `DepartmentResponse`).
+  - Automated test suite for Phase 5A (`tests/test_auth.py`, `tests/test_health.py`, `tests/test_rbac.py`).
 
 ### Changed
 
@@ -36,5 +44,5 @@ and this project adheres to Semantic Versioning.
 
 ### Notes
 
-- The database schema and demo data are available.
-- Backend authentication API, CRUD APIs, frontend business screens, dashboard, and AI features have not been implemented yet.
+- Phase 5A authentication and RBAC foundation complete.
+- CRUD APIs (Assets, Departments, Users), Asset Assignment workflows, Incident/Maintenance APIs, Dashboard, Frontend UI integration, and AI features have not been implemented yet and will be added in upcoming phases.

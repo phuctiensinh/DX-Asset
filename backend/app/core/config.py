@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from typing import Optional, List
 
 class Settings(BaseSettings):
     APP_NAME: str = "DX-Asset"
@@ -10,6 +10,9 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = "postgresql://dx_user:dx_password_secret@localhost:5432/dx_asset_db"
+
+    # CORS Origins
+    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # AI Feature
     AI_ENABLED: bool = True
