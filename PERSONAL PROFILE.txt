@@ -1,0 +1,412 @@
+# PERSONAL PROFILE & PROJECT CONTEXT
+
+## 1. Thông tin về tôi
+
+Tôi là Nguyễn Phạm Đại Phúc, sinh viên năm 3 ngành Kỹ thuật Phần mềm tại Trường Đại học Thủ Dầu Một (TDMU), Việt Nam.
+
+Tôi đang học và thực hành phát triển phần mềm, đặc biệt quan tâm đến:
+
+* Phát triển web.
+* Phát triển ứng dụng Android.
+* Cơ sở dữ liệu.
+* Phân tích và thiết kế phần mềm.
+* AI ứng dụng trong phần mềm.
+* Phần mềm nguồn mở và chuyển đổi số.
+
+Tôi đã có trải nghiệm làm một số dự án web, ứng dụng và bài tập phần mềm. Tôi có thể sử dụng AI coding agent để hỗ trợ lập trình, nhưng tôi vẫn cần được giải thích rõ về kiến trúc, cách hoạt động, lý do lựa chọn công nghệ và cách triển khai.
+
+## 2. Trình độ và cách tôi muốn được hỗ trợ
+
+* Hãy xem tôi là sinh viên Kỹ thuật Phần mềm đang phát triển kỹ năng thực tế.
+* Tôi có thể hiểu các khái niệm lập trình cơ bản, frontend, backend và database, nhưng không muốn mặc định rằng tôi đã thành thạo mọi công nghệ.
+* Khi sử dụng công nghệ hoặc kiến trúc mới, hãy giải thích ngắn gọn nó dùng để làm gì và tại sao cần dùng.
+* Ưu tiên cách làm thực tế, dễ bảo trì, dễ chạy và phù hợp với nhóm sinh viên.
+* Không tự ý sử dụng công nghệ quá phức tạp chỉ để làm dự án trông hiện đại.
+* Khi có nhiều lựa chọn, hãy so sánh ngắn gọn và đề xuất một lựa chọn phù hợp.
+* Nếu tôi hiểu sai hoặc đang đưa ra quyết định không hợp lý, hãy nói thẳng và giải thích.
+* Không chỉ đồng ý với mọi ý tưởng của tôi.
+* Khi sửa code, ưu tiên cung cấp code hoàn chỉnh hoặc hướng dẫn rõ ràng để tôi có thể áp dụng.
+* Không giả định rằng tôi đã cài đặt sẵn mọi công cụ cần thiết.
+
+## 3. Bối cảnh cuộc thi
+
+Tôi đang chuẩn bị tham gia cuộc thi Phần mềm Nguồn mở OLP 2026.
+
+Chủ đề cuộc thi là xây dựng DX-OS / DX-Lab, hướng đến mô phỏng các không gian:
+
+* H — Nhân sự.
+* P — Quy trình.
+* D — Dữ liệu.
+* I — Trí tuệ nhân tạo.
+
+DX-OS trong bối cảnh cuộc thi là nền tảng điều hành số cho doanh nghiệp, không phải hệ điều hành kernel.
+
+Các yêu cầu quan trọng cần ghi nhớ:
+
+* Sản phẩm phải là phần mềm nguồn mở.
+* Mã nguồn phải được công khai trên Internet.
+* Sử dụng giấy phép được OSI công nhận.
+* Có README và tài liệu cài đặt.
+* Có thể build và chạy từ mã nguồn.
+* Có release.
+* Có changelog và issue tracker khi phù hợp.
+* Dự án cần có tính nguyên gốc, tính thực tế, giao diện thân thiện, mức độ hoàn thiện và khả năng phát triển bền vững.
+
+Không được chỉ làm một giao diện minh họa không có nghiệp vụ thực tế.
+
+## 4. Dự án tôi muốn xây dựng
+
+Tên dự án dự kiến:
+
+DX-Asset
+
+Tên đầy đủ:
+
+DX-Asset: Nền tảng quản lý vòng đời tài sản số và thiết bị doanh nghiệp.
+
+Tên tiếng Anh:
+
+DX-Asset: Open-Source Digital Asset Lifecycle Management Platform
+
+## 5. Ý tưởng tổng quan
+
+DX-Asset là một nền tảng web nguồn mở giúp doanh nghiệp quản lý tập trung vòng đời tài sản và thiết bị, chẳng hạn như laptop, máy tính bàn, màn hình, máy in, thiết bị mạng và các thiết bị nội bộ khác.
+
+Hệ thống hỗ trợ theo dõi:
+
+* Thông tin tài sản.
+* Người đang sử dụng.
+* Phòng ban.
+* Lịch sử bàn giao.
+* Tình trạng thiết bị.
+* Lịch sử báo hỏng.
+* Lịch sử sửa chữa.
+* Trạng thái thu hồi hoặc thanh lý.
+* Dữ liệu thống kê phục vụ quản lý.
+
+Mục tiêu là thay thế việc quản lý rời rạc bằng Excel, giấy tờ hoặc tin nhắn bằng một hệ thống tập trung, có quy trình và có lịch sử rõ ràng.
+
+## 6. Bài toán thực tế
+
+Trong doanh nghiệp, tài sản thường được quản lý rời rạc. Khi thiết bị được cấp phát, chuyển người sử dụng, bị hỏng hoặc được sửa chữa, thông tin có thể không được cập nhật đầy đủ.
+
+Điều này dẫn đến:
+
+* Khó biết thiết bị đang ở đâu.
+* Khó biết ai đang sử dụng thiết bị.
+* Khó theo dõi lịch sử bàn giao.
+* Khó quản lý thiết bị đang hỏng hoặc đang sửa.
+* Khó thống kê tài sản theo phòng ban.
+* Khó truy xuất lịch sử khi xảy ra sự cố hoặc mất mát.
+
+DX-Asset giải quyết bằng cách tạo hồ sơ tập trung cho từng tài sản và kết nối các hoạt động quản lý thành một quy trình thống nhất.
+
+## 7. Luồng nghiệp vụ chính của MVP
+
+Luồng demo chính:
+
+Quản trị viên tạo tài sản
+→ Tài sản được gắn mã QR
+→ Bàn giao tài sản cho nhân viên
+→ Nhân viên xem thông tin tài sản hoặc báo hỏng
+→ Hệ thống tạo phiếu xử lý
+→ Bộ phận IT tiếp nhận và cập nhật trạng thái
+→ Quản lý theo dõi lịch sử và dashboard.
+
+Ví dụ:
+
+1. Admin tạo tài sản LAP-001.
+2. Hệ thống lưu thông tin laptop và tạo QR code.
+3. Admin bàn giao LAP-001 cho nhân viên Nguyễn A.
+4. Nhân viên báo lỗi Wi-Fi.
+5. Hệ thống tạo phiếu báo hỏng liên kết với LAP-001.
+6. IT tiếp nhận và xử lý.
+7. Hệ thống lưu lịch sử sửa chữa.
+8. Quản lý xem tình trạng tài sản trên dashboard.
+
+## 8. Các chức năng dự kiến
+
+### Quản lý tài sản
+
+* Thêm tài sản.
+* Chỉnh sửa tài sản.
+* Xem chi tiết tài sản.
+* Xóa hoặc vô hiệu hóa tài sản theo quy tắc phù hợp.
+* Phân loại tài sản.
+* Quản lý trạng thái tài sản.
+* Tìm kiếm và lọc.
+* Tạo và hiển thị QR code.
+
+### Quản lý người dùng
+
+* Đăng nhập.
+* Quản lý vai trò.
+* Quản lý phòng ban.
+* Phân quyền cơ bản.
+
+Các vai trò dự kiến:
+
+* Admin.
+* IT / Asset Manager.
+* Employee.
+* Manager.
+
+### Quản lý vòng đời tài sản
+
+* Nhập tài sản.
+* Bàn giao tài sản.
+* Thu hồi tài sản.
+* Chuyển người sử dụng.
+* Cập nhật trạng thái.
+* Theo dõi lịch sử.
+
+### Báo hỏng và sửa chữa
+
+* Nhân viên gửi phiếu báo hỏng.
+* Đính kèm mô tả lỗi.
+* Có thể đính kèm hình ảnh nếu phù hợp.
+* IT tiếp nhận phiếu.
+* Cập nhật trạng thái xử lý.
+* Ghi nhận nguyên nhân và cách xử lý.
+* Lưu lịch sử sửa chữa.
+
+### Dashboard
+
+* Tổng số tài sản.
+* Tài sản đang sử dụng.
+* Tài sản trong kho.
+* Tài sản đang sửa chữa.
+* Tài sản đã thu hồi.
+* Số lượng phiếu báo hỏng.
+* Thống kê tài sản theo phòng ban.
+* Thống kê tình trạng tài sản.
+
+### AI hỗ trợ
+
+AI là chức năng hỗ trợ, không phải trung tâm duy nhất của sản phẩm.
+
+Dự kiến AI có thể:
+
+* Phân loại nội dung báo hỏng.
+* Đề xuất bộ phận xử lý.
+* Đề xuất mức độ ưu tiên.
+* Tóm tắt nội dung phiếu.
+* Tìm hướng dẫn xử lý từ kho tri thức.
+* Hỗ trợ tra cứu lịch sử tài sản bằng ngôn ngữ tự nhiên.
+
+AI không được tự ý thực hiện các hành động quan trọng như:
+
+* Tự duyệt bàn giao.
+* Tự thay đổi quyền người dùng.
+* Tự thanh lý tài sản.
+* Tự quyết định chi phí.
+* Tự thực hiện hành động ảnh hưởng đến dữ liệu quan trọng mà không có kiểm soát.
+
+## 9. Điểm sáng tạo dự kiến
+
+Điểm sáng tạo chính:
+
+QR Asset Passport + AI hỗ trợ xử lý sự cố dựa trên thông tin tài sản.
+
+Mỗi tài sản có một hồ sơ số bao gồm:
+
+* Thông tin thiết bị.
+* Mã tài sản.
+* Người đang sử dụng.
+* Lịch sử bàn giao.
+* Lịch sử sửa chữa.
+* Tình trạng hiện tại.
+* Các phiếu liên quan.
+
+QR code giúp truy cập nhanh hồ sơ tài sản hoặc thực hiện thao tác phù hợp sau khi xác thực.
+
+AI hỗ trợ phân loại và đề xuất xử lý sự cố dựa trên dữ liệu có liên quan, thay vì chỉ tích hợp một chatbot hỏi đáp chung chung.
+
+## 10. Ánh xạ với DX-OS
+
+### H — Nhân sự
+
+* Người dùng.
+* Phòng ban.
+* Vai trò.
+* Phân quyền.
+* Nhân viên sử dụng tài sản.
+
+### P — Quy trình
+
+* Bàn giao tài sản.
+* Thu hồi tài sản.
+* Báo hỏng.
+* Tiếp nhận và xử lý sửa chữa.
+* Cập nhật trạng thái.
+* Phê duyệt khi cần.
+
+### D — Dữ liệu
+
+* Tài sản.
+* Người dùng.
+* Phòng ban.
+* Lịch sử bàn giao.
+* Phiếu báo hỏng.
+* Lịch sử sửa chữa.
+* Dashboard và báo cáo.
+
+### I — Trí tuệ nhân tạo
+
+* Phân loại sự cố.
+* Đề xuất bộ phận xử lý.
+* Tóm tắt phiếu.
+* Tìm kiếm tri thức.
+* Hỗ trợ tra cứu dữ liệu.
+
+## 11. Phạm vi MVP
+
+Ưu tiên hoàn thiện các chức năng sau:
+
+1. Đăng nhập và phân quyền cơ bản.
+2. Quản lý tài sản.
+3. Quản lý người dùng và phòng ban.
+4. Bàn giao và thu hồi tài sản.
+5. QR code.
+6. Báo hỏng.
+7. Quy trình xử lý phiếu.
+8. Lịch sử tài sản.
+9. Dashboard.
+10. Một chức năng AI có giá trị thực tế.
+
+Không mở rộng sang ERP hoặc hệ thống kế toán tài sản đầy đủ trong giai đoạn MVP.
+
+Chưa ưu tiên:
+
+* Tính khấu hao kế toán.
+* Quản lý mua hàng toàn diện.
+* Quản lý nhà cung cấp.
+* Quản lý kho phức tạp.
+* GPS tracking.
+* IoT.
+* Nhận diện khuôn mặt.
+* Ứng dụng mobile native riêng.
+* AI tự động điều hành không kiểm soát.
+
+## 12. Định hướng công nghệ
+
+Stack dự kiến, có thể thay đổi sau khi phân tích:
+
+* Frontend: Next.js + TypeScript.
+* UI: Tailwind CSS + shadcn/ui.
+* Backend: FastAPI.
+* Database: PostgreSQL.
+* Authentication: Giải pháp xác thực phù hợp với kiến trúc.
+* QR code: Thư viện mã nguồn mở phù hợp.
+* AI: Framework / mô hình / công cụ nguồn mở phù hợp với yêu cầu cuộc thi.
+* Deployment: Docker Compose.
+* Source code: GitHub.
+* CI/CD: GitHub Actions nếu phù hợp.
+* Documentation: README, Changelog, Issues và tài liệu cài đặt.
+
+Không bắt buộc phải sử dụng toàn bộ công nghệ trên. Hãy ưu tiên sự ổn định, đơn giản, dễ build và dễ demo.
+
+## 13. Cách AI Agent cần làm việc
+
+Bạn là AI coding agent hỗ trợ tôi xây dựng dự án này.
+
+Không được bắt đầu bằng cách viết toàn bộ code ngay lập tức.
+
+Hãy làm việc theo từng giai đoạn:
+
+### Giai đoạn 1: Phân tích
+
+* Đọc và hiểu bối cảnh dự án.
+* Xác định vấn đề thực tế.
+* Xác định người dùng.
+* Xác định MVP.
+* Chỉ ra các rủi ro và điểm chưa rõ.
+* Đề xuất kiến trúc ban đầu.
+
+### Giai đoạn 2: Thiết kế
+
+* Thiết kế database.
+* Thiết kế ERD.
+* Xác định các entity.
+* Xác định quan hệ.
+* Xác định workflow.
+* Xác định vai trò và quyền.
+* Xác định API.
+* Xác định cấu trúc thư mục.
+
+### Giai đoạn 3: Khởi tạo dự án
+
+* Tạo cấu trúc dự án.
+* Cấu hình frontend, backend và database.
+* Cấu hình biến môi trường.
+* Cấu hình Docker Compose.
+* Tạo README ban đầu.
+* Tạo LICENSE phù hợp.
+* Đảm bảo dự án có thể chạy được.
+
+### Giai đoạn 4: Phát triển MVP
+
+Phát triển từng module theo thứ tự:
+
+1. Authentication và phân quyền.
+2. Database và API tài sản.
+3. Giao diện quản lý tài sản.
+4. Người dùng và phòng ban.
+5. Bàn giao / thu hồi.
+6. QR code.
+7. Báo hỏng và workflow.
+8. Lịch sử.
+9. Dashboard.
+10. AI hỗ trợ.
+
+Sau mỗi giai đoạn:
+
+* Kiểm tra lỗi.
+* Chạy thử.
+* Cập nhật tài liệu.
+* Không tự ý phá vỡ chức năng đã hoàn thành.
+
+### Giai đoạn 5: Hoàn thiện nguồn mở
+
+* Kiểm tra license.
+* Kiểm tra dependency.
+* Viết README rõ ràng.
+* Viết hướng dẫn cài đặt.
+* Viết hướng dẫn build từ source.
+* Tạo file .env.example.
+* Tạo release.
+* Tạo changelog.
+* Tạo issue tracker phù hợp.
+* Kiểm tra dự án có thể được người khác clone và chạy.
+
+## 14. Nguyên tắc quan trọng
+
+* Không overengineering.
+* Không mở rộng phạm vi nếu chưa cần thiết.
+* Không tạo chức năng chỉ để làm demo đẹp.
+* Không dùng AI một cách hình thức.
+* Không sử dụng thư viện nguồn đóng nếu ảnh hưởng đến yêu cầu nguồn mở của cuộc thi.
+* Phải kiểm tra giấy phép của dependency quan trọng.
+* Không hardcode secret, API key hoặc mật khẩu.
+* Không dùng dữ liệu cá nhân thật trong demo nếu không cần thiết.
+* Ưu tiên dữ liệu mẫu có thể seed tự động.
+* Ưu tiên Docker để dễ triển khai.
+* Ưu tiên code dễ đọc, dễ bảo trì.
+* Khi có quyết định kiến trúc quan trọng, hãy giải thích lý do.
+* Nếu yêu cầu của tôi mâu thuẫn với tiêu chí cuộc thi, hãy cảnh báo.
+* Nếu một tính năng quá lớn so với MVP, hãy đề xuất cắt giảm.
+* Không tuyên bố dự án đã hoàn thành nếu chưa thực sự chạy và kiểm tra.
+
+## 15. Cách phản hồi tôi mong muốn
+
+Khi tôi yêu cầu thực hiện một nhiệm vụ:
+
+1. Nói rõ bạn hiểu nhiệm vụ gì.
+2. Nêu các giả định nếu có.
+3. Nếu nhiệm vụ lớn, chia thành các bước.
+4. Thực hiện bước hiện tại.
+5. Hướng dẫn cách kiểm tra kết quả.
+6. Nêu những gì đã hoàn thành và những gì chưa làm.
+7. Không tự ý chuyển sang quá nhiều bước lớn nếu chưa kiểm soát được kết quả.
+
+Tôi muốn xây dựng một sản phẩm thực tế, có thể trình diễn trong cuộc thi, có mã nguồn mở đúng chuẩn và giúp tôi hiểu được dự án, không chỉ tạo ra code mà tôi không hiểu.
