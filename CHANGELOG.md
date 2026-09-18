@@ -36,6 +36,15 @@ and this project adheres to Semantic Versioning.
   - FastAPI dependencies (`app/api/deps.py`) for `get_current_user` and RBAC role verification (`require_roles`).
   - Pydantic schemas for authentication and user profiles (`LoginRequest`, `TokenResponse`, `UserResponse`, `DepartmentResponse`).
   - Automated test suite for Phase 5A (`tests/test_auth.py`, `tests/test_health.py`, `tests/test_rbac.py`).
+- Added Phase 5B Frontend Authentication:
+  - Configured Tailwind CSS and global styling system for Next.js App Router (`tailwind.config.js`, `postcss.config.js`, `globals.css`).
+  - Added TypeScript type definitions (`types/auth.ts`) for authentication, roles, users, and tokens.
+  - Added API client utility (`lib/api.ts`) supporting configurable API base URL and automatic JWT Bearer token authorization header injection.
+  - Added React Auth Context & Provider (`lib/auth-context.tsx`) managing login, logout, current user profile fetching, token storage in `localStorage`, and error state handling.
+  - Added ProtectedRoute client-side guard component (`components/ProtectedRoute.tsx`) to protect authenticated pages with loading state.
+  - Implemented Enterprise Login Page (`app/login/page.tsx`) with password visibility toggle, error alert messaging, and local demo accounts quick-fill functionality.
+  - Implemented Protected Dashboard shell (`app/dashboard/page.tsx`) displaying logged-in user profile, role badges, JWT session security info, and logout mechanism.
+  - Configured root route (`app/page.tsx`) to redirect users based on authentication status.
 
 ### Changed
 
@@ -44,5 +53,5 @@ and this project adheres to Semantic Versioning.
 
 ### Notes
 
-- Phase 5A authentication and RBAC foundation complete.
-- CRUD APIs (Assets, Departments, Users), Asset Assignment workflows, Incident/Maintenance APIs, Dashboard, Frontend UI integration, and AI features have not been implemented yet and will be added in upcoming phases.
+- Phase 5A (Backend Auth & RBAC) and Phase 5B (Frontend Authentication) complete.
+- CRUD APIs (Assets, Departments, Users), Asset Assignment workflows, Incident/Maintenance APIs, Business Dashboard stats, and AI features have not been implemented yet and will be added in upcoming phases.
