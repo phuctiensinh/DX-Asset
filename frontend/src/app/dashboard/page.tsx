@@ -3,9 +3,9 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Navbar } from '@/components/Navbar';
+import Link from 'next/link';
 import {
-  ShieldCheck,
-  LogOut,
   User as UserIcon,
   Mail,
   Shield,
@@ -13,6 +13,7 @@ import {
   Boxes,
   KeyRound,
   Calendar,
+  ArrowRight,
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -35,41 +36,7 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-30 bg-slate-800/90 backdrop-blur border-b border-slate-700/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="font-bold text-lg text-white leading-tight">DX-Asset</div>
-            <div className="text-xs text-slate-400">Digital Asset Lifecycle Platform</div>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* User info pill */}
-          <div className="hidden sm:flex items-center space-x-3 bg-slate-900/60 border border-slate-700/60 px-3.5 py-1.5 rounded-full text-xs">
-            <UserIcon className="w-4 h-4 text-sky-400" />
-            <span className="font-semibold text-slate-200">{user?.full_name}</span>
-            <span
-              className={`px-2 py-0.5 rounded-md border font-medium text-[10px] ${getRoleBadgeStyle(
-                user?.role
-              )}`}
-            >
-              {user?.role}
-            </span>
-          </div>
-
-          <button
-            onClick={logout}
-            className="flex items-center space-x-2 px-3.5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold rounded-xl transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Đăng xuất</span>
-          </button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -79,23 +46,25 @@ function DashboardContent() {
             <div>
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-medium mb-3">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Phiên đăng nhập xác thực thành công (Phase 5B)</span>
+                <span>Phiên làm việc xác thực thành công (Phase 5C)</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Xin chào, {user?.full_name}!
               </h2>
               <p className="text-slate-300 text-sm mt-1">
-                Bạn đang truy cập không gian làm việc DX-Asset với vai trò{' '}
+                Bạn đang truy cập hệ thống quản lý tài sản với vai trò{' '}
                 <span className="font-semibold text-sky-400">{user?.role}</span>.
               </p>
             </div>
-            <button
-              onClick={logout}
-              className="sm:hidden w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium rounded-xl"
+
+            <Link
+              href="/assets"
+              className="flex items-center space-x-2 px-5 py-3 bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold rounded-xl shadow-lg shadow-sky-500/20 transition-all"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng xuất khỏi hệ thống</span>
-            </button>
+              <Boxes className="w-4 h-4" />
+              <span>Đi tới Quản lý Tài sản</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
 
