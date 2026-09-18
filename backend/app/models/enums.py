@@ -1,0 +1,51 @@
+import enum
+
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    IT_ASSET_MANAGER = "IT_ASSET_MANAGER"
+    EMPLOYEE = "EMPLOYEE"
+    MANAGER = "MANAGER"
+
+class AssetStatus(str, enum.Enum):
+    IN_STOCK = "IN_STOCK"
+    ASSIGNED = "ASSIGNED"
+    IN_MAINTENANCE = "IN_MAINTENANCE"
+    DAMAGED = "DAMAGED"
+    RETIRED = "RETIRED"
+    LOST = "LOST"
+    INACTIVE = "INACTIVE"
+
+class AssignmentStatus(str, enum.Enum):
+    ACTIVE = "ACTIVE"
+    RETURNED = "RETURNED"
+
+class IncidentCategory(str, enum.Enum):
+    HARDWARE = "HARDWARE"
+    SOFTWARE = "SOFTWARE"
+    NETWORK = "NETWORK"
+    POWER = "POWER"
+    PHYSICAL_DAMAGE = "PHYSICAL_DAMAGE"
+    OTHER = "OTHER"
+
+class IncidentPriority(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+class IncidentStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    IN_REVIEW = "IN_REVIEW"
+    IN_PROGRESS = "IN_PROGRESS"
+    WAITING_FOR_INFO = "WAITING_FOR_INFO"
+    RESOLVED = "RESOLVED"
+    CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
+
+class AssetActionType(str, enum.Enum):
+    CREATED = "CREATED"
+    ASSIGNED = "ASSIGNED"
+    RETURNED = "RETURNED"
+    INCIDENT_REPORTED = "INCIDENT_REPORTED"
+    MAINTENANCE_UPDATED = "MAINTENANCE_UPDATED"
+    STATUS_CHANGED = "STATUS_CHANGED"
