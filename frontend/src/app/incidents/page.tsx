@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
@@ -532,14 +533,24 @@ function IncidentsContent() {
                             <Eye className="w-4 h-4" />
                           </button>
                           {canManageIT && (
-                            <button
-                              onClick={() => openUpdateModal(item)}
-                              className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
-                              title="Xử lý / Cập nhật sự cố"
-                            >
-                              <Wrench className="w-3.5 h-3.5" />
-                              <span>Xử lý</span>
-                            </button>
+                            <>
+                              <button
+                                onClick={() => openUpdateModal(item)}
+                                className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
+                                title="Xử lý / Cập nhật sự cố"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Xử lý</span>
+                              </button>
+                              <Link
+                                href="/maintenance"
+                                className="px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
+                                title="Chuyển sang trang Quản lý Bảo trì"
+                              >
+                                <Wrench className="w-3.5 h-3.5" />
+                                <span>Bảo trì</span>
+                              </Link>
+                            </>
                           )}
                         </div>
                       </td>

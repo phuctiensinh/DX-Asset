@@ -29,6 +29,7 @@ class Asset(Base):
     department = relationship("Department", back_populates="assets", foreign_keys=[department_id])
     assignments = relationship("AssetAssignment", back_populates="asset")
     incidents = relationship("Incident", back_populates="asset")
+    maintenances = relationship("Maintenance", back_populates="asset")
     histories = relationship("AssetHistory", back_populates="asset")
 
     def __repr__(self):

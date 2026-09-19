@@ -11,8 +11,9 @@ from app.api.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.asset import Asset
 from app.models.incident import Incident
+from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
-from app.models.enums import UserRole, AssetStatus, IncidentCategory, IncidentPriority, IncidentStatus, AssetActionType
+from app.models.enums import UserRole, AssetStatus, IncidentCategory, IncidentPriority, IncidentStatus, AssetActionType, MaintenanceStatus
 from app.schemas.incident import (
     IncidentCreate,
     IncidentUpdate,
@@ -228,6 +229,17 @@ def update_incident(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Không thể chuyển trạng thái phiếu từ '{incident.status}' sang '{new_status}'."
             )
+        # Prevent resolving or closing incident if linked maintenance is active
+        if new_status in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED):
+            active_mnt = db.query(Maintenance).filter(
+                Maintenance.incident_id == incident.id,
+                Maintenance.status.in_([MaintenanceStatus.SCHEDULED, MaintenanceStatus.IN_PROGRESS])
+            ).first()
+            if active_mnt:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Không thể hoàn thành phiếu sự cố khi đợt bảo trì liên kết [{active_mnt.maintenance_code}] đang ở trạng thái '{active_mnt.status}'. Vui lòng hoàn thành đợt bảo trì trước."
+                )
 
     # Verify assigned_it_id if provided
     if "assigned_it_id" in update_data and update_data["assigned_it_id"] is not None:

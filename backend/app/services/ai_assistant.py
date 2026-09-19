@@ -9,9 +9,10 @@ from app.models.user import User
 from app.models.asset import Asset
 from app.models.assignment import AssetAssignment
 from app.models.incident import Incident
+from app.models.maintenance import Maintenance
 from app.models.department import Department
 from app.models.history import AssetHistory
-from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus
+from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus, MaintenanceStatus
 from app.schemas.assistant import AssistantChatResponse, AssistantSource
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,28 @@ class AIAssistantService:
                     f"- Mô tả: {incident.description}"
                 )
                 return AssistantChatResponse(answer=answer, intent="INCIDENT_DETAIL", sources=sources, is_fallback=True)
+
+        # B2. Check for Maintenance Code lookup (e.g. MNT-20260919-0001, MNT-001)
+        mnt_match = re.search(r"(MNT-[a-zA-Z0-9\-_]+)", clean_msg, re.IGNORECASE)
+        if mnt_match:
+            mnt_code = mnt_match.group(1).upper()
+            maintenance = db.query(Maintenance).filter(func.upper(Maintenance.maintenance_code) == mnt_code).first()
+            if maintenance:
+                sources.append(AssistantSource(
+                    type="maintenance", id=maintenance.id, code=maintenance.maintenance_code, name=maintenance.title, details=f"Status: {maintenance.status}"
+                ))
+                tech_name = maintenance.technician.full_name if maintenance.technician else "Chưa phân công"
+                asset_code = maintenance.asset.asset_code if maintenance.asset else "N/A"
+                answer = (
+                    f"Phiếu bảo trì **{maintenance.maintenance_code}** - {maintenance.title}:\n"
+                    f"- Trạng thái: **{maintenance.status}**\n"
+                    f"- Tài sản: `{asset_code}` ({maintenance.asset.name if maintenance.asset else ''})\n"
+                    f"- Kỹ thuật viên: {tech_name}\n"
+                    f"- Chi phí sửa chữa: {maintenance.repair_cost:,.0f} VNĐ\n"
+                    f"- Mô tả: {maintenance.description or 'Không có mô tả'}\n"
+                    f"- Ghi chú kết quả: {maintenance.resolution_notes or 'Chưa có'}"
+                )
+                return AssistantChatResponse(answer=answer, intent="MAINTENANCE_DETAIL", sources=sources, is_fallback=True)
 
         # C. Intent: Assigned Assets Query ("các tài sản đang được cấp phát", "danh sách cấp phát")
         if "đang được cấp phát" in lower_msg or "đang cấp phát" in lower_msg or "đã cấp phát" in lower_msg:

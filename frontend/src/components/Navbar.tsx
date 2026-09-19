@@ -13,6 +13,7 @@ import {
   LogOut,
   User as UserIcon,
   Bot,
+  Wrench,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -58,6 +59,12 @@ export function Navbar() {
       label: 'Quản lý sự cố',
       icon: AlertTriangle,
       active: pathname.startsWith('/incidents'),
+    },
+    {
+      href: '/maintenance',
+      label: 'Bảo trì thiết bị',
+      icon: Wrench,
+      active: pathname.startsWith('/maintenance'),
     },
     {
       href: '/assistant',

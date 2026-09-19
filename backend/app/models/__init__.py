@@ -7,12 +7,14 @@ from app.models.enums import (
     IncidentPriority,
     IncidentStatus,
     AssetActionType,
+    MaintenanceStatus,
 )
 from app.models.department import Department
 from app.models.user import User
 from app.models.asset import Asset
 from app.models.assignment import AssetAssignment
 from app.models.incident import Incident
+from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
 
 __all__ = [
@@ -24,10 +26,12 @@ __all__ = [
     "IncidentPriority",
     "IncidentStatus",
     "AssetActionType",
+    "MaintenanceStatus",
     "Department",
     "User",
     "Asset",
     "AssetAssignment",
     "Incident",
+    "Maintenance",
     "AssetHistory",
 ]

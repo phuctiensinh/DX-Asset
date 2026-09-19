@@ -74,6 +74,17 @@ and this project adheres to Semantic Versioning.
   - Rule-Based Fallback Engine automatically activated when optional AI API key is unconfigured or unavailable.
   - Interactive Frontend AI Chat interface (`app/assistant/page.tsx`) with suggested question chips, real data source tags, typing animations, and Navbar link.
   - Automated unit test suite (`tests/test_assistant.py`) covering read-only policy, asset lookups, count queries, ticket lookups, and idempotency.
+- Added Phase 10 Asset Maintenance & Incident Workflow:
+  - Database schema: `MaintenanceStatus` enum (`SCHEDULED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), `maintenances` table, relations in `Asset` and `Incident` models, and Alembic migration `002_add_maintenance_table.py`.
+  - Added `MAINTENANCE_STARTED` and `MAINTENANCE_COMPLETED` action types to `AssetActionType`.
+  - Maintenance Pydantic schemas (`MaintenanceCreate`, `MaintenanceUpdate`, `MaintenanceStart`, `MaintenanceComplete`, `MaintenanceResponse`, `MaintenanceListResponse`).
+  - Maintenance API endpoints (`GET /api/v1/maintenances`, `GET /api/v1/maintenances/{id}`, `POST /api/v1/maintenances`, `PATCH /api/v1/maintenances/{id}/start`, `PATCH /api/v1/maintenances/{id}/complete`, `PATCH /api/v1/maintenances/{id}`).
+  - Atomic asset status transitions: asset changes to `IN_MAINTENANCE` on start without losing `current_user_id` or `department_id`, and safely reverts to `ASSIGNED` if active assignment exists or `IN_STOCK` if unassigned upon completion.
+  - Linked maintenance resolution guard on `PATCH /api/v1/incidents/{id}`: prevents moving incident to `RESOLVED` or `CLOSED` when linked maintenance is active (`SCHEDULED` or `IN_PROGRESS`).
+  - Full audit tracking in `AssetHistory` for maintenance scheduling, start, completion, and updates.
+  - Frontend Maintenance Management page (`app/maintenance/page.tsx`) with status filters, search, aggregation metrics, plan creation modal, complete modal, detail modal, and navbar link.
+  - Updated AI Assistant service (`app/services/ai_assistant.py`) with `MNT-` maintenance code lookup and maintenance stats support.
+  - Automated unit test suite (`tests/test_maintenances.py`) with 65 total passing tests.
 
 
 ### Changed
