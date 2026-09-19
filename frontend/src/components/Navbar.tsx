@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   LayoutDashboard,
   Boxes,
+  UserCheck,
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
@@ -43,6 +44,12 @@ export function Navbar() {
       label: 'Quản lý tài sản',
       icon: Boxes,
       active: pathname.startsWith('/assets'),
+    },
+    {
+      href: '/assignments',
+      label: 'Cấp phát tài sản',
+      icon: UserCheck,
+      active: pathname.startsWith('/assignments'),
     },
   ];
 

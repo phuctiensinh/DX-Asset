@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi } from '@/lib/api';
+import Link from 'next/link';
 import {
   Boxes,
   Plus,
@@ -19,6 +20,7 @@ import {
   Tag,
   Building2,
   User as UserIcon,
+  UserCheck,
   Calendar,
   QrCode,
   Laptop,
@@ -464,6 +466,13 @@ function AssetsContent() {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
+                          <Link
+                            href={`/assignments?search=${encodeURIComponent(item.asset_code)}`}
+                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 transition-colors"
+                            title="Xem lịch sử cấp phát"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                          </Link>
                           <button
                             onClick={() => openDetailModal(item)}
                             className="p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
