@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Boxes,
   UserCheck,
+  AlertTriangle,
   LogOut,
   User as UserIcon,
 } from 'lucide-react';
@@ -50,6 +51,12 @@ export function Navbar() {
       label: 'Cấp phát tài sản',
       icon: UserCheck,
       active: pathname.startsWith('/assignments'),
+    },
+    {
+      href: '/incidents',
+      label: 'Quản lý sự cố',
+      icon: AlertTriangle,
+      active: pathname.startsWith('/incidents'),
     },
   ];
 

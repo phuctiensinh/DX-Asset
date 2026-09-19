@@ -8,6 +8,12 @@ from app.schemas.assignment import (
     AssignmentResponse,
     AssignmentListResponse,
 )
+from app.schemas.incident import (
+    IncidentCreate,
+    IncidentUpdate,
+    IncidentResponse,
+    IncidentListResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -23,6 +29,10 @@ __all__ = [
     "AssignmentTransfer",
     "AssignmentResponse",
     "AssignmentListResponse",
+    "IncidentCreate",
+    "IncidentUpdate",
+    "IncidentResponse",
+    "IncidentListResponse",
 ]
 
 

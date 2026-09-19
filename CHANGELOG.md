@@ -46,6 +46,22 @@ and this project adheres to Semantic Versioning.
   - Implemented Protected Dashboard shell (`app/dashboard/page.tsx`) displaying logged-in user profile, role badges, JWT session security info, and logout mechanism.
   - Configured root route (`app/page.tsx`) to redirect users based on authentication status.
 
+- Added Phase 5C Asset CRUD:
+  - Asset management API endpoints (`GET /api/v1/assets`, `GET /api/v1/assets/{id}`, `POST /api/v1/assets`, `PATCH /api/v1/assets/{id}`, `DELETE /api/v1/assets/{id}`).
+  - Asset Pydantic schemas (`AssetCreate`, `AssetUpdate`, `AssetResponse`, `AssetListResponse`).
+  - Frontend Asset Management page (`app/assets/page.tsx`) with search, filter, pagination, create, edit, detail modals.
+- Added Phase 6 Asset Assignment:
+  - Assignment API endpoints (`GET /api/v1/assignments`, `GET /api/v1/assignments/{id}`, `POST /api/v1/assignments`, `PATCH /api/v1/assignments/{id}/return`, `PATCH /api/v1/assignments/{id}/transfer`).
+  - Helper endpoints `GET /api/v1/users` and `GET /api/v1/departments`.
+  - Frontend Asset Assignment page (`app/assignments/page.tsx`) with Cấp phát, Thu hồi, Chuyển giao workflows.
+  - Partial unique index DB constraint protection and IntegrityError 409 Conflict handling.
+- Added Phase 7 Incident Management:
+  - Incident API endpoints (`GET /api/v1/incidents`, `GET /api/v1/incidents/{id}`, `POST /api/v1/incidents`, `PATCH /api/v1/incidents/{id}`).
+  - Incident Pydantic schemas (`IncidentCreate`, `IncidentUpdate`, `IncidentResponse`, `IncidentListResponse`).
+  - Valid status transition validation (`OPEN` -> `IN_REVIEW` -> `IN_PROGRESS` -> `RESOLVED` / `CLOSED` / `CANCELLED`).
+  - Asset history audit recording (`INCIDENT_REPORTED`, `MAINTENANCE_UPDATED`).
+  - Frontend Incident Management page (`app/incidents/page.tsx`) with reporting modal and IT ticket processing modal.
+
 ### Changed
 
 - Configured the development environment for Node.js, Python, Docker, and PostgreSQL.
@@ -53,5 +69,5 @@ and this project adheres to Semantic Versioning.
 
 ### Notes
 
-- Phase 5A (Backend Auth & RBAC) and Phase 5B (Frontend Authentication) complete.
-- CRUD APIs (Assets, Departments, Users), Asset Assignment workflows, Incident/Maintenance APIs, Business Dashboard stats, and AI features have not been implemented yet and will be added in upcoming phases.
+- Phase 5A, 5B, 5C, Phase 6 (Asset Assignment), and Phase 7 (Incident Management) are fully implemented and verified.
+
