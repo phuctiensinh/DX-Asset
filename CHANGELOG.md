@@ -61,6 +61,12 @@ and this project adheres to Semantic Versioning.
   - Valid status transition validation (`OPEN` -> `IN_REVIEW` -> `IN_PROGRESS` -> `RESOLVED` / `CLOSED` / `CANCELLED`).
   - Asset history audit recording (`INCIDENT_REPORTED`, `MAINTENANCE_UPDATED`).
   - Frontend Incident Management page (`app/incidents/page.tsx`) with reporting modal and IT ticket processing modal.
+- Added Phase 8 Dashboard & Statistics:
+  - Dashboard API endpoint (`GET /api/v1/dashboard/summary`) returning real-time PostgreSQL SQL aggregation data.
+  - Pydantic response models (`DashboardSummaryResponse`, `AssetStatusCounts`, `AssignmentStatusCounts`, `IncidentStatusCounts`, `DepartmentAssetStats`, `RecentActivityItem`).
+  - SQL aggregation queries for asset statuses, assignment statuses, incident statuses, department allocation metrics (`outerjoin` and status filter case statements), and top 10 recent asset history events.
+  - Complete real-time Frontend Dashboard UI (`app/dashboard/page.tsx`) with 5 metric summary cards, status progress bar distribution, incident breakdown grid, department allocation table, and activity feed.
+  - Automated unit tests (`tests/test_dashboard.py`) with full RBAC, dynamic update, and 100% test idempotency.
 
 ### Changed
 
