@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   LogOut,
   User as UserIcon,
+  Bot,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -58,7 +59,14 @@ export function Navbar() {
       icon: AlertTriangle,
       active: pathname.startsWith('/incidents'),
     },
+    {
+      href: '/assistant',
+      label: 'Trợ lý AI',
+      icon: Bot,
+      active: pathname.startsWith('/assistant'),
+    },
   ];
+
 
   return (
     <header className="sticky top-0 z-30 bg-slate-800/90 backdrop-blur border-b border-slate-700/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">

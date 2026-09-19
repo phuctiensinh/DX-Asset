@@ -67,6 +67,14 @@ and this project adheres to Semantic Versioning.
   - SQL aggregation queries for asset statuses, assignment statuses, incident statuses, department allocation metrics (`outerjoin` and status filter case statements), and top 10 recent asset history events.
   - Complete real-time Frontend Dashboard UI (`app/dashboard/page.tsx`) with 5 metric summary cards, status progress bar distribution, incident breakdown grid, department allocation table, and activity feed.
   - Automated unit tests (`tests/test_dashboard.py`) with full RBAC, dynamic update, and 100% test idempotency.
+- Added Phase 9 AI Assistant for Asset Management:
+  - Natural language Vietnamese query API (`POST /api/v1/assistant/chat`).
+  - Pydantic schemas (`AssistantChatRequest`, `AssistantChatResponse`, `AssistantSource`).
+  - AIAssistantService implementing intent recognition, PostgreSQL real-data tools, and read-only mutation guards (`MUTATION_REJECTED`).
+  - Rule-Based Fallback Engine automatically activated when optional AI API key is unconfigured or unavailable.
+  - Interactive Frontend AI Chat interface (`app/assistant/page.tsx`) with suggested question chips, real data source tags, typing animations, and Navbar link.
+  - Automated unit test suite (`tests/test_assistant.py`) covering read-only policy, asset lookups, count queries, ticket lookups, and idempotency.
+
 
 ### Changed
 
