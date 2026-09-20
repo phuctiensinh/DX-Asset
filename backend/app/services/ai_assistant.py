@@ -15,6 +15,7 @@ from app.models.history import AssetHistory
 from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus, MaintenanceStatus, UserRole
 from app.schemas.assistant import AssistantChatResponse, AssistantSource
 from app.services.smart_routing import SmartRoutingService
+from app.services.knowledge_base import KnowledgeBaseService
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +209,7 @@ class AIAssistantService:
             return AssistantChatResponse(answer=answer, intent="MAINTENANCE_ASSETS", sources=sources, is_fallback=True)
 
         # G. Intent: Active / Pending Incidents ("sự cố nào đang xử lý", "sự cố kỹ thuật", "phiếu sự cố")
-        if "sự cố" in lower_msg or "incident" in lower_msg:
+        if ("sự cố" in lower_msg or "incident" in lower_msg) and not any(kw in lower_msg for kw in ["tương tự", "giống lỗi", "tri thức", "cách khắc phục", "kinh nghiệm"]):
             pending_incidents = db.query(Incident).filter(
                 Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_REVIEW, IncidentStatus.IN_PROGRESS, IncidentStatus.WAITING_FOR_INFO])
             ).all()
@@ -300,7 +301,55 @@ class AIAssistantService:
                 answer = "Hiện tại không tìm thấy phiếu sự cố nào đang cần phân công."
             return AssistantChatResponse(answer=answer, intent="TECHNICIAN_RECOMMENDATION_QUERY", sources=sources, is_fallback=True)
 
-        # L. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
+        # L. Intent: Similar Incident Query ("sự cố tương tự", "tương tự phiếu", "lỗi tương tự", "giống lỗi này")
+        if "tương tự" in lower_msg or "giống lỗi" in lower_msg or "tương tự phiếu" in lower_msg:
+            inc_match = re.search(r"(INC-[a-zA-Z0-9\-_]+)", clean_msg, re.IGNORECASE)
+            target_inc = None
+            if inc_match:
+                ticket_code = inc_match.group(1).upper()
+                target_inc = db.query(Incident).filter(func.upper(Incident.ticket_code) == ticket_code).first()
+            if not target_inc:
+                target_inc = db.query(Incident).order_by(Incident.id.desc()).first()
+
+            if target_inc:
+                sources.append(AssistantSource(type="incident", id=target_inc.id, code=target_inc.ticket_code, name=target_inc.title))
+                sim_res = KnowledgeBaseService.get_similar_incidents(db, target_inc.id, limit=3, min_score=20.0)
+                if sim_res.items:
+                    items_str_list = []
+                    for item in sim_res.items:
+                        items_str_list.append(
+                            f"- **{item.ticket_code}**: {item.title} ({item.similarity_score}% tương đồng)\n"
+                            f"  *Cách khắc phục*: {item.resolution_notes}"
+                        )
+                    answer = (
+                        f"Tìm thấy **{sim_res.total_found}** sự cố tương tự trong Knowledge Base cho phiếu **{target_inc.ticket_code}** ({target_inc.title}):\n"
+                        + "\n".join(items_str_list)
+                    )
+                else:
+                    answer = f"Chưa có sự cố tương tự nào đạt ngưỡng phù hợp trong Knowledge Base cho phiếu **{target_inc.ticket_code}**."
+            else:
+                answer = "Chưa có dữ liệu phiếu sự cố trong hệ thống để tìm kiếm tương tự."
+            return AssistantChatResponse(answer=answer, intent="SIMILAR_INCIDENT_QUERY", sources=sources, is_fallback=True)
+
+        # M. Intent: Knowledge Base Resolution Query ("kinh nghiệm", "tri thức", "cách khắc phục", "bài học", "đã từng", "trước đây")
+        if any(kw in lower_msg for kw in ["kinh nghiệm", "tri thức", "cách khắc phục", "hướng xử lý", "bài học", "đã từng", "trước đây"]):
+            resolved_incidents = db.query(Incident).filter(
+                Incident.status.in_([IncidentStatus.RESOLVED, IncidentStatus.CLOSED]),
+                Incident.resolution_notes.isnot(None),
+                func.length(func.trim(Incident.resolution_notes)) > 0
+            ).order_by(Incident.id.desc()).limit(5).all()
+
+            if resolved_incidents:
+                items_str = []
+                for inc in resolved_incidents:
+                    sources.append(AssistantSource(type="incident", id=inc.id, code=inc.ticket_code, name=inc.title))
+                    items_str.append(f"- **[{inc.category}] {inc.ticket_code}** ({inc.title}): {inc.resolution_notes}")
+                answer = f"Tổng hợp tri thức giải quyết sự cố gần đây từ Knowledge Base:\n" + "\n".join(items_str)
+            else:
+                answer = "Hiện chưa có bài học kinh nghiệm xử lý sự cố nào được ghi nhận trong Knowledge Base."
+            return AssistantChatResponse(answer=answer, intent="KNOWLEDGE_BASE_QUERY", sources=sources, is_fallback=True)
+
+        # N. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
         matched_assets = db.query(Asset).filter(
             or_(Asset.name.ilike(f"%{clean_msg}%"), Asset.category.ilike(f"%{clean_msg}%"))
         ).limit(5).all()

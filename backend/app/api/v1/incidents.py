@@ -25,7 +25,9 @@ from app.schemas.smart_routing import (
     RecommendationsResponse,
     AssignIncidentRequest,
 )
+from app.schemas.knowledge_base import SimilarIncidentListResponse
 from app.services.smart_routing import SmartRoutingService
+from app.services.knowledge_base import KnowledgeBaseService
 
 router = APIRouter()
 
@@ -417,3 +419,25 @@ def assign_incident_technician(
     db.refresh(incident)
 
     return _get_incident_query(db).filter(Incident.id == incident.id).first()
+
+@router.get("/{incident_id}/similar", response_model=SimilarIncidentListResponse)
+def get_similar_incidents_endpoint(
+    incident_id: int,
+    limit: int = Query(5, ge=1, le=20, description="Số lượng sự cố tương tự tối đa"),
+    min_score: float = Query(30.0, ge=0.0, le=100.0, description="Ngưỡng điểm tương đồng tối thiểu"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Tra cứu các sự cố tương tự đã giải quyết trong Knowledge Base (Tất cả người dùng đã đăng nhập)."""
+    try:
+        return KnowledgeBaseService.get_similar_incidents(
+            db=db,
+            target_incident_id=incident_id,
+            limit=limit,
+            min_score=min_score,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )

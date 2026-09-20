@@ -28,6 +28,7 @@ import {
   Cpu,
   Layers,
   UserCheck,
+  BookOpen,
 } from 'lucide-react';
 
 interface AssetSummary {
@@ -89,6 +90,38 @@ interface RecommendationsResponse {
   priority: string;
   suggested_queue: string;
   recommendations: TechnicianRecommendationItem[];
+}
+
+interface LinkedMaintenanceInfo {
+  maintenance_code: string;
+  status: string;
+  repair_cost: number;
+  duration_hours?: number | null;
+  resolution_notes?: string | null;
+}
+
+interface SimilarIncidentItem {
+  incident_id: number;
+  ticket_code: string;
+  title: string;
+  category: string;
+  priority: string;
+  status: string;
+  resolution_notes: string;
+  repair_cost: number;
+  resolved_at?: string | null;
+  asset_code?: string | null;
+  asset_name?: string | null;
+  similarity_score: number;
+  similarity_reasons: string[];
+  linked_maintenance?: LinkedMaintenanceInfo | null;
+}
+
+interface SimilarIncidentListResponse {
+  target_incident_id: number;
+  target_ticket_code: string;
+  total_found: number;
+  items: SimilarIncidentItem[];
 }
 
 interface IncidentListResponse {
@@ -298,9 +331,23 @@ function IncidentsContent() {
     setShowUpdateModal(true);
   };
 
-  const openDetailModal = (inc: Incident) => {
+  // Knowledge Base State
+  const [similarIncidents, setSimilarIncidents] = useState<SimilarIncidentListResponse | null>(null);
+  const [loadingSimilar, setLoadingSimilar] = useState<boolean>(false);
+
+  const openDetailModal = async (inc: Incident) => {
     setSelectedIncident(inc);
     setShowDetailModal(true);
+    setLoadingSimilar(true);
+    setSimilarIncidents(null);
+    try {
+      const data = await fetchApi<SimilarIncidentListResponse>(`/incidents/${inc.id}/similar?limit=5`);
+      setSimilarIncidents(data);
+    } catch (err: any) {
+      console.error('Lỗi lấy danh sách sự cố tương tự:', err);
+    } finally {
+      setLoadingSimilar(false);
+    }
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -936,7 +983,7 @@ function IncidentsContent() {
       {/* DETAIL MODAL */}
       {showDetailModal && selectedIncident && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 space-y-4">
+          <div className="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 space-y-4 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-slate-700">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-5 h-5 text-rose-400" />
@@ -1002,6 +1049,99 @@ function IncidentsContent() {
                 </div>
               </div>
             )}
+
+            {/* KNOWLEDGE BASE / SIMILAR INCIDENTS SECTION */}
+            <div className="pt-3 border-t border-slate-700/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
+                  <BookOpen className="w-4 h-4 text-sky-400" />
+                  <span>🔎 Sự cố tương tự trong Knowledge Base</span>
+                </div>
+                {similarIncidents && (
+                  <span className="text-[11px] text-slate-400">
+                    Tìm thấy: <strong className="text-sky-300">{similarIncidents.total_found}</strong> sự cố
+                  </span>
+                )}
+              </div>
+
+              {loadingSimilar ? (
+                <div className="p-4 bg-slate-900/40 border border-slate-700/40 rounded-xl flex items-center justify-center space-x-2 text-xs text-slate-400">
+                  <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                  <span>Đang truy vấn Knowledge Base...</span>
+                </div>
+              ) : !similarIncidents || similarIncidents.items.length === 0 ? (
+                <div className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-400 text-center">
+                  Chưa tìm thấy sự cố tương tự phù hợp trong Knowledge Base (Ngưỡng khớp score ≥ 30).
+                </div>
+              ) : (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {similarIncidents.items.map((item) => (
+                    <div
+                      key={item.incident_id}
+                      className="p-3 bg-slate-900/70 border border-slate-700/60 rounded-xl space-y-2 text-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-sky-300 font-bold">{item.ticket_code}</span>
+                            <span className="font-semibold text-slate-200">{item.title}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Tài sản: {item.asset_name} ({item.asset_code}) • {item.category}
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold">
+                            Khớp {item.similarity_score}%
+                          </span>
+                          {item.resolved_at && (
+                            <span className="text-[10px] text-slate-400 mt-0.5">
+                              {formatDate(item.resolved_at)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Similarity Reasons */}
+                      {item.similarity_reasons && item.similarity_reasons.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {item.similarity_reasons.map((reason, rIdx) => (
+                            <span
+                              key={rIdx}
+                              className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700"
+                            >
+                              ✓ {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Resolution Notes */}
+                      {item.resolution_notes && (
+                        <div className="p-2 bg-emerald-950/30 border border-emerald-500/20 rounded-lg text-emerald-200 text-[11px]">
+                          <strong className="text-emerald-400 font-semibold">Cách đã xử lý: </strong>
+                          {item.resolution_notes}
+                        </div>
+                      )}
+
+                      {/* Linked Maintenance Info if present */}
+                      {item.linked_maintenance && (
+                        <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                          <div>
+                            Bảo trì: <span className="text-slate-300 font-mono font-medium">{item.linked_maintenance.maintenance_code}</span> ({item.linked_maintenance.status})
+                          </div>
+                          {item.linked_maintenance.duration_hours !== null && (
+                            <div>
+                              Thời gian xử lý: <span className="text-amber-300 font-medium">{item.linked_maintenance.duration_hours} giờ</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700">
               <div>Ngày tạo: {formatDate(selectedIncident.created_at)}</div>

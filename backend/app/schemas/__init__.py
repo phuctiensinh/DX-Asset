@@ -25,6 +25,11 @@ from app.schemas.technician_skill import (
     TechnicianSkillResponse,
     TechnicianProfileResponse,
 )
+from app.schemas.knowledge_base import (
+    LinkedMaintenanceInfo,
+    SimilarIncidentItem,
+    SimilarIncidentListResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -51,6 +56,9 @@ __all__ = [
     "TechnicianSkillCreate",
     "TechnicianSkillResponse",
     "TechnicianProfileResponse",
+    "LinkedMaintenanceInfo",
+    "SimilarIncidentItem",
+    "SimilarIncidentListResponse",
 ]
 
 

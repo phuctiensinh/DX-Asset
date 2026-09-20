@@ -8,7 +8,7 @@ from app.core.security import create_access_token
 from app.models import User, UserRole
 
 @pytest.fixture(scope="module")
-def client() -> TestClient:
+def client(db: Session) -> TestClient:
     with TestClient(app) as c:
         yield c
 

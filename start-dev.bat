@@ -8,15 +8,20 @@ echo       DX-Asset Development Server
 echo ========================================
 echo.
 
-echo [1/3] Starting PostgreSQL...
+echo [1/4] Starting PostgreSQL...
 docker compose up -d postgres
 
 echo.
-echo [2/3] Starting Backend...
+echo [2/4] Running database migrations...
+cd /d D:\web\dx-asset\backend
+.venv\Scripts\python.exe -m alembic upgrade head
+
+echo.
+echo [3/4] Starting Backend...
 start "DX-Asset Backend" cmd /k "cd /d D:\web\dx-asset\backend && .venv\Scripts\uvicorn.exe app.main:app --reload --port 8000"
 
 echo.
-echo [3/3] Starting Frontend...
+echo [4/4] Starting Frontend...
 start "DX-Asset Frontend" cmd /k "cd /d D:\web\dx-asset\frontend && npm run dev"
 
 echo.
