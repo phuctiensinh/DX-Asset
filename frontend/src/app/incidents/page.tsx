@@ -24,6 +24,10 @@ import {
   DollarSign,
   Clock,
   ShieldAlert,
+  Sparkles,
+  Cpu,
+  Layers,
+  UserCheck,
 } from 'lucide-react';
 
 interface AssetSummary {
@@ -54,12 +58,37 @@ interface Incident {
   assigned_it_id?: number | null;
   resolution_notes?: string | null;
   repair_cost: number;
+  suggested_queue?: string | null;
+  ai_confidence?: number | null;
+  ai_reasoning?: string | null;
   created_at: string;
   updated_at: string;
   resolved_at?: string | null;
   asset?: AssetSummary | null;
   reporter?: UserSummary | null;
   assigned_it?: UserSummary | null;
+}
+
+interface TechnicianRecommendationItem {
+  user_id: number;
+  full_name: string;
+  email: string;
+  role: string;
+  total_score: number;
+  skill_score: number;
+  workload_score: number;
+  sla_score: number;
+  active_workload: number;
+  reasons: string[];
+}
+
+interface RecommendationsResponse {
+  incident_id: number;
+  ticket_code: string;
+  category: string;
+  priority: string;
+  suggested_queue: string;
+  recommendations: TechnicianRecommendationItem[];
 }
 
 interface IncidentListResponse {
@@ -140,7 +169,46 @@ function IncidentsContent() {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
+  const [showRecommendationModal, setShowRecommendationModal] = useState<boolean>(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+
+  // Smart Routing Recommendation State
+  const [recommendationsData, setRecommendationsData] = useState<RecommendationsResponse | null>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState<boolean>(false);
+  const [assigningTechId, setAssigningTechId] = useState<number | null>(null);
+
+  const openRecommendationModal = async (inc: Incident) => {
+    setSelectedIncident(inc);
+    setShowRecommendationModal(true);
+    setLoadingRecommendations(true);
+    setRecommendationsData(null);
+    try {
+      const data = await fetchApi<RecommendationsResponse>(`/incidents/${inc.id}/recommendations`);
+      setRecommendationsData(data);
+    } catch (err: any) {
+      console.error('Lỗi lấy đề xuất Kỹ thuật viên:', err);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  const handleAssignTechnician = async (incidentId: number, techId: number) => {
+    setAssigningTechId(techId);
+    try {
+      await fetchApi<Incident>(`/incidents/${incidentId}/assign`, {
+        method: 'POST',
+        body: JSON.stringify({ technician_id: techId }),
+      });
+      setShowRecommendationModal(false);
+      setSuccessMsg('Đã xác nhận phân công Kỹ thuật viên thành công!');
+      setTimeout(() => setSuccessMsg(null), 4000);
+      loadIncidents();
+    } catch (err: any) {
+      alert(err?.message || 'Không thể phân công Kỹ thuật viên');
+    } finally {
+      setAssigningTechId(null);
+    }
+  };
 
   // Form States
   const [createFormData, setCreateFormData] = useState({
@@ -507,7 +575,14 @@ function IncidentsContent() {
                       </td>
                       <td className="py-3.5 px-4 space-y-1">
                         <div>{getPriorityBadge(item.priority)}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{item.category}</div>
+                        <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1">
+                          <span>{item.category}</span>
+                          {item.suggested_queue && (
+                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-[9px] border border-purple-500/30">
+                              {item.suggested_queue}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-4">
                         {getStatusBadge(item.status)}
@@ -524,7 +599,7 @@ function IncidentsContent() {
                         {formatDate(item.created_at)}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-1.5">
                           <button
                             onClick={() => openDetailModal(item)}
                             className="p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
@@ -534,6 +609,14 @@ function IncidentsContent() {
                           </button>
                           {canManageIT && (
                             <>
+                              <button
+                                onClick={() => openRecommendationModal(item)}
+                                className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
+                                title="Gợi ý & Đề xuất Kỹ thuật viên (Smart Routing)"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                                <span>Đề xuất IT</span>
+                              </button>
                               <button
                                 onClick={() => openUpdateModal(item)}
                                 className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
@@ -924,6 +1007,148 @@ function IncidentsContent() {
               <div>Ngày tạo: {formatDate(selectedIncident.created_at)}</div>
               <button
                 onClick={() => setShowDetailModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RECOMMENDATION MODAL (SMART ROUTING & TECHNICIAN RECOMMENDATION) */}
+      {showRecommendationModal && selectedIncident && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl bg-slate-800 border border-purple-500/30 rounded-2xl shadow-2xl p-6 text-slate-100 my-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+              <div className="flex items-center space-x-2">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white tracking-tight">
+                    Smart Routing & Đề xuất Kỹ thuật viên
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Phiếu sự cố: <span className="font-mono text-purple-300 font-semibold">{selectedIncident.ticket_code}</span> - {selectedIncident.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRecommendationModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* AI Classification & Queue Card */}
+            <div className="bg-slate-900/80 border border-purple-500/20 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <div className="text-[10px] uppercase font-semibold text-slate-400">Danh mục Sự cố</div>
+                <div className="font-bold text-slate-100 mt-1 flex items-center space-x-1.5">
+                  <Cpu className="w-4 h-4 text-sky-400" />
+                  <span>{selectedIncident.category}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-semibold text-slate-400">Queue Xử lý Gợi ý</div>
+                <div className="font-mono font-bold text-purple-300 mt-1 flex items-center space-x-1.5">
+                  <Layers className="w-4 h-4 text-purple-400" />
+                  <span>{recommendationsData?.suggested_queue || selectedIncident.suggested_queue || 'GENERAL_SUPPORT'}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-semibold text-slate-400">Chế độ phân công</div>
+                <div className="font-semibold text-amber-300 mt-1 flex items-center space-x-1.5">
+                  <UserCheck className="w-4 h-4 text-amber-400" />
+                  <span>Xác nhận bởi Quản trị</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Candidates List */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+                <span>Bảng xếp hạng Kỹ thuật viên phù hợp (100-pt Scoring)</span>
+                <span className="text-[11px] text-slate-500 font-normal">Skill (40) + Workload (40) + SLA (20)</span>
+              </h4>
+
+              {loadingRecommendations ? (
+                <div className="p-8 flex flex-col items-center justify-center space-y-2">
+                  <Loader2 className="w-7 h-7 text-purple-400 animate-spin" />
+                  <span className="text-xs text-slate-400">Đang phân tích dữ liệu kỹ năng & workload...</span>
+                </div>
+              ) : !recommendationsData || recommendationsData.recommendations.length === 0 ? (
+                <div className="p-6 text-center text-xs text-slate-400 border border-slate-700 rounded-xl">
+                  Không tìm thấy Kỹ thuật viên phù hợp trong hệ thống.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {recommendationsData.recommendations.map((tech, idx) => (
+                    <div
+                      key={tech.user_id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        idx === 0
+                          ? 'bg-purple-950/20 border-purple-500/50 shadow-lg shadow-purple-500/10'
+                          : 'bg-slate-900/60 border-slate-700/70 hover:border-slate-600'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            {idx === 0 && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                ★ TOP 1 ĐỀ XUẤT
+                              </span>
+                            )}
+                            <span className="font-bold text-white text-sm">{tech.full_name}</span>
+                            <span className="text-xs text-slate-400">({tech.email})</span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
+                            {tech.reasons.map((r, rIdx) => (
+                              <span key={rIdx} className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 flex-shrink-0">
+                          <div className="text-right">
+                            <div className="text-xs text-slate-400">Đồ thị Phù hợp</div>
+                            <div className="text-lg font-extrabold font-mono text-purple-300">
+                              {tech.total_score}<span className="text-xs text-slate-500">/100</span>
+                            </div>
+                          </div>
+                          <button
+                            disabled={assigningTechId === tech.user_id}
+                            onClick={() => handleAssignTechnician(selectedIncident.id, tech.user_id)}
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
+                          >
+                            {assigningTechId === tech.user_id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>Phân công</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700">
+              <div className="italic text-slate-500">
+                AI đóng vai trò hỗ trợ điều phối. Việc giao việc hoàn toàn nằm trong quyết định của bạn.
+              </div>
+              <button
+                onClick={() => setShowRecommendationModal(false)}
                 className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
               >
                 Đóng

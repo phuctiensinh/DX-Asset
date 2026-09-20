@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.main import app
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, Base, engine
 from app.core.security import create_access_token
 from app.models import User, UserRole
 
@@ -14,7 +14,20 @@ def client() -> TestClient:
 
 @pytest.fixture(scope="module")
 def db() -> Session:
+    Base.metadata.create_all(bind=engine)
     session = SessionLocal()
+    # Check if admin user exists, if not seed database
+    admin = session.query(User).filter(User.role == UserRole.ADMIN).first()
+    if not admin:
+        import sys, os
+        scripts_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        from seed_data import seed_database
+        seed_database()
+        session.close()
+        session = SessionLocal()
+
     try:
         yield session
     finally:

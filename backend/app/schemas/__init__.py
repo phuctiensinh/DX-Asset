@@ -14,6 +14,17 @@ from app.schemas.incident import (
     IncidentResponse,
     IncidentListResponse,
 )
+from app.schemas.smart_routing import (
+    ClassificationResponse,
+    TechnicianRecommendationItem,
+    RecommendationsResponse,
+    AssignIncidentRequest,
+)
+from app.schemas.technician_skill import (
+    TechnicianSkillCreate,
+    TechnicianSkillResponse,
+    TechnicianProfileResponse,
+)
 
 __all__ = [
     "UserResponse",
@@ -33,6 +44,13 @@ __all__ = [
     "IncidentUpdate",
     "IncidentResponse",
     "IncidentListResponse",
+    "ClassificationResponse",
+    "TechnicianRecommendationItem",
+    "RecommendationsResponse",
+    "AssignIncidentRequest",
+    "TechnicianSkillCreate",
+    "TechnicianSkillResponse",
+    "TechnicianProfileResponse",
 ]
 
 

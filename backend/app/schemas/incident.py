@@ -34,6 +34,9 @@ class IncidentResponse(IncidentBase):
     assigned_it_id: Optional[int] = None
     resolution_notes: Optional[str] = None
     repair_cost: float
+    suggested_queue: Optional[str] = None
+    ai_confidence: Optional[float] = None
+    ai_reasoning: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime] = None

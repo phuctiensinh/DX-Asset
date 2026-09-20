@@ -12,8 +12,9 @@ from app.models.incident import Incident
 from app.models.maintenance import Maintenance
 from app.models.department import Department
 from app.models.history import AssetHistory
-from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus, MaintenanceStatus
+from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus, MaintenanceStatus, UserRole
 from app.schemas.assistant import AssistantChatResponse, AssistantSource
+from app.services.smart_routing import SmartRoutingService
 
 logger = logging.getLogger(__name__)
 
@@ -252,7 +253,54 @@ class AIAssistantService:
                 answer = "Chưa có dữ liệu lịch sử biến động tài sản trong hệ thống."
             return AssistantChatResponse(answer=answer, intent="RECENT_HISTORY", sources=sources, is_fallback=True)
 
-        # J. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
+        # J. Intent: Technician Workload Query ("workload", "khối lượng công việc", "kỹ thuật viên nào rảnh", "kỹ thuật viên")
+        if "workload" in lower_msg or "khối lượng" in lower_msg or "kỹ thuật viên" in lower_msg or "rảnh" in lower_msg:
+            techs = db.query(User).filter(
+                User.role.in_([UserRole.ADMIN, UserRole.IT_ASSET_MANAGER]),
+                User.is_active == True
+            ).all()
+            if techs:
+                lines = []
+                for t in techs:
+                    inc, mnt, total_w = SmartRoutingService.calculate_technician_workload(db, t.id)
+                    lines.append(f"- **{t.full_name}** (`{t.email}`): **{total_w}** active (Sự cố: {inc}, Bảo trì: {mnt})")
+                answer = f"Khối lượng công việc (Workload) hiện tại của các Kỹ thuật viên / IT Manager:\n" + "\n".join(lines)
+            else:
+                answer = "Hệ thống chưa có tài khoản Kỹ thuật viên / IT Manager nào."
+            return AssistantChatResponse(answer=answer, intent="TECHNICIAN_WORKLOAD_QUERY", sources=sources, is_fallback=True)
+
+        # K. Intent: Technician Recommendation Query ("ai phù hợp", "đề xuất kỹ thuật viên", "gợi ý kỹ thuật viên")
+        if "phù hợp" in lower_msg or "đề xuất" in lower_msg or "gợi ý" in lower_msg:
+            inc_match = re.search(r"(INC-[a-zA-Z0-9\-_]+)", clean_msg, re.IGNORECASE)
+            incident = None
+            if inc_match:
+                ticket_code = inc_match.group(1).upper()
+                incident = db.query(Incident).filter(func.upper(Incident.ticket_code) == ticket_code).first()
+            if not incident:
+                incident = db.query(Incident).filter(
+                    Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_REVIEW])
+                ).order_by(Incident.id.desc()).first()
+
+            if incident:
+                sources.append(AssistantSource(type="incident", id=incident.id, code=incident.ticket_code, name=incident.title))
+                recs = SmartRoutingService.get_recommendations(db, incident.category, incident.priority)
+                if recs:
+                    top_rec = recs[0]
+                    reasons_str = "\n".join([f"  {r}" for r in top_rec.reasons])
+                    answer = (
+                        f"Đề xuất Kỹ thuật viên phù hợp nhất cho phiếu **{incident.ticket_code}** ({incident.title}):\n"
+                        f"- **Kỹ thuật viên**: **{top_rec.full_name}** (`{top_rec.email}`)\n"
+                        f"- **Tổng điểm phù hợp**: **{top_rec.total_score}/100**\n"
+                        f"- **Lý do đề xuất**:\n{reasons_str}\n\n"
+                        f"*Lưu ý: Hệ thống chỉ đưa ra đề xuất. Quản trị viên / IT Manager cần xác nhận phân công trên trang Quản lý Sự cố.*"
+                    )
+                else:
+                    answer = f"Không tìm thấy Kỹ thuật viên phù hợp cho phiếu **{incident.ticket_code}**."
+            else:
+                answer = "Hiện tại không tìm thấy phiếu sự cố nào đang cần phân công."
+            return AssistantChatResponse(answer=answer, intent="TECHNICIAN_RECOMMENDATION_QUERY", sources=sources, is_fallback=True)
+
+        # L. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
         matched_assets = db.query(Asset).filter(
             or_(Asset.name.ilike(f"%{clean_msg}%"), Asset.category.ilike(f"%{clean_msg}%"))
         ).limit(5).all()

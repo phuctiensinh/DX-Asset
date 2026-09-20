@@ -22,6 +22,7 @@ from app.models import (
     AssetAssignment,
     Incident,
     AssetHistory,
+    TechnicianSkill,
     UserRole,
     AssetStatus,
     AssignmentStatus,
@@ -464,6 +465,44 @@ def seed_database():
                 histories_created += 1
 
         logger.info(f"-> Asset Histories: Đã tạo {histories_created} mới.")
+
+        # 7. SEED TECHNICIAN SKILLS
+        skills_data = [
+            # IT Manager: Strong in Hardware & Network, moderate in Software/Power/Damage
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.HARDWARE, "skill_level": 5},
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.NETWORK, "skill_level": 5},
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.SOFTWARE, "skill_level": 4},
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.POWER, "skill_level": 3},
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.PHYSICAL_DAMAGE, "skill_level": 4},
+            {"email": "it_manager@dxasset.local", "category": IncidentCategory.OTHER, "skill_level": 3},
+            # Admin: Strong in Software & Other, moderate in Hardware/Network/Power
+            {"email": "admin@dxasset.local", "category": IncidentCategory.SOFTWARE, "skill_level": 5},
+            {"email": "admin@dxasset.local", "category": IncidentCategory.OTHER, "skill_level": 5},
+            {"email": "admin@dxasset.local", "category": IncidentCategory.HARDWARE, "skill_level": 3},
+            {"email": "admin@dxasset.local", "category": IncidentCategory.NETWORK, "skill_level": 3},
+            {"email": "admin@dxasset.local", "category": IncidentCategory.POWER, "skill_level": 4},
+            {"email": "admin@dxasset.local", "category": IncidentCategory.PHYSICAL_DAMAGE, "skill_level": 2},
+        ]
+
+        skills_created = 0
+        for s in skills_data:
+            user = user_map.get(s["email"])
+            if user:
+                existing = db.query(TechnicianSkill).filter(
+                    TechnicianSkill.user_id == user.id,
+                    TechnicianSkill.category == s["category"],
+                ).first()
+                if not existing:
+                    ts = TechnicianSkill(
+                        user_id=user.id,
+                        category=s["category"],
+                        skill_level=s["skill_level"],
+                    )
+                    db.add(ts)
+                    db.flush()
+                    skills_created += 1
+
+        logger.info(f"-> Technician Skills: Đã tạo {skills_created} bản ghi kỹ năng mới.")
 
         db.commit()
         logger.info("==================================================")

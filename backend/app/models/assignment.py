@@ -26,7 +26,8 @@ class AssetAssignment(Base):
             "uq_active_asset_assignment",
             "asset_id",
             unique=True,
-            postgresql_where=text("status = 'ACTIVE'")
+            postgresql_where=text("status = 'ACTIVE'"),
+            sqlite_where=text("status = 'ACTIVE'")
         ),
     )
 

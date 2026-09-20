@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Numeric, ForeignKey, DateTime, Enum as SQLEnum, func
+from sqlalchemy import Column, Integer, String, Text, Numeric, Float, ForeignKey, DateTime, Enum as SQLEnum, func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from app.models.enums import IncidentCategory, IncidentPriority, IncidentStatus
@@ -18,6 +18,9 @@ class Incident(Base):
     assigned_it_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     resolution_notes = Column(Text, nullable=True)
     repair_cost = Column(Numeric(12, 2), default=0.00, nullable=False)
+    suggested_queue = Column(String(50), nullable=True)
+    ai_confidence = Column(Float, nullable=True)
+    ai_reasoning = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     resolved_at = Column(DateTime(timezone=True), nullable=True)

@@ -16,6 +16,7 @@ from app.models.assignment import AssetAssignment
 from app.models.incident import Incident
 from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
+from app.models.technician_skill import TechnicianSkill
 
 __all__ = [
     "Base",
@@ -34,4 +35,5 @@ __all__ = [
     "Incident",
     "Maintenance",
     "AssetHistory",
+    "TechnicianSkill",
 ]

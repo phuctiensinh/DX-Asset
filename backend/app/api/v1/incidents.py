@@ -20,6 +20,12 @@ from app.schemas.incident import (
     IncidentResponse,
     IncidentListResponse,
 )
+from app.schemas.smart_routing import (
+    ClassificationResponse,
+    RecommendationsResponse,
+    AssignIncidentRequest,
+)
+from app.services.smart_routing import SmartRoutingService
 
 router = APIRouter()
 
@@ -169,7 +175,14 @@ def create_incident(
         date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
         ticket_code = f"INC-{date_str}-{uuid.uuid4().hex[:4].upper()}"
 
-    # 4. Create Incident
+    # 4. Run Smart Routing classification metadata
+    classification = SmartRoutingService.classify_incident_text(
+        title=incident_in.title.strip(),
+        description=incident_in.description.strip(),
+        current_category=incident_in.category,
+    )
+
+    # Create Incident
     incident = Incident(
         ticket_code=ticket_code,
         asset_id=asset.id,
@@ -179,6 +192,9 @@ def create_incident(
         category=incident_in.category,
         priority=incident_in.priority,
         status=IncidentStatus.OPEN,
+        suggested_queue=classification.queue,
+        ai_confidence=classification.confidence,
+        ai_reasoning=classification.reasoning,
     )
     db.add(incident)
 
@@ -282,6 +298,121 @@ def update_incident(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Cập nhật phiếu thất bại do xung đột dữ liệu. Vui lòng tải lại dữ liệu và thử lại."
+        )
+    db.refresh(incident)
+
+    return _get_incident_query(db).filter(Incident.id == incident.id).first()
+
+@router.post("/{incident_id}/classify", response_model=ClassificationResponse)
+def classify_incident(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.IT_ASSET_MANAGER)),
+):
+    """Phân loại sự cố tự động & gợi ý Queue xử lý (ADMIN & IT_ASSET_MANAGER)."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    res = SmartRoutingService.classify_incident_text(
+        title=incident.title,
+        description=incident.description,
+        current_category=incident.category,
+    )
+
+    incident.suggested_queue = res.queue
+    incident.ai_confidence = res.confidence
+    incident.ai_reasoning = res.reasoning
+    db.commit()
+    db.refresh(incident)
+
+    return ClassificationResponse(
+        category=incident.category,
+        suggested_queue=res.queue,
+        ai_confidence=res.confidence,
+        ai_reasoning=res.reasoning,
+    )
+
+@router.get("/{incident_id}/recommendations", response_model=RecommendationsResponse)
+def get_incident_technician_recommendations(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.IT_ASSET_MANAGER)),
+):
+    """Phân tích & đề xuất danh sách Kỹ thuật viên phù hợp dựa trên 100-pt Scoring Engine (ADMIN & IT_ASSET_MANAGER)."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    queue = incident.suggested_queue or SmartRoutingService.get_queue_for_category(incident.category)
+    recs = SmartRoutingService.get_recommendations(db, incident.category, incident.priority)
+
+    return RecommendationsResponse(
+        incident_id=incident.id,
+        ticket_code=incident.ticket_code,
+        category=incident.category,
+        priority=incident.priority,
+        suggested_queue=queue,
+        recommendations=recs,
+    )
+
+@router.post("/{incident_id}/assign", response_model=IncidentResponse)
+def assign_incident_technician(
+    incident_id: int,
+    assign_in: AssignIncidentRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.IT_ASSET_MANAGER)),
+):
+    """Phân công Kỹ thuật viên phụ trách xử lý sự cố (ADMIN & IT_ASSET_MANAGER). Tái sử dụng field assigned_it_id."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    tech = db.query(User).filter(
+        User.id == assign_in.technician_id,
+        User.role.in_([UserRole.ADMIN, UserRole.IT_ASSET_MANAGER]),
+        User.is_active == True
+    ).first()
+
+    if not tech:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy Kỹ thuật viên hợp lệ với ID {assign_in.technician_id}"
+        )
+
+    incident.assigned_it_id = tech.id
+    if incident.status == IncidentStatus.OPEN:
+        incident.status = IncidentStatus.IN_REVIEW
+
+    # Audit history
+    details = f"Phân công Kỹ thuật viên {tech.full_name} ({tech.email}) phụ trách phiếu sự cố [{incident.ticket_code}]"
+    if assign_in.notes:
+        details += f" - Ghi chú: {assign_in.notes.strip()}"
+
+    history = AssetHistory(
+        asset_id=incident.asset_id,
+        action_type=AssetActionType.MAINTENANCE_UPDATED,
+        performed_by_id=current_user.id,
+        details=details,
+    )
+    db.add(history)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Phân công Kỹ thuật viên thất bại do xung đột dữ liệu."
         )
     db.refresh(incident)
 
