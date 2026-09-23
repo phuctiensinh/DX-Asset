@@ -25,6 +25,11 @@ def test_knowledge_base_similarity_scoring_and_eligibility(db: Session, admin_us
     - Similarity reasons explanation in Vietnamese
     - Limit parameter & Min score filtering
     """
+    # Clear any leftover test incidents & maintenances from previous runs
+    db.query(Maintenance).delete()
+    db.query(Incident).delete()
+    db.commit()
+
     # 1. Create a test Asset
     asset1 = Asset(
         asset_code=f"KB-AST-01-{datetime.now().timestamp()}",
@@ -50,8 +55,8 @@ def test_knowledge_base_similarity_scoring_and_eligibility(db: Session, admin_us
     # 2. Target incident A (RESOLVED, HARDWARE)
     target_inc = Incident(
         ticket_code=f"INC-TGT-{datetime.now().timestamp()}",
-        title="Màn hình laptop bị chớp giật xanh nhấp nháy",
-        description="Màn hình hiển thị sọc xanh và chớp nháy liên tục khi cắm sạc laptop dell xps",
+        title="KBU_UNIQUE_SCREEN_FLASH_999 Màn hình laptop bị chớp giật xanh nhấp nháy",
+        description="KBU_UNIQUE_SCREEN_FLASH_999 Màn hình hiển thị sọc xanh và chớp nháy liên tục khi cắm sạc laptop dell xps",
         category=IncidentCategory.HARDWARE,
         priority=IncidentPriority.HIGH,
         status=IncidentStatus.RESOLVED,
@@ -65,8 +70,8 @@ def test_knowledge_base_similarity_scoring_and_eligibility(db: Session, admin_us
     # Candidate 1: High similarity (RESOLVED, HARDWARE, same asset category, resolved notes)
     cand1 = Incident(
         ticket_code=f"INC-CND1-{datetime.now().timestamp()}",
-        title="Laptop bị chớp màn hình sọc xanh",
-        description="Màn hình laptop xps bị chớp nháy sọc ngang khi dùng sạc",
+        title="KBU_UNIQUE_SCREEN_FLASH_999 Laptop bị chớp màn hình sọc xanh",
+        description="KBU_UNIQUE_SCREEN_FLASH_999 Màn hình laptop xps bị chớp nháy sọc ngang khi dùng sạc",
         category=IncidentCategory.HARDWARE,
         priority=IncidentPriority.MEDIUM,
         status=IncidentStatus.RESOLVED,

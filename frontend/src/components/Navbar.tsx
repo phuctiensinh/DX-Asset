@@ -14,6 +14,7 @@ import {
   User as UserIcon,
   Bot,
   Wrench,
+  BrainCircuit,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -35,6 +36,8 @@ export function Navbar() {
     }
   };
 
+  const isManagementRole = user && ['ADMIN', 'IT_ASSET_MANAGER', 'MANAGER'].includes(user.role);
+
   const navLinks = [
     {
       href: '/dashboard',
@@ -42,6 +45,16 @@ export function Navbar() {
       icon: LayoutDashboard,
       active: pathname === '/dashboard',
     },
+    ...(isManagementRole
+      ? [
+          {
+            href: '/intelligence',
+            label: 'Trí tuệ Tài sản',
+            icon: BrainCircuit,
+            active: pathname.startsWith('/intelligence'),
+          },
+        ]
+      : []),
     {
       href: '/assets',
       label: 'Quản lý tài sản',
@@ -73,6 +86,7 @@ export function Navbar() {
       active: pathname.startsWith('/assistant'),
     },
   ];
+
 
 
   return (

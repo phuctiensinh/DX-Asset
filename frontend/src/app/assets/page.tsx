@@ -24,7 +24,12 @@ import {
   Calendar,
   QrCode,
   Laptop,
+  BrainCircuit,
+  Activity,
+  Shield,
 } from 'lucide-react';
+import { getAssetIntelligenceDetail } from '@/lib/api';
+import { AssetIntelligenceDetailResponse } from '@/types/intelligence';
 
 interface Asset {
   id: number;
@@ -78,6 +83,10 @@ function AssetsContent() {
   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
+
+  // Intelligence State in Detail Modal
+  const [intelDetail, setIntelDetail] = useState<AssetIntelligenceDetailResponse | null>(null);
+  const [intelLoading, setIntelLoading] = useState<boolean>(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -166,9 +175,20 @@ function AssetsContent() {
     setShowEditModal(true);
   };
 
-  const openDetailModal = (asset: Asset) => {
+  const openDetailModal = async (asset: Asset) => {
     setSelectedAsset(asset);
+    setIntelDetail(null);
     setShowDetailModal(true);
+
+    try {
+      setIntelLoading(true);
+      const data = await getAssetIntelligenceDetail(asset.id);
+      setIntelDetail(data);
+    } catch {
+      // Ignore if user cannot access intelligence
+    } finally {
+      setIntelLoading(false);
+    }
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -922,6 +942,76 @@ function AssetsContent() {
                 </div>
               </div>
             )}
+
+            {/* Asset Intelligence & Risk Health Card */}
+            {intelLoading ? (
+              <div className="p-4 bg-slate-900/40 border border-slate-700/40 rounded-xl text-center text-xs text-slate-400 animate-pulse">
+                Đang phân tích trí tuệ tài sản (Asset Intelligence)...
+              </div>
+            ) : intelDetail ? (
+              <div className="p-4 bg-gradient-to-r from-purple-950/40 to-slate-900 border border-purple-500/30 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-purple-400 text-xs font-semibold">
+                    <BrainCircuit className="w-4 h-4" />
+                    <span>Asset Intelligence & Risk Health</span>
+                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                      intelDetail.health_risk.risk_level === 'LOW'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        : intelDetail.health_risk.risk_level === 'MEDIUM'
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        : intelDetail.health_risk.risk_level === 'HIGH'
+                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                    }`}
+                  >
+                    Risk: {intelDetail.health_risk.risk_level} ({intelDetail.health_risk.risk_score}/100)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
+                    <div className="text-[10px] text-slate-400">Sức khỏe</div>
+                    <div className="font-extrabold text-emerald-400 text-sm mt-0.5">
+                      {intelDetail.health_risk.health_score}%
+                    </div>
+                  </div>
+                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
+                    <div className="text-[10px] text-slate-400">Sự cố</div>
+                    <div className="font-bold text-white text-sm mt-0.5">
+                      {intelDetail.metrics.incident_count}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
+                    <div className="text-[10px] text-slate-400">MTTR</div>
+                    <div className="font-bold text-sky-400 text-sm mt-0.5">
+                      {intelDetail.metrics.mttr_hours !== null ? `${intelDetail.metrics.mttr_hours}h` : 'N/A'}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
+                    <div className="text-[10px] text-slate-400">Chi phí sửa</div>
+                    <div className="font-bold text-amber-400 text-xs mt-0.5 truncate">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(intelDetail.metrics.total_repair_cost)}
+                    </div>
+                  </div>
+                </div>
+
+                {intelDetail.health_risk.warning_reasons.length > 0 && (
+                  <div className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg space-y-1">
+                    <div className="font-semibold flex items-center space-x-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span>Cảnh báo rủi ro bất thường:</span>
+                    </div>
+                    <ul className="list-disc list-inside space-y-0.5 pl-1 text-[10px]">
+                      {intelDetail.health_risk.warning_reasons.map((r, idx) => (
+                        <li key={idx}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-700">
               <div className="flex items-center space-x-1.5">

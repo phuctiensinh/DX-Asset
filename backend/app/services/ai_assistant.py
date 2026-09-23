@@ -16,6 +16,7 @@ from app.models.enums import AssetStatus, AssignmentStatus, IncidentStatus, Main
 from app.schemas.assistant import AssistantChatResponse, AssistantSource
 from app.services.smart_routing import SmartRoutingService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.asset_intelligence import AssetIntelligenceService
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +197,78 @@ class AIAssistantService:
                 answer = "Hiện tại không có tài sản nào ở trạng thái có sẵn (IN_STOCK)."
             return AssistantChatResponse(answer=answer, intent="UNASSIGNED_ASSETS", sources=sources, is_fallback=True)
 
+        # M1. Intent: Top Failure Assets Query ("hay hỏng nhất", "hỏng nhiều nhất", "nhiều sự cố nhất")
+        if any(kw in lower_msg for kw in ["hay hỏng nhất", "hỏng nhiều nhất", "lỗi nhiều nhất", "nhiều sự cố nhất"]):
+            top_failures = AssetIntelligenceService.get_top_failures(db, limit=5)
+            if top_failures:
+                lines = []
+                for tf in top_failures:
+                    sources.append(AssistantSource(type="asset", id=tf.asset_id, code=tf.asset_code, name=tf.asset_name))
+                    top_cat_str = f" (Chủ yếu lỗi: {tf.top_category})" if tf.top_category else ""
+                    lines.append(f"- **{tf.asset_name}** (`{tf.asset_code}`): **{tf.incident_count}** sự cố{top_cat_str}")
+                answer = "Top 5 tài sản có tần suất báo lỗi/sự cố nhiều nhất:\n" + "\n".join(lines)
+            else:
+                answer = "Chưa có tài sản nào ghi nhận sự cố trong hệ thống."
+            return AssistantChatResponse(answer=answer, intent="TOP_FAILURE_ASSETS_QUERY", sources=sources, is_fallback=True)
+
+        # M2. Intent: High Cost Assets Query ("tốn nhiều tiền sửa", "tốn tiền sửa nhất", "chi phí sửa chữa cao", "tốn kém nhất")
+        if any(kw in lower_msg for kw in ["tốn nhiều tiền sửa", "tốn tiền sửa nhất", "chi phí sửa chữa cao", "tốn kém nhất", "tốn chi phí nhất"]):
+            top_costly = AssetIntelligenceService.get_top_costly(db, limit=5)
+            if top_costly:
+                lines = []
+                for tc in top_costly:
+                    sources.append(AssistantSource(type="asset", id=tc.asset_id, code=tc.asset_code, name=tc.asset_name))
+                    cost_str = f"{tc.total_repair_cost:,.0f}".replace(",", ".")
+                    lines.append(f"- **{tc.asset_name}** (`{tc.asset_code}`): **{cost_str} VNĐ** ({tc.maintenance_count} lượt bảo trì)")
+                answer = "Top 5 tài sản tốn chi phí sửa chữa cao nhất:\n" + "\n".join(lines)
+            else:
+                answer = "Chưa có dữ liệu chi phí sửa chữa phát sinh trong hệ thống."
+            return AssistantChatResponse(answer=answer, intent="HIGH_COST_ASSETS_QUERY", sources=sources, is_fallback=True)
+
+        # M3. Intent: Asset Risk & Warning Query ("rủi ro cao", "mức độ rủi ro", "dấu hiệu bất thường", "cảnh báo")
+        if any(kw in lower_msg for kw in ["rủi ro cao", "mức độ rủi ro", "dấu hiệu bất thường", "tài sản bất thường", "tài sản cảnh báo"]):
+            items, total = AssetIntelligenceService.get_risk_matrix(db, limit=5)
+            high_risk_items = [item for item in items if item.risk_level in ("HIGH", "CRITICAL")]
+            if not high_risk_items:
+                high_risk_items = items[:3]
+
+            if high_risk_items:
+                lines = []
+                for item in high_risk_items:
+                    sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.asset_name))
+                    reasons = "; ".join(item.warning_reasons) if item.warning_reasons else "Vận hành bình thường"
+                    lines.append(f"- **{item.asset_name}** (`{item.asset_code}`) - Risk: **{item.risk_level}** ({item.risk_score}/100)\n  *Lý do*: {reasons}")
+                answer = f"Danh sách tài sản có chỉ số rủi ro cao / bị cảnh báo trong hệ thống:\n" + "\n".join(lines)
+            else:
+                answer = "Hiện tại không có tài sản nào bị xếp loại rủi ro cao hoặc bất thường."
+            return AssistantChatResponse(answer=answer, intent="ASSET_RISK_QUERY", sources=sources, is_fallback=True)
+
+        # M4. Intent: Specific Asset Health & Cost Queries ("sức khỏe của", "tốn bao nhiêu tiền sửa")
+        if any(kw in lower_msg for kw in ["sức khỏe", "chi phí sửa", "tốn bao nhiêu tiền"]):
+            for token in tokens:
+                code_upper = token.upper()
+                if code_upper not in excluded_words:
+                    asset = db.query(Asset).filter(func.upper(Asset.asset_code) == code_upper).first()
+                    if asset:
+                        detail = AssetIntelligenceService.get_asset_intelligence_detail(db, asset.id)
+                        if detail:
+                            sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
+                            cost_str = f"{detail.metrics.total_repair_cost:,.0f}".replace(",", ".")
+                            mttr_str = f"{detail.metrics.mttr_hours:.1f} giờ" if detail.metrics.mttr_hours is not None else "N/A"
+                            reasons_str = "\n".join([f"  - {r}" for r in detail.health_risk.warning_reasons]) if detail.health_risk.warning_reasons else "  - Không có cảnh báo bất thường."
+
+                            answer = (
+                                f"Báo cáo phân tích trí tuệ tài sản **{asset.name}** (`{asset.asset_code}`):\n"
+                                f"- Điểm sức khỏe (Health Score): **{detail.health_risk.health_score}/100**\n"
+                                f"- Mức độ rủi ro (Risk Level): **{detail.health_risk.risk_level}** ({detail.health_risk.risk_score}/100)\n"
+                                f"- Số lượt sự cố: {detail.metrics.incident_count}\n"
+                                f"- Tổng chi phí sửa chữa: **{cost_str} VNĐ**\n"
+                                f"- MTTR (Thời gian sửa trung bình): {mttr_str}\n"
+                                f"- Cảnh báo rủi ro:\n{reasons_str}"
+                            )
+                            intent_name = "ASSET_REPAIR_COST_QUERY" if "tiền" in lower_msg or "chi phí" in lower_msg else "ASSET_HEALTH_QUERY"
+                            return AssistantChatResponse(answer=answer, intent=intent_name, sources=sources, is_fallback=True)
+
         # F. Intent: Maintenance & Damaged Assets ("tài sản hỏng", "đang bảo trì", "hư hỏng")
         if "bảo trì" in lower_msg or "hỏng" in lower_msg or "hư hỏng" in lower_msg or "damaged" in lower_msg:
             maint_assets = db.query(Asset).filter(Asset.status.in_([AssetStatus.IN_MAINTENANCE, AssetStatus.DAMAGED])).all()
@@ -350,6 +423,7 @@ class AIAssistantService:
             return AssistantChatResponse(answer=answer, intent="KNOWLEDGE_BASE_QUERY", sources=sources, is_fallback=True)
 
         # N. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
+
         matched_assets = db.query(Asset).filter(
             or_(Asset.name.ilike(f"%{clean_msg}%"), Asset.category.ilike(f"%{clean_msg}%"))
         ).limit(5).all()

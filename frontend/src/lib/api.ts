@@ -79,3 +79,38 @@ export async function fetchApi<T>(
 
   return response.json() as Promise<T>;
 }
+
+export async function getIntelligenceSummary(): Promise<any> {
+  return fetchApi('/intelligence/summary');
+}
+
+export async function getRiskMatrix(params: {
+  risk_level?: string;
+  category?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<any> {
+  const queryParts: string[] = [];
+  if (params.risk_level) queryParts.push(`risk_level=${encodeURIComponent(params.risk_level)}`);
+  if (params.category) queryParts.push(`category=${encodeURIComponent(params.category)}`);
+  if (params.search) queryParts.push(`search=${encodeURIComponent(params.search)}`);
+  if (params.limit !== undefined) queryParts.push(`limit=${params.limit}`);
+  if (params.offset !== undefined) queryParts.push(`offset=${params.offset}`);
+
+  const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+  return fetchApi(`/intelligence/risk-matrix${queryString}`);
+}
+
+export async function getTopFailures(limit: number = 5): Promise<any> {
+  return fetchApi(`/intelligence/top-failures?limit=${limit}`);
+}
+
+export async function getTopCostly(limit: number = 5): Promise<any> {
+  return fetchApi(`/intelligence/top-costly?limit=${limit}`);
+}
+
+export async function getAssetIntelligenceDetail(assetId: number): Promise<any> {
+  return fetchApi(`/intelligence/assets/${assetId}`);
+}
+
