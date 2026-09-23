@@ -1,4 +1,5 @@
 const TOKEN_KEY = 'dx_asset_access_token';
+import type { AllocationRequest, AllocationResponse, CapacityRequest, CapacityResponse, ReplacementSimulationRequest, ReplacementSimulationResponse, ReplacementRecommendationsResponse } from '@/types/optimization';
 
 export function getApiBaseUrl(): string {
   const url =
@@ -114,3 +115,15 @@ export async function getAssetIntelligenceDetail(assetId: number): Promise<any> 
   return fetchApi(`/intelligence/assets/${assetId}`);
 }
 
+export function simulateAllocation(request: AllocationRequest): Promise<AllocationResponse> {
+  return fetchApi('/optimization/what-if/allocation', { method: 'POST', body: JSON.stringify(request) });
+}
+export function simulateCapacity(request: CapacityRequest): Promise<CapacityResponse> {
+  return fetchApi('/optimization/what-if/capacity', { method: 'POST', body: JSON.stringify(request) });
+}
+export function simulateReplacement(request: ReplacementSimulationRequest): Promise<ReplacementSimulationResponse> {
+  return fetchApi('/optimization/what-if/replacement', { method: 'POST', body: JSON.stringify(request) });
+}
+export function getReplacementRecommendations(limit = 20, offset = 0): Promise<ReplacementRecommendationsResponse> {
+  return fetchApi(`/optimization/recommendations/replacements?limit=${limit}&offset=${offset}`);
+}

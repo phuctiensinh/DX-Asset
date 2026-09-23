@@ -9,6 +9,10 @@ and this project adheres to Semantic Versioning.
 
 ### Added
 
+- Added Phase 14 read-only allocation, technician-capacity, and replacement/depreciation simulations, plus transparent replacement-priority recommendations.
+- Added a role-protected Optimization API and responsive `/intelligence/optimization` page; recommendations are never applied automatically.
+- Added deterministic Phase 14 assistant intents and restricted employee assistant queries to currently assigned asset information; global analytics remain management-only.
+
 - Added initial project skeleton for the DX-Asset asset management platform.
 - Added frontend foundation using Next.js, React, TypeScript, Tailwind CSS, and shadcn/ui.
 - Added backend foundation using FastAPI, Python, Pydantic, SQLAlchemy, and Alembic.
@@ -95,4 +99,3 @@ and this project adheres to Semantic Versioning.
 ### Notes
 
 - Phase 5A, 5B, 5C, Phase 6 (Asset Assignment), and Phase 7 (Incident Management) are fully implemented and verified.
-

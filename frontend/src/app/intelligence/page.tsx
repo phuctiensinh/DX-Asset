@@ -148,6 +148,7 @@ function IntelligenceContent() {
               <p className="text-slate-300 text-sm mt-1">
                 Đánh giá sức khỏe thiết bị, phát hiện lỗi lặp lại, tối ưu MTTR và chi phí sửa chữa từ dữ liệu vận hành thực tế.
               </p>
+              <Link href="/intelligence/optimization" className="inline-flex mt-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-500/20">What-if & Optimization →</Link>
             </div>
 
             <button

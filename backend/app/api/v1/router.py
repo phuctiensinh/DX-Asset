@@ -10,6 +10,7 @@ from app.api.v1.maintenances import router as maintenances_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.intelligence import router as intelligence_router
+from app.api.v1.optimization import router as optimization_router
 
 api_router = APIRouter()
 
@@ -24,6 +25,6 @@ api_router.include_router(maintenances_router, prefix="/maintenances", tags=["ma
 api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(assistant_router, prefix="/assistant", tags=["assistant"])
 api_router.include_router(intelligence_router, prefix="/intelligence", tags=["intelligence"])
-
+api_router.include_router(optimization_router, prefix="/optimization", tags=["optimization"])
 
 

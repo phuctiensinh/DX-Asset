@@ -17,6 +17,8 @@ from app.schemas.assistant import AssistantChatResponse, AssistantSource
 from app.services.smart_routing import SmartRoutingService
 from app.services.knowledge_base import KnowledgeBaseService
 from app.services.asset_intelligence import AssetIntelligenceService
+from app.schemas.optimization import AllocationRequest, CapacityRequest, ReplacementSimulationRequest
+from app.services.optimization import OptimizationService
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +60,7 @@ class AIAssistantService:
             )
 
         # Try Optional AI API Provider if API Key is configured
-        if settings.AI_ENABLED and settings.AI_API_KEY:
+        if current_user.role != UserRole.EMPLOYEE and settings.AI_ENABLED and settings.AI_API_KEY:
             try:
                 llm_response = AIAssistantService._call_external_llm(db, current_user, clean_msg)
                 if llm_response:
@@ -72,6 +74,78 @@ class AIAssistantService:
     @staticmethod
     def _process_rule_based_query(db: Session, current_user: User, clean_msg: str, lower_msg: str) -> AssistantChatResponse:
         sources: List[AssistantSource] = []
+
+        # Employee assistant responses are restricted to assets currently held by that employee.
+        # Global optimization/analytics and unrelated tickets/history require a management role.
+        manager_roles = (UserRole.ADMIN, UserRole.IT_ASSET_MANAGER, UserRole.MANAGER)
+        if current_user.role == UserRole.EMPLOYEE:
+            if any(term in lower_msg for term in ("thay thế", "ưu tiên thay", "sla", "kỹ thuật viên", "bao nhiêu laptop", "còn đủ", "đủ laptop", "khấu hao", "chi phí", "tài sản nào", "có bao nhiêu", "tổng số", "thống kê", "đang bảo trì", "sự cố nào", "lịch sử", "workload", "phòng ban")):
+                return AssistantChatResponse(answer="Truy vấn này cần quyền xem số liệu tổng hợp. Nhân viên chỉ có thể hỏi về tài sản hiện đang được giao cho mình.", intent="FORBIDDEN_GLOBAL_QUERY", sources=[], is_fallback=True)
+            own = db.query(Asset).filter(Asset.current_user_id == current_user.id)
+            asset_code = re.search(r"([a-zA-Z0-9_-]{3,50})", clean_msg)
+            if asset_code:
+                asset = own.filter(func.upper(Asset.asset_code) == asset_code.group(1).upper()).first()
+                if asset:
+                    sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
+                    return AssistantChatResponse(answer=f"Tài sản của bạn: **{asset.name}** (`{asset.asset_code}`), trạng thái **{asset.status}**, danh mục {asset.category}.", intent="ASSET_DETAIL", sources=sources, is_fallback=True)
+            matches = own.order_by(Asset.asset_code).limit(10).all()
+            if any(k in lower_msg for k in ("tài sản", "thiết bị", "được giao", "của tôi", "của mình")):
+                for asset in matches:
+                    sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
+                answer = "Tài sản hiện đang được giao cho bạn:\n" + "\n".join(f"- **{a.name}** (`{a.asset_code}`) — {a.status}" for a in matches) if matches else "Hiện bạn không có tài sản nào được giao."
+                return AssistantChatResponse(answer=answer, intent="MY_ASSIGNED_ASSETS", sources=sources, is_fallback=True)
+            return AssistantChatResponse(answer="Nhân viên chỉ có thể tra cứu tài sản hiện đang được giao cho mình. Hãy hỏi về mã tài sản hoặc danh sách tài sản của bạn.", intent="EMPLOYEE_SCOPE_ONLY", sources=[], is_fallback=True)
+
+        # Deterministic Phase 14 intents. Missing parameters are requested rather than invented.
+        if any(term in lower_msg for term in ("nên ưu tiên thay", "ưu tiên thay thế", "tài sản nào nên thay", "replacement priority")):
+            result = OptimizationService.get_replacement_recommendations(db, limit=5)
+            for item in result.items:
+                sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.name, details=f"Score {item.replacement_recommendation_score}"))
+            answer = "Đề xuất ưu tiên xem xét thay thế (heuristic, không phải kết luận tối ưu):\n" + "\n".join(f"- **{i.name}** (`{i.asset_code}`): {i.priority_level}, score {i.replacement_recommendation_score}/100 — {'; '.join(i.reasons)}" for i in result.items) if result.items else "Chưa có dữ liệu tài sản để lập đề xuất."
+            return AssistantChatResponse(answer=answer, intent="REPLACEMENT_PRIORITY", sources=sources, is_fallback=True)
+
+        if "sla" in lower_msg and any(t in lower_msg for t in ("kỹ thuật viên", "it", "nhân sự", "technician")):
+            nums = [float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", lower_msg)]
+            if len(nums) < 3:
+                return AssistantChatResponse(answer="Để mô phỏng, vui lòng cung cấp SLA hiện tại (ngày), SLA mục tiêu (ngày), số sự cố dự kiến và năng lực xử lý mỗi kỹ thuật viên mỗi ngày.", intent="CAPACITY_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
+            # Natural language commonly gives current/target SLA and incident count; capacity remains explicit.
+            if len(nums) < 4:
+                return AssistantChatResponse(answer="Còn thiếu năng lực xử lý sự cố mỗi kỹ thuật viên mỗi ngày. Vui lòng cung cấp giá trị này để tính kịch bản.", intent="CAPACITY_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
+            result = OptimizationService.simulate_capacity(CapacityRequest(current_sla_days=nums[0], target_sla_days=nums[1], expected_incidents=int(nums[2]), incidents_per_technician_per_day=nums[3]))
+            return AssistantChatResponse(answer=f"Ước tính cần **{result.estimated_required_technicians} kỹ thuật viên** theo giả định năng lực đã nhập. Đây là ước tính kịch bản, không thay đổi SLA thật.", intent="CAPACITY_SIMULATION", sources=[AssistantSource(type="simulation", name="User-provided simulation parameters")], is_fallback=True)
+
+        if any(term in lower_msg for term in ("khấu hao", "giá mỗi chiếc", "giá mỗi laptop", "giá 15 triệu")):
+            nums = [float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", lower_msg)]
+            if len(nums) < 3:
+                return AssistantChatResponse(answer="Vui lòng cung cấp số lượng, giá mỗi tài sản và thời gian sử dụng (năm); có thể thêm thời gian mô phỏng và giá trị còn lại.", intent="REPLACEMENT_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
+            # Amounts expressed in millions are normalized only when the query explicitly says 'triệu'.
+            unit_cost = nums[1] * 1_000_000 if "triệu" in lower_msg else nums[1]
+            horizon = int(nums[3]) if len(nums) > 3 else int(nums[2])
+            result = OptimizationService.simulate_replacement(ReplacementSimulationRequest(quantity=int(nums[0]), unit_cost=unit_cost, useful_life_years=nums[2], simulation_horizon_years=max(1, horizon)))
+            return AssistantChatResponse(answer=f"Mô phỏng theo tham số người dùng: tổng chi phí {result.total_initial_cost:,.0f} VNĐ; khấu hao đường thẳng ước tính {result.annual_depreciation:,.0f} VNĐ/năm. Đây không phải số liệu kế toán thực tế.", intent="REPLACEMENT_SIMULATION", sources=[AssistantSource(type="simulation", name="User-provided simulation parameters")], is_fallback=True)
+
+        category_aliases = {
+            "laptop": "Laptop", "máy tính xách tay": "Laptop", "desktop": "Desktop PC",
+            "máy tính bàn": "Desktop PC", "monitor": "Monitor", "màn hình": "Monitor",
+            "máy in": "Printer", "printer": "Printer", "router": "Router", "switch": "Network Switch",
+            "bàn phím": "Keyboard",
+        }
+        requested_category = next((category for alias, category in category_aliases.items() if alias in lower_msg), None)
+        number_match = re.search(r"(?:cần|thêm|cho)\s+(\d+)\s+(?:người|nhân viên|(?:chiếc\s+)?)", lower_msg)
+        if not number_match and requested_category:
+            number_match = re.search(r"\b(\d+)\s+(?:chiếc\s+)?(?:laptop|desktop|monitor|máy in|máy tính bàn|máy tính xách tay|màn hình|router|switch|bàn phím)\b", lower_msg)
+        if requested_category and number_match and any(term in lower_msg for term in ("đủ", "còn", "cấp cho", "cần")):
+            department = None
+            for candidate in db.query(Department).all():
+                if candidate.name.lower() in lower_msg or candidate.code.lower() in lower_msg:
+                    department = candidate
+                    break
+            if department is None:
+                return AssistantChatResponse(answer="Vui lòng nêu phòng ban mục tiêu (ví dụ: phòng IT) để mô phỏng phân bổ.", intent="ALLOCATION_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
+            result = OptimizationService.simulate_allocation(db, AllocationRequest(department_id=department.id, asset_category=requested_category, requested_quantity=int(number_match.group(1))))
+            for item in result.candidates:
+                sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.name))
+            return AssistantChatResponse(answer=f"Có {result.available_quantity} tài sản {result.asset_category} IN_STOCK; yêu cầu {result.requested_quantity}, thiếu {result.shortage_quantity}. Ứng viên chỉ là đề xuất và chưa được cấp phát.", intent="ALLOCATION_SIMULATION", sources=sources, is_fallback=True)
 
         # A. Check for specific Asset Code lookup by scanning all word tokens in user message
         tokens = re.findall(r"([a-zA-Z0-9\-_]{3,50})", clean_msg)
