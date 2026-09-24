@@ -8,6 +8,10 @@ from app.models.enums import (
     IncidentStatus,
     AssetActionType,
     MaintenanceStatus,
+    ProcessCaseType,
+    ProcessEventType,
+    ProcessEventSource,
+    ProcessEventTimestampQuality,
 )
 from app.models.department import Department
 from app.models.user import User
@@ -17,6 +21,8 @@ from app.models.incident import Incident
 from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
 from app.models.technician_skill import TechnicianSkill
+from app.models.process_case import ProcessCase
+from app.models.process_event import ProcessEvent
 
 __all__ = [
     "Base",
@@ -28,6 +34,10 @@ __all__ = [
     "IncidentStatus",
     "AssetActionType",
     "MaintenanceStatus",
+    "ProcessCaseType",
+    "ProcessEventType",
+    "ProcessEventSource",
+    "ProcessEventTimestampQuality",
     "Department",
     "User",
     "Asset",
@@ -36,4 +46,6 @@ __all__ = [
     "Maintenance",
     "AssetHistory",
     "TechnicianSkill",
+    "ProcessCase",
+    "ProcessEvent",
 ]

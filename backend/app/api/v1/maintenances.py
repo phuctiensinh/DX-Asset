@@ -21,6 +21,7 @@ from app.models.enums import (
     MaintenanceStatus,
     IncidentStatus,
     AssetActionType,
+    ProcessEventType,
 )
 from app.schemas.maintenance import (
     MaintenanceCreate,
@@ -29,6 +30,11 @@ from app.schemas.maintenance import (
     MaintenanceComplete,
     MaintenanceResponse,
     MaintenanceListResponse,
+)
+from app.services.process_event_writer import (
+    create_process_event,
+    get_or_create_incident_case,
+    get_or_create_maintenance_case,
 )
 
 router = APIRouter()
@@ -39,6 +45,15 @@ def _get_maintenance_query(db: Session):
         joinedload(Maintenance.incident),
         joinedload(Maintenance.technician),
     )
+
+
+def _get_maintenance_process_case(db: Session, maintenance: Maintenance):
+    if maintenance.incident_id is not None:
+        incident = db.query(Incident).filter(Incident.id == maintenance.incident_id).first()
+        if incident is None:
+            raise ValueError("Linked Incident no longer exists")
+        return get_or_create_incident_case(db, incident)
+    return get_or_create_maintenance_case(db, maintenance)
 
 @router.get("", response_model=MaintenanceListResponse)
 def list_maintenances(
@@ -139,6 +154,8 @@ def create_maintenance(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Phiếu sự cố '{incident.ticket_code}' thuộc tài sản ID {incident.asset_id}, không khớp với tài sản ID {asset.id}."
             )
+    else:
+        incident = None
 
     # 3. Verify technician if provided
     if maintenance_in.technician_id:
@@ -186,6 +203,21 @@ def create_maintenance(
     db.add(history)
 
     try:
+        db.flush()
+        process_case = (
+            get_or_create_incident_case(db, incident)
+            if incident is not None
+            else get_or_create_maintenance_case(db, maintenance)
+        )
+        create_process_event(
+            db,
+            case=process_case,
+            event_type=ProcessEventType.MAINTENANCE_CREATED,
+            maintenance_id=maintenance.id,
+            performed_by_id=current_user.id,
+            occurred_at=datetime.now(timezone.utc),
+            source_event_key=f"maintenance:{maintenance.id}:created",
+        )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -237,6 +269,7 @@ def start_maintenance(
         )
 
     # 1. Update maintenance status & start_date
+    old_maintenance_status = maintenance.status
     maintenance.status = MaintenanceStatus.IN_PROGRESS
     if not maintenance.start_date:
         maintenance.start_date = datetime.now(timezone.utc)
@@ -259,9 +292,13 @@ def start_maintenance(
     asset.status = AssetStatus.IN_MAINTENANCE
 
     # If linked to Incident, update Incident status to IN_PROGRESS if OPEN/IN_REVIEW
+    linked_incident = None
+    old_incident_status = None
     if maintenance.incident_id:
         incident = db.query(Incident).filter(Incident.id == maintenance.incident_id).first()
+        linked_incident = incident
         if incident and incident.status in (IncidentStatus.OPEN, IncidentStatus.IN_REVIEW):
+            old_incident_status = incident.status
             incident.status = IncidentStatus.IN_PROGRESS
 
     # 3. Audit AssetHistory
@@ -274,6 +311,29 @@ def start_maintenance(
     db.add(history)
 
     try:
+        occurred_at = datetime.now(timezone.utc)
+        process_case = _get_maintenance_process_case(db, maintenance)
+        if old_maintenance_status != maintenance.status:
+            create_process_event(
+                db,
+                case=process_case,
+                event_type=ProcessEventType.MAINTENANCE_STATUS_CHANGED,
+                maintenance_id=maintenance.id,
+                from_status=old_maintenance_status,
+                to_status=maintenance.status,
+                performed_by_id=current_user.id,
+                occurred_at=occurred_at,
+            )
+        if linked_incident is not None and old_incident_status is not None:
+            create_process_event(
+                db,
+                case=get_or_create_incident_case(db, linked_incident),
+                event_type=ProcessEventType.INCIDENT_STATUS_CHANGED,
+                from_status=old_incident_status,
+                to_status=linked_incident.status,
+                performed_by_id=current_user.id,
+                occurred_at=occurred_at,
+            )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -319,6 +379,7 @@ def complete_maintenance(
         )
 
     # 1. Update maintenance status, completed_date, details
+    old_maintenance_status = maintenance.status
     maintenance.status = MaintenanceStatus.COMPLETED
     maintenance.completed_date = datetime.now(timezone.utc)
     if not maintenance.start_date:
@@ -368,6 +429,17 @@ def complete_maintenance(
     db.add(history)
 
     try:
+        if old_maintenance_status != maintenance.status:
+            create_process_event(
+                db,
+                case=_get_maintenance_process_case(db, maintenance),
+                event_type=ProcessEventType.MAINTENANCE_STATUS_CHANGED,
+                maintenance_id=maintenance.id,
+                from_status=old_maintenance_status,
+                to_status=maintenance.status,
+                performed_by_id=current_user.id,
+                occurred_at=maintenance.completed_date,
+            )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -395,6 +467,7 @@ def update_maintenance(
         )
 
     update_data = maintenance_in.model_dump(exclude_unset=True)
+    old_status = maintenance.status
 
     if "technician_id" in update_data and update_data["technician_id"] is not None:
         tech = db.query(User).filter(User.id == update_data["technician_id"]).first()
@@ -417,6 +490,16 @@ def update_maintenance(
     db.add(history)
 
     try:
+        if old_status != maintenance.status:
+            create_process_event(
+                db,
+                case=_get_maintenance_process_case(db, maintenance),
+                event_type=ProcessEventType.MAINTENANCE_STATUS_CHANGED,
+                maintenance_id=maintenance.id,
+                from_status=old_status,
+                to_status=maintenance.status,
+                performed_by_id=current_user.id,
+            )
         db.commit()
     except IntegrityError:
         db.rollback()

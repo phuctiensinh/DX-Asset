@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from app.models.asset import Asset, AssetStatus
 from app.models.incident import Incident, IncidentCategory, IncidentPriority, IncidentStatus
 from app.models.maintenance import Maintenance, MaintenanceStatus
+from app.models.process_case import ProcessCase
+from app.models.process_event import ProcessEvent
 from app.models.user import User, UserRole
 from app.services.knowledge_base import KnowledgeBaseService
 from app.services.ai_assistant import AIAssistantService
@@ -26,6 +28,8 @@ def test_knowledge_base_similarity_scoring_and_eligibility(db: Session, admin_us
     - Limit parameter & Min score filtering
     """
     # Clear any leftover test incidents & maintenances from previous runs
+    db.query(ProcessEvent).delete()
+    db.query(ProcessCase).delete()
     db.query(Maintenance).delete()
     db.query(Incident).delete()
     db.commit()

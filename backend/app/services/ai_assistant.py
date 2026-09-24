@@ -19,6 +19,7 @@ from app.services.knowledge_base import KnowledgeBaseService
 from app.services.asset_intelligence import AssetIntelligenceService
 from app.schemas.optimization import AllocationRequest, CapacityRequest, ReplacementSimulationRequest
 from app.services.optimization import OptimizationService
+from app.services.process_mining_assistant import ProcessMiningAssistantService
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,14 @@ class AIAssistantService:
                 sources=[],
                 is_fallback=True,
             )
+
+        # Process Mining is deterministic and globally scoped. Resolve these
+        # intents before any optional LLM path or general-purpose query branch.
+        process_mining_response = ProcessMiningAssistantService.process_chat(
+            db, current_user, clean_msg
+        )
+        if process_mining_response is not None:
+            return process_mining_response
 
         # Try Optional AI API Provider if API Key is configured
         if current_user.role != UserRole.EMPLOYEE and settings.AI_ENABLED and settings.AI_API_KEY:

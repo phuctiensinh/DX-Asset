@@ -11,6 +11,7 @@ from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.assistant import router as assistant_router
 from app.api.v1.intelligence import router as intelligence_router
 from app.api.v1.optimization import router as optimization_router
+from app.api.v1.process_mining import router as process_mining_router
 
 api_router = APIRouter()
 
@@ -26,5 +27,5 @@ api_router.include_router(dashboard_router, prefix="/dashboard", tags=["dashboar
 api_router.include_router(assistant_router, prefix="/assistant", tags=["assistant"])
 api_router.include_router(intelligence_router, prefix="/intelligence", tags=["intelligence"])
 api_router.include_router(optimization_router, prefix="/optimization", tags=["optimization"])
-
+api_router.include_router(process_mining_router, prefix="/process-mining", tags=["process-mining"])
 

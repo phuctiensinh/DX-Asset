@@ -14,6 +14,7 @@ from app.models.incident import Incident
 from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
 from app.models.enums import UserRole, AssetStatus, IncidentCategory, IncidentPriority, IncidentStatus, AssetActionType, MaintenanceStatus
+from app.models.enums import ProcessEventType
 from app.schemas.incident import (
     IncidentCreate,
     IncidentUpdate,
@@ -28,6 +29,7 @@ from app.schemas.smart_routing import (
 from app.schemas.knowledge_base import SimilarIncidentListResponse
 from app.services.smart_routing import SmartRoutingService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.process_event_writer import create_process_event, get_or_create_incident_case
 
 router = APIRouter()
 
@@ -210,6 +212,17 @@ def create_incident(
     db.add(history)
 
     try:
+        db.flush()
+        process_case = get_or_create_incident_case(db, incident)
+        create_process_event(
+            db,
+            case=process_case,
+            event_type=ProcessEventType.INCIDENT_CREATED,
+            to_status=incident.status,
+            performed_by_id=current_user.id,
+            occurred_at=datetime.now(timezone.utc),
+            source_event_key=f"incident:{incident.id}:created",
+        )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -294,6 +307,16 @@ def update_incident(
     db.add(history)
 
     try:
+        if status_changed:
+            process_case = get_or_create_incident_case(db, incident)
+            create_process_event(
+                db,
+                case=process_case,
+                event_type=ProcessEventType.INCIDENT_STATUS_CHANGED,
+                from_status=old_status,
+                to_status=incident.status,
+                performed_by_id=current_user.id,
+            )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -391,6 +414,9 @@ def assign_incident_technician(
             detail=f"Không tìm thấy Kỹ thuật viên hợp lệ với ID {assign_in.technician_id}"
         )
 
+    previous_technician_id = incident.assigned_it_id
+    previous_status = incident.status
+    status_changed = previous_status == IncidentStatus.OPEN
     incident.assigned_it_id = tech.id
     if incident.status == IncidentStatus.OPEN:
         incident.status = IncidentStatus.IN_REVIEW
@@ -409,6 +435,28 @@ def assign_incident_technician(
     db.add(history)
 
     try:
+        if previous_technician_id != tech.id or status_changed:
+            process_case = get_or_create_incident_case(db, incident)
+            occurred_at = datetime.now(timezone.utc)
+            if previous_technician_id != tech.id:
+                create_process_event(
+                    db,
+                    case=process_case,
+                    event_type=ProcessEventType.TECHNICIAN_ASSIGNED,
+                    target_user_id=tech.id,
+                    performed_by_id=current_user.id,
+                    occurred_at=occurred_at,
+                )
+            if status_changed:
+                create_process_event(
+                    db,
+                    case=process_case,
+                    event_type=ProcessEventType.INCIDENT_STATUS_CHANGED,
+                    from_status=previous_status,
+                    to_status=incident.status,
+                    performed_by_id=current_user.id,
+                    occurred_at=occurred_at,
+                )
         db.commit()
     except IntegrityError:
         db.rollback()

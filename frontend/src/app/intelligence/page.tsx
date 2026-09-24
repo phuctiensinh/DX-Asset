@@ -149,6 +149,7 @@ function IntelligenceContent() {
                 Đánh giá sức khỏe thiết bị, phát hiện lỗi lặp lại, tối ưu MTTR và chi phí sửa chữa từ dữ liệu vận hành thực tế.
               </p>
               <Link href="/intelligence/optimization" className="inline-flex mt-3 rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-500/20">What-if & Optimization →</Link>
+              <Link href="/intelligence/process-mining" className="ml-2 inline-flex mt-3 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-500/20">Process Mining →</Link>
             </div>
 
             <button

@@ -58,3 +58,22 @@ class MaintenanceStatus(str, enum.Enum):
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
 
+class ProcessCaseType(str, enum.Enum):
+    INCIDENT = "INCIDENT"
+    MAINTENANCE = "MAINTENANCE"
+
+class ProcessEventType(str, enum.Enum):
+    INCIDENT_CREATED = "INCIDENT_CREATED"
+    INCIDENT_STATUS_CHANGED = "INCIDENT_STATUS_CHANGED"
+    TECHNICIAN_ASSIGNED = "TECHNICIAN_ASSIGNED"
+    MAINTENANCE_CREATED = "MAINTENANCE_CREATED"
+    MAINTENANCE_STATUS_CHANGED = "MAINTENANCE_STATUS_CHANGED"
+
+class ProcessEventSource(str, enum.Enum):
+    LIVE = "LIVE"
+    BACKFILL = "BACKFILL"
+
+class ProcessEventTimestampQuality(str, enum.Enum):
+    ACTION_TIME = "ACTION_TIME"
+    LEGACY_FIELD = "LEGACY_FIELD"
+    AMBIGUOUS = "AMBIGUOUS"

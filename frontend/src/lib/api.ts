@@ -1,5 +1,13 @@
 const TOKEN_KEY = 'dx_asset_access_token';
 import type { AllocationRequest, AllocationResponse, CapacityRequest, CapacityResponse, ReplacementSimulationRequest, ReplacementSimulationResponse, ReplacementRecommendationsResponse } from '@/types/optimization';
+import type {
+  ProcessMiningBottleneck,
+  ProcessMiningCaseDetail,
+  ProcessMiningCases,
+  ProcessMiningFilters,
+  ProcessMiningSummary,
+  ProcessMiningVariants,
+} from '@/types/process-mining';
 
 export function getApiBaseUrl(): string {
   const url =
@@ -126,4 +134,45 @@ export function simulateReplacement(request: ReplacementSimulationRequest): Prom
 }
 export function getReplacementRecommendations(limit = 20, offset = 0): Promise<ReplacementRecommendationsResponse> {
   return fetchApi(`/optimization/recommendations/replacements?limit=${limit}&offset=${offset}`);
+}
+
+function processMiningQuery(filters: ProcessMiningFilters): string {
+  const params = new URLSearchParams();
+  if (filters.date_from) params.set('date_from', filters.date_from);
+  if (filters.date_to) params.set('date_to', filters.date_to);
+  if (filters.case_type) params.set('case_type', filters.case_type);
+  if (filters.source) params.set('source', filters.source);
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
+export function getProcessMiningSummary(filters: ProcessMiningFilters = {}): Promise<ProcessMiningSummary> {
+  return fetchApi(`/process-mining/summary${processMiningQuery(filters)}`);
+}
+
+export function getProcessMiningVariants(filters: ProcessMiningFilters = {}): Promise<ProcessMiningVariants> {
+  return fetchApi(`/process-mining/variants${processMiningQuery(filters)}`);
+}
+
+export function getProcessMiningBottlenecks(
+  filters: ProcessMiningFilters = {},
+  minSample = 5,
+): Promise<ProcessMiningBottleneck[]> {
+  const query = processMiningQuery(filters);
+  const separator = query ? '&' : '?';
+  return fetchApi(`/process-mining/bottlenecks${query}${separator}min_sample=${minSample}`);
+}
+
+export function getProcessMiningCases(
+  filters: ProcessMiningFilters = {},
+  page = 1,
+  pageSize = 10,
+): Promise<ProcessMiningCases> {
+  const query = processMiningQuery(filters);
+  const separator = query ? '&' : '?';
+  return fetchApi(`/process-mining/cases${query}${separator}page=${page}&page_size=${pageSize}`);
+}
+
+export function getProcessMiningCase(caseId: number): Promise<ProcessMiningCaseDetail> {
+  return fetchApi(`/process-mining/cases/${caseId}`);
 }

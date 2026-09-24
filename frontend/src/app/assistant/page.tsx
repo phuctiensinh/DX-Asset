@@ -70,6 +70,10 @@ function AssistantContent() {
   }, [messages, loading]);
 
   const suggestedQuestions = [
+    'Quy trình xử lý sự cố hiện tại thế nào?',
+    'Có những biến thể quy trình nào?',
+    'Đâu là bottleneck hiện tại?',
+    'CASE-023 đã trải qua những bước nào?',
     'Có bao nhiêu tài sản đang được cấp phát?',
     'Tài sản nào chưa được cấp phát?',
     'Có những sự cố nào đang xử lý?',
