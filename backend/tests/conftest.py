@@ -35,21 +35,40 @@ def db() -> Session:
 
 @pytest.fixture(scope="module")
 def admin_user(db: Session) -> User:
-    user = db.query(User).filter(User.role == UserRole.ADMIN).first()
+    user = db.query(User).filter(User.role == UserRole.ADMIN, User.is_active == True).first()
     assert user is not None, "Admin user should exist in DB seed"
     return user
 
 @pytest.fixture(scope="module")
 def it_manager_user(db: Session) -> User:
-    user = db.query(User).filter(User.role == UserRole.IT_ASSET_MANAGER).first()
-    assert user is not None, "IT Manager user should exist in DB seed"
+    user = db.query(User).filter(User.role == UserRole.IT_ASSET_MANAGER, User.is_active == True).first()
+    if not user:
+        user = db.query(User).filter(User.email == "it_manager@dxasset.local").first()
+        if user:
+            user.role = UserRole.IT_ASSET_MANAGER
+            user.is_active = True
+            db.commit()
+            db.refresh(user)
+        else:
+            user = User(
+                email="it_manager@dxasset.local",
+                password_hash=get_password_hash("password123"),
+                full_name="Trần Thị IT Manager",
+                role=UserRole.IT_ASSET_MANAGER,
+                is_active=True,
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
     return user
+
 
 @pytest.fixture(scope="module")
 def employee_user(db: Session) -> User:
-    user = db.query(User).filter(User.role == UserRole.EMPLOYEE).first()
+    user = db.query(User).filter(User.role == UserRole.EMPLOYEE, User.is_active == True).first()
     assert user is not None, "Employee user should exist in DB seed"
     return user
+
 
 @pytest.fixture(scope="module")
 def admin_token(admin_user: User) -> str:

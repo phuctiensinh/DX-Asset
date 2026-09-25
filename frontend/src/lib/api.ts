@@ -1,4 +1,6 @@
 const TOKEN_KEY = 'dx_asset_access_token';
+const REFRESH_TOKEN_KEY = 'dx_asset_refresh_token';
+
 import type { AllocationRequest, AllocationResponse, CapacityRequest, CapacityResponse, ReplacementSimulationRequest, ReplacementSimulationResponse, ReplacementRecommendationsResponse } from '@/types/optimization';
 import type {
   ProcessMiningBottleneck,
@@ -8,6 +10,7 @@ import type {
   ProcessMiningSummary,
   ProcessMiningVariants,
 } from '@/types/process-mining';
+import { refreshAccessToken } from '@/lib/oidc';
 
 export function getApiBaseUrl(): string {
   const url =
@@ -35,8 +38,50 @@ export function removeStoredToken(): void {
   }
 }
 
+export function getStoredRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function setStoredRefreshToken(token: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  }
+}
+
+export function removeStoredRefreshToken(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+}
+
+export function clearStoredTokens(): void {
+  removeStoredToken();
+  removeStoredRefreshToken();
+}
+
+export function getTokenExpiration(token: string): number | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payloadJson = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(payloadJson);
+    return typeof payload.exp === 'number' ? payload.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isTokenExpired(token: string, offsetSeconds = 10): boolean {
+  const exp = getTokenExpiration(token);
+  if (!exp) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return exp <= now + offsetSeconds;
+}
+
 interface RequestOptions extends RequestInit {
   token?: string | null;
+  skipRefreshRetry?: boolean;
 }
 
 export async function fetchApi<T>(
@@ -47,7 +92,18 @@ export async function fetchApi<T>(
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${baseUrl}${cleanEndpoint}`;
 
-  const token = options.token !== undefined ? options.token : getStoredToken();
+  let token = options.token !== undefined ? options.token : getStoredToken();
+
+  // Proactive check: Refresh before API request if access token is expired or near expiration
+  if (token && isTokenExpired(token) && !options.skipRefreshRetry) {
+    const refreshedToken = await refreshAccessToken();
+    if (refreshedToken) {
+      token = refreshedToken;
+    } else {
+      clearStoredTokens();
+      token = null;
+    }
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -68,7 +124,34 @@ export async function fetchApi<T>(
     throw new Error('Không thể kết nối đến máy chủ backend (Network Error). Vui lòng kiểm tra lại dịch vụ backend.');
   }
 
+  // Reactive check: If backend returns 401 Unauthorized, attempt refresh once and retry
+  if (response.status === 401 && !options.skipRefreshRetry) {
+    const refreshedToken = await refreshAccessToken();
+    if (refreshedToken) {
+      const retryHeaders: Record<string, string> = {
+        ...headers,
+        Authorization: `Bearer ${refreshedToken}`,
+      };
+      try {
+        const retryResponse = await fetch(url, {
+          ...options,
+          headers: retryHeaders,
+        });
+        if (retryResponse.ok) {
+          return retryResponse.json() as Promise<T>;
+        }
+      } catch {
+        // Retry failed
+      }
+    }
+    // Refresh failed or retry failed -> clear stored tokens
+    clearStoredTokens();
+  }
+
   if (!response.ok) {
+    if (response.status === 401) {
+      clearStoredTokens();
+    }
     let errorMessage = `Yêu cầu thất bại với mã lỗi ${response.status}`;
     try {
       const errorData = await response.json();
@@ -78,7 +161,6 @@ export async function fetchApi<T>(
         errorMessage = errorData.detail.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(', ');
       }
     } catch {
-      // Fall back to HTTP status text
       errorMessage = response.statusText || errorMessage;
     }
     const errorObj = new Error(errorMessage) as Error & { status?: number };

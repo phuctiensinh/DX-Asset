@@ -14,7 +14,12 @@ def login(
     request: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    """Authenticate user with email & password, returning a JWT access token."""
+    """
+    [DEPRECATED / TEST COMPATIBILITY ONLY]
+    Authenticate user with email & password, returning a local HS256 JWT access token.
+    Official production authentication is Keycloak OIDC (PKCE flow) via /auth/me with Bearer token.
+    This endpoint is preserved strictly for Pytest test client compatibility without requiring a live Keycloak instance.
+    """
     user = db.query(User).filter(User.email == request.email).first()
     
     # Generic authentication error to avoid user enumeration

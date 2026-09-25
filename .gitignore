@@ -36,4 +36,5 @@ Thumbs.db
 
 # Temporary Analysis Files
 *_content.txt
+*.tsbuildinfo
 

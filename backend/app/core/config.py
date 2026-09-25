@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     AI_API_KEY: Optional[str] = None
     AI_API_URL: str = "https://api.openai.com/v1"
 
+    # Keycloak OIDC Settings
+    KEYCLOAK_ENABLED: bool = True
+    KEYCLOAK_ISSUER_URL: str = "http://localhost:8080/realms/dx-asset"
+    KEYCLOAK_JWKS_URL: str = "http://localhost:8080/realms/dx-asset/protocol/openid-connect/certs"
+    KEYCLOAK_CLIENT_ID: str = "dx-asset-frontend"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

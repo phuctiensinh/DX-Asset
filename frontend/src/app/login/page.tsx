@@ -5,23 +5,21 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import {
   ShieldCheck,
-  Lock,
-  Mail,
-  Eye,
-  EyeOff,
   AlertCircle,
   Loader2,
-  Building2,
+  KeyRound,
+  UserPlus,
+  ArrowRight,
+  ShieldAlert,
+  Server,
+  Lock,
 } from 'lucide-react';
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading, error, clearError } = useAuth();
+  const { login, register, isAuthenticated, isLoading, error, clearError } = useAuth();
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isKeycloakRedirecting, setIsKeycloakRedirecting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,35 +28,28 @@ export default function LoginPage() {
     }
   }, [isLoading, isAuthenticated, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleKeycloakLogin = async () => {
     setLocalError(null);
     clearError();
-
-    if (!email.trim()) {
-      setLocalError('Vui lòng nhập địa chỉ email.');
-      return;
-    }
-    if (!password) {
-      setLocalError('Vui lòng nhập mật khẩu.');
-      return;
-    }
-
-    setIsSubmitting(true);
+    setIsKeycloakRedirecting(true);
     try {
-      await login({ email: email.trim(), password });
-    } catch (err) {
-      // Error handled inside AuthContext or setting local error
-    } finally {
-      setIsSubmitting(false);
+      await login(); // Triggers Keycloak OIDC PKCE Authorization Code Flow
+    } catch (err: any) {
+      setIsKeycloakRedirecting(false);
+      setLocalError(err?.message || 'Không thể kết nối đến Keycloak SSO IdP.');
     }
   };
 
-  const handleDemoFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('password123');
+  const handleKeycloakRegister = async () => {
     setLocalError(null);
     clearError();
+    setIsKeycloakRedirecting(true);
+    try {
+      await register(); // Triggers Keycloak Self-Registration Flow
+    } catch (err: any) {
+      setIsKeycloakRedirecting(false);
+      setLocalError(err?.message || 'Không thể mở trang Đăng ký Keycloak.');
+    }
   };
 
   const activeError = localError || error;
@@ -91,112 +82,59 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-              Email tài khoản
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-5 h-5" />
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@dxasset.local"
-                className="w-full pl-11 pr-4 py-3 bg-slate-900/80 border border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl text-sm text-slate-100 placeholder-slate-500 transition-all outline-none"
-                disabled={isSubmitting}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-              Mật khẩu
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-5 h-5" />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-11 pr-11 py-3 bg-slate-900/80 border border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl text-sm text-slate-100 placeholder-slate-500 transition-all outline-none"
-                disabled={isSubmitting}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
+        {/* Primary Action: Keycloak OIDC Authentication Buttons */}
+        <div className="space-y-4">
           <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            type="button"
+            onClick={handleKeycloakLogin}
+            disabled={isKeycloakRedirecting}
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-500/25 transition-all flex items-center justify-center space-x-3 disabled:opacity-60 disabled:cursor-not-allowed group"
           >
-            {isSubmitting ? (
+            {isKeycloakRedirecting ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Đang đăng nhập...</span>
+                <span>Đang chuyển hướng sang Keycloak...</span>
               </>
             ) : (
-              <span>Đăng nhập hệ thống</span>
+              <>
+                <KeyRound className="w-5 h-5 text-sky-200 group-hover:scale-110 transition-transform" />
+                <span>Đăng nhập bằng Keycloak SSO (OIDC)</span>
+                <ArrowRight className="w-4 h-4 ml-1 opacity-70 group-hover:translate-x-1 transition-transform" />
+              </>
             )}
           </button>
-        </form>
 
-        {/* Demo Accounts Quick-Fill Section */}
+          <button
+            type="button"
+            onClick={handleKeycloakRegister}
+            disabled={isKeycloakRedirecting}
+            className="w-full py-3 px-4 bg-slate-700/60 hover:bg-slate-700/90 border border-slate-600/80 text-slate-200 hover:text-white font-semibold rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-60 text-sm"
+          >
+            <UserPlus className="w-4 h-4 text-emerald-400" />
+            <span>Đăng ký Tài khoản Mới (Self-Registration)</span>
+          </button>
+        </div>
+
+        {/* Identity & Authorization Architecture Info Card */}
         <div className="mt-8 pt-6 border-t border-slate-700/60">
-          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            <Building2 className="w-4 h-4 text-sky-400" />
-            <span>Tài khoản Demo Local (Click để thử)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => handleDemoFill('admin@dxasset.local')}
-              className="p-2.5 rounded-lg bg-slate-900/50 hover:bg-slate-700/60 border border-slate-700/50 text-left transition-colors"
-            >
-              <div className="font-semibold text-sky-400">ADMIN</div>
-              <div className="text-slate-400 truncate">admin@dxasset.local</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoFill('it_manager@dxasset.local')}
-              className="p-2.5 rounded-lg bg-slate-900/50 hover:bg-slate-700/60 border border-slate-700/50 text-left transition-colors"
-            >
-              <div className="font-semibold text-indigo-400">IT MANAGER</div>
-              <div className="text-slate-400 truncate">it_manager@dxasset.local</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoFill('manager@dxasset.local')}
-              className="p-2.5 rounded-lg bg-slate-900/50 hover:bg-slate-700/60 border border-slate-700/50 text-left transition-colors"
-            >
-              <div className="font-semibold text-emerald-400">MANAGER</div>
-              <div className="text-slate-400 truncate">manager@dxasset.local</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoFill('employee1@dxasset.local')}
-              className="p-2.5 rounded-lg bg-slate-900/50 hover:bg-slate-700/60 border border-slate-700/50 text-left transition-colors"
-            >
-              <div className="font-semibold text-amber-400">EMPLOYEE</div>
-              <div className="text-slate-400 truncate">employee1@dxasset.local</div>
-            </button>
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-700/50 space-y-2.5 text-xs text-slate-300">
+            <div className="flex items-center space-x-2 font-semibold text-sky-400">
+              <Server className="w-4 h-4" />
+              <span>Hạ tầng Xác thực Chính thức Keycloak OIDC</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              DX-Asset áp dụng chuẩn bảo mật OIDC Authorization Code Flow với PKCE. Mật khẩu và thông tin đăng nhập được xác thực tuyệt đối tại Server Keycloak IdP.
+            </p>
+            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <span className="flex items-center space-x-1">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Source of Truth Role: PostgreSQL</span>
+              </span>
+              <span className="flex items-center space-x-1 text-amber-400 font-mono">
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Single Owner</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

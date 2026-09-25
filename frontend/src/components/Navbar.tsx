@@ -15,6 +15,7 @@ import {
   Bot,
   Wrench,
   BrainCircuit,
+  Users,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -52,6 +53,16 @@ export function Navbar() {
             label: 'Trí tuệ Tài sản',
             icon: BrainCircuit,
             active: pathname.startsWith('/intelligence'),
+          },
+        ]
+      : []),
+    ...(user?.role === 'ADMIN'
+      ? [
+          {
+            href: '/users',
+            label: 'Quản lý người dùng',
+            icon: Users,
+            active: pathname.startsWith('/users'),
           },
         ]
       : []),

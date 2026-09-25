@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, TokenResponse, LoginRequest } from '@/types/auth';
-import { fetchApi, getStoredToken, setStoredToken, removeStoredToken } from '@/lib/api';
+import { fetchApi, getStoredToken, setStoredToken, setStoredRefreshToken, clearStoredTokens } from '@/lib/api';
+import { loginWithKeycloak, logoutKeycloak } from '@/lib/oidc';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -10,9 +11,10 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (credentials?: LoginRequest) => Promise<void>;
+  register: () => Promise<void>;
   logout: () => void;
-  loadCurrentUser: () => Promise<void>;
+  loadCurrentUser: (tokenOverride?: string) => Promise<User | null>;
   clearError: () => void;
 }
 
@@ -24,56 +26,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const loadCurrentUser = useCallback(async () => {
-    const token = getStoredToken();
+  const loadCurrentUser = useCallback(async (tokenOverride?: string): Promise<User | null> => {
+    const token = tokenOverride || getStoredToken();
     if (!token) {
       setUser(null);
       setIsLoading(false);
-      return;
+      return null;
     }
 
     try {
       const currentUser = await fetchApi<User>('/auth/me', { token });
       setUser(currentUser);
-    } catch (err: any) {
-      // If 401 Unauthorized or invalid token, clear token
-      removeStoredToken();
-      setUser(null);
-    } finally {
       setIsLoading(false);
+      return currentUser;
+    } catch (err: any) {
+      // If 401 Unauthorized or invalid token, clear session completely
+      clearStoredTokens();
+      setUser(null);
+      setIsLoading(false);
+      return null;
     }
   }, []);
 
   useEffect(() => {
+    // If currently on the authorization callback route, defer loadCurrentUser execution
+    // because AuthCallbackPage will handle code exchange and invoke loadCurrentUser explicitly.
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth/callback')) {
+      setIsLoading(false);
+      return;
+    }
     loadCurrentUser();
   }, [loadCurrentUser]);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetchApi<TokenResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(credentials),
-      });
-
-      setStoredToken(res.access_token);
-      setUser(res.user);
-      setIsLoading(false);
-      router.push('/dashboard');
+      // Keycloak OIDC PKCE Authorization Code Flow is the exclusive official authentication method
+      await loginWithKeycloak();
     } catch (err: any) {
       setIsLoading(false);
-      const msg = err?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+      const msg = err?.message || 'Không thể mở trang Đăng nhập Keycloak SSO.';
       setError(msg);
       throw err;
     }
   };
 
+  const register = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await loginWithKeycloak({ promptRegister: true });
+    } catch (err: any) {
+      setIsLoading(false);
+      setError('Không thể mở trang Đăng ký Keycloak.');
+    }
+  };
+
   const logout = () => {
-    removeStoredToken();
+    clearStoredTokens();
     setUser(null);
     setError(null);
-    router.push('/login');
+    logoutKeycloak();
   };
 
   const clearError = () => {
@@ -88,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         error,
         login,
+        register,
         logout,
         loadCurrentUser,
         clearError,

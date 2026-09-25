@@ -70,9 +70,15 @@ def seed_database():
         common_password_hash = get_password_hash("password123")
         users_data = [
             {
-                "email": "admin@dxasset.local",
-                "full_name": "Nguyễn Văn Admin",
+                "email": "2424801030008@student.tdmu.edu.vn",
+                "full_name": "Nguyễn Phạm Đại Phúc (System Owner)",
                 "role": UserRole.ADMIN,
+                "dept_code": "ADMINISTRATION",
+            },
+            {
+                "email": "admin@dxasset.local",
+                "full_name": "Nguyễn Văn Admin (Legacy)",
+                "role": UserRole.IT_ASSET_MANAGER,
                 "dept_code": "ADMINISTRATION",
             },
             {
@@ -101,6 +107,7 @@ def seed_database():
             },
         ]
 
+
         user_map = {}
         users_created = 0
         for u in users_data:
@@ -119,7 +126,10 @@ def seed_database():
                 user_map[u["email"]] = user
                 users_created += 1
             else:
+                existing.role = u["role"]
+                existing.is_active = True
                 user_map[u["email"]] = existing
+
 
         logger.info(f"-> Users: Đã tạo {users_created} mới, tổng số: {len(user_map)}")
 
@@ -292,11 +302,18 @@ def seed_database():
             to_user = user_map[asm["assigned_to_email"]]
             by_user = user_map[asm["assigned_by_email"]]
 
-            existing = db.query(AssetAssignment).filter(
-                AssetAssignment.asset_id == asset.id,
-                AssetAssignment.assigned_to_user_id == to_user.id,
-                AssetAssignment.status == asm["status"],
-            ).first()
+            if asm["status"] == AssignmentStatus.ACTIVE:
+                existing = db.query(AssetAssignment).filter(
+                    AssetAssignment.asset_id == asset.id,
+                    AssetAssignment.status == AssignmentStatus.ACTIVE,
+                ).first()
+            else:
+                existing = db.query(AssetAssignment).filter(
+                    AssetAssignment.asset_id == asset.id,
+                    AssetAssignment.assigned_to_user_id == to_user.id,
+                    AssetAssignment.status == asm["status"],
+                ).first()
+
 
             if not existing:
                 assignment = AssetAssignment(

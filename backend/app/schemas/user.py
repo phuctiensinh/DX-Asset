@@ -12,11 +12,16 @@ class DepartmentResponse(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    keycloak_user_id: Optional[str] = None
     email: str
     full_name: str
     role: UserRole
     department_id: Optional[int] = None
+    department: Optional[DepartmentResponse] = None
     is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole

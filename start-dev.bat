@@ -8,12 +8,19 @@ echo       DX-Asset Development Server
 echo ========================================
 echo.
 
-echo [1/5] Starting PostgreSQL...
-docker compose up -d postgres
+echo [1/5] Starting PostgreSQL + Keycloak...
+docker compose up -d postgres keycloak
+
+if errorlevel 1 (
+    echo.
+    echo ERROR: Docker services failed to start.
+    pause
+    exit /b 1
+)
 
 echo.
-echo Waiting for PostgreSQL...
-timeout /t 3 /nobreak >nul
+echo Waiting for PostgreSQL + Keycloak...
+timeout /t 5 /nobreak >nul
 
 echo.
 echo [2/5] Running database migrations...
@@ -49,6 +56,7 @@ echo       DX-Asset Started
 echo ========================================
 echo.
 echo PostgreSQL: Docker
+echo Keycloak:   http://localhost:8080
 echo Backend:    http://127.0.0.1:8000/docs
 echo Frontend:   http://localhost:3000
 echo.

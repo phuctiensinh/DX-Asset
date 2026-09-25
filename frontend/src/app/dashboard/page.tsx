@@ -437,7 +437,7 @@ function DashboardContent() {
                         {data.departments.map((dept, index) => {
                           const rate = dept.total_assets > 0 ? Math.round((dept.assigned_assets / dept.total_assets) * 100) : 0;
                           return (
-                            <tr key={dept.department_id || index} className="hover:bg-slate-700/20 transition-colors">
+                            <tr key={`dept-${dept.department_id ?? 'null'}-${index}`} className="hover:bg-slate-700/20 transition-colors">
                               <td className="py-3 px-3">
                                 <div className="font-semibold text-white">{dept.department_name}</div>
                                 <div className="text-[11px] text-slate-400 font-mono">{dept.department_code}</div>
