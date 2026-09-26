@@ -1,16 +1,18 @@
 import uuid
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Response, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_roles
 from app.models.user import User
 from app.models.asset import Asset
 from app.models.incident import Incident
+from app.models.incident_attachment import IncidentAttachment
 from app.models.maintenance import Maintenance
 from app.models.history import AssetHistory
 from app.models.enums import UserRole, AssetStatus, IncidentCategory, IncidentPriority, IncidentStatus, AssetActionType, MaintenanceStatus
@@ -21,6 +23,7 @@ from app.schemas.incident import (
     IncidentResponse,
     IncidentListResponse,
 )
+from app.schemas.incident_attachment import IncidentAttachmentResponse
 from app.schemas.smart_routing import (
     ClassificationResponse,
     RecommendationsResponse,
@@ -29,7 +32,10 @@ from app.schemas.smart_routing import (
 from app.schemas.knowledge_base import SimilarIncidentListResponse
 from app.services.smart_routing import SmartRoutingService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.storage_service import StorageService
+from app.utils.file_validation import validate_file_security
 from app.services.process_event_writer import create_process_event, get_or_create_incident_case
+
 
 router = APIRouter()
 
@@ -489,3 +495,198 @@ def get_similar_incidents_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+# --- Incident Attachment Management Endpoints ---
+
+def _format_attachment(att: IncidentAttachment) -> IncidentAttachmentResponse:
+    return IncidentAttachmentResponse(
+        id=att.id,
+        incident_id=att.incident_id,
+        file_name=att.file_name,
+        file_size=att.file_size,
+        mime_type=att.mime_type,
+        uploaded_by_id=att.uploaded_by_id,
+        created_at=att.created_at,
+        file_url=f"/api/v1/incidents/{att.incident_id}/attachments/{att.id}/file"
+    )
+
+def _check_incident_access(incident: Incident, user: User) -> None:
+    """RBAC check: EMPLOYEE can only access incidents reported by themselves."""
+    if user.role == UserRole.EMPLOYEE and incident.reporter_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Nhân viên chỉ có quyền truy cập phiếu sự cố do chính mình báo cáo."
+        )
+
+@router.post("/{incident_id}/attachments", response_model=IncidentAttachmentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_incident_attachment(
+    incident_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Upload tập tin đính kèm cho phiếu sự cố (Bằng chứng hỏng hóc / Hóa đơn / Ảnh chụp).
+    - Phân quyền: Người báo cáo (EMPLOYEE), hoặc IT Manager / Admin.
+    - Kiểm tra giới hạn file (tối đa 5 file/phiếu), MIME type, extension và Magic Bytes.
+    """
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    _check_incident_access(incident, current_user)
+
+    # Count existing attachments
+    existing_count = db.query(IncidentAttachment).filter(IncidentAttachment.incident_id == incident.id).count()
+    if existing_count >= 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phiếu sự cố này đã đạt giới hạn tối đa 5 tập tin đính kèm."
+        )
+
+    file_bytes = await file.read()
+    ext, clean_mime = validate_file_security(
+        file_bytes=file_bytes,
+        filename=file.filename or "file",
+        content_type=file.content_type or "",
+        max_size_mb=settings.MAX_UPLOAD_SIZE_MB,
+    )
+
+    # Phase 1: Upload to SeaweedFS Filer
+    relative_path = await StorageService.upload_file(
+        ticket_code=incident.ticket_code,
+        file_name=file.filename or "file",
+        file_bytes=file_bytes,
+        mime_type=clean_mime,
+    )
+
+    # Phase 2: Save metadata to PostgreSQL DB with Rollback protection
+    attachment = IncidentAttachment(
+        incident_id=incident.id,
+        file_name=file.filename or "file",
+        file_path=relative_path,
+        file_size=len(file_bytes),
+        mime_type=clean_mime,
+        uploaded_by_id=current_user.id,
+    )
+    db.add(attachment)
+
+    try:
+        db.commit()
+        db.refresh(attachment)
+    except Exception as exc:
+        db.rollback()
+        # Rollback: Delete file from SeaweedFS to avoid orphan files
+        await StorageService.delete_file(relative_path)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lỗi lưu trữ thông tin tập tin vào cơ sở dữ liệu: {exc}"
+        )
+
+    return _format_attachment(attachment)
+
+@router.get("/{incident_id}/attachments", response_model=List[IncidentAttachmentResponse])
+def list_incident_attachments(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lấy danh sách tập tin đính kèm của một phiếu sự cố."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    _check_incident_access(incident, current_user)
+
+    attachments = db.query(IncidentAttachment).filter(
+        IncidentAttachment.incident_id == incident.id
+    ).order_by(IncidentAttachment.id.asc()).all()
+
+    return [_format_attachment(att) for att in attachments]
+
+@router.get("/{incident_id}/attachments/{attachment_id}/file")
+async def download_incident_attachment_file(
+    incident_id: int,
+    attachment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Stream / Tải tập tin đính kèm từ SeaweedFS thông qua FastAPI Proxy (Yêu cầu xác thực & phân quyền)."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    _check_incident_access(incident, current_user)
+
+    attachment = db.query(IncidentAttachment).filter(
+        IncidentAttachment.id == attachment_id,
+        IncidentAttachment.incident_id == incident.id,
+    ).first()
+
+    if not attachment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy tập tin đính kèm với ID {attachment_id}"
+        )
+
+    file_bytes, mime_type = await StorageService.download_file(attachment.file_path)
+
+    disp = "inline" if mime_type.startswith("image/") or mime_type == "application/pdf" else "attachment"
+    return Response(
+        content=file_bytes,
+        media_type=mime_type,
+        headers={
+            "Content-Disposition": f'{disp}; filename="{attachment.file_name}"'
+        }
+    )
+
+@router.delete("/{incident_id}/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_incident_attachment(
+    incident_id: int,
+    attachment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Xóa tập tin đính kèm (Người tải lên hoặc ADMIN/IT Manager). Xóa đồng thời ở SeaweedFS và PostgreSQL."""
+    incident = db.query(Incident).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+
+    attachment = db.query(IncidentAttachment).filter(
+        IncidentAttachment.id == attachment_id,
+        IncidentAttachment.incident_id == incident.id,
+    ).first()
+
+    if not attachment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy tập tin đính kèm với ID {attachment_id}"
+        )
+
+    # Permission check for delete
+    is_owner = attachment.uploaded_by_id == current_user.id
+    is_staff = current_user.role in (UserRole.ADMIN, UserRole.IT_ASSET_MANAGER)
+    if not (is_owner or is_staff):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bạn không có quyền xóa tập tin đính kèm này."
+        )
+
+    # 1. Delete file from SeaweedFS
+    await StorageService.delete_file(attachment.file_path)
+
+    # 2. Delete record from PostgreSQL
+    db.delete(attachment)
+    db.commit()

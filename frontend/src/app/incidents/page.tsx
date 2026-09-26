@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, uploadIncidentAttachment, deleteIncidentAttachment, getIncidentAttachmentFileUrl, fetchAttachmentBlob } from '@/lib/api';
+
 import {
   AlertTriangle,
   Plus,
@@ -29,7 +30,15 @@ import {
   Layers,
   UserCheck,
   BookOpen,
+  Paperclip,
+  Upload,
+  FileText,
+  Trash2,
+  Download,
+  Image as ImageIcon,
+  Camera,
 } from 'lucide-react';
+
 
 interface AssetSummary {
   id: number;
@@ -44,6 +53,17 @@ interface UserSummary {
   email: string;
   full_name: string;
   role: string;
+}
+
+export interface IncidentAttachment {
+  id: number;
+  incident_id: number;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_by_id: number;
+  created_at: string;
+  file_url: string;
 }
 
 interface Incident {
@@ -68,7 +88,9 @@ interface Incident {
   asset?: AssetSummary | null;
   reporter?: UserSummary | null;
   assigned_it?: UserSummary | null;
+  attachments?: IncidentAttachment[];
 }
+
 
 interface TechnicianRecommendationItem {
   user_id: number;
@@ -305,6 +327,57 @@ function IncidentsContent() {
     }
   };
 
+  // Pending Attachments for Create Incident Modal
+
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadProgressMsg, setUploadProgressMsg] = useState<string | null>(null);
+  const createCameraInputRef = React.useRef<HTMLInputElement>(null);
+  const createFilePickerInputRef = React.useRef<HTMLInputElement>(null);
+
+  const ALLOWED_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.docx', '.xlsx'];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+  const handleAddPendingFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+
+    if (pendingFiles.length + selected.length > 5) {
+      alert('Mỗi phiếu sự cố chỉ được đính kèm tối đa 5 tập tin.');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    const invalidFiles: string[] = [];
+    const validFiles: File[] = [];
+
+    for (const f of selected) {
+      const ext = '.' + f.name.split('.').pop()?.toLowerCase();
+      if (!ALLOWED_EXTS.includes(ext)) {
+        invalidFiles.push(`${f.name} (Định dạng '${ext}' không hỗ trợ)`);
+        continue;
+      }
+      if (f.size > MAX_FILE_SIZE) {
+        invalidFiles.push(`${f.name} (Dung lượng ${(f.size / (1024 * 1024)).toFixed(1)}MB vượt quá 10MB)`);
+        continue;
+      }
+      validFiles.push(f);
+    }
+
+    if (invalidFiles.length > 0) {
+      alert(`Một số tệp không hợp lệ và đã bị bỏ qua:\n- ${invalidFiles.join('\n- ')}`);
+    }
+
+    if (validFiles.length > 0) {
+      setPendingFiles((prev) => [...prev, ...validFiles]);
+    }
+
+    if (e.target) e.target.value = '';
+  };
+
+  const handleRemovePendingFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const openCreateModal = () => {
     loadReferenceData();
     setCreateFormData({
@@ -314,6 +387,8 @@ function IncidentsContent() {
       priority: 'MEDIUM',
       description: '',
     });
+    setPendingFiles([]);
+    setUploadProgressMsg(null);
     setFormError(null);
     setShowCreateModal(true);
   };
@@ -331,15 +406,59 @@ function IncidentsContent() {
     setShowUpdateModal(true);
   };
 
-  // Knowledge Base State
+  // Knowledge Base & Attachments State
   const [similarIncidents, setSimilarIncidents] = useState<SimilarIncidentListResponse | null>(null);
   const [loadingSimilar, setLoadingSimilar] = useState<boolean>(false);
+  const [attachmentsList, setAttachmentsList] = useState<IncidentAttachment[]>([]);
+  const [previewBlobs, setPreviewBlobs] = useState<Record<number, string>>({});
+  const [uploadingAttachment, setUploadingAttachment] = useState<boolean>(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const loadAttachments = async (incidentId: number) => {
+    try {
+      const data = await fetchApi<IncidentAttachment[]>(`/incidents/${incidentId}/attachments`);
+      setAttachmentsList(data || []);
+
+      if (data && data.length > 0) {
+        data.forEach(async (att) => {
+          if (att.mime_type.startsWith('image/')) {
+            try {
+              const { blobUrl } = await fetchAttachmentBlob(incidentId, att.id);
+              setPreviewBlobs((prev) => ({ ...prev, [att.id]: blobUrl }));
+            } catch (e) {
+              console.error('Lỗi nạp ảnh đính kèm:', e);
+            }
+          }
+        });
+      }
+    } catch (err: any) {
+      console.error('Lỗi lấy tập tin đính kèm:', err);
+    }
+  };
+
+  const handleDownloadAttachment = async (att: IncidentAttachment) => {
+    if (!selectedIncident) return;
+    try {
+      const { blobUrl } = await fetchAttachmentBlob(selectedIncident.id, att.id);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = att.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch (err: any) {
+      alert(err?.message || 'Không thể tải tập tin');
+    }
+  };
 
   const openDetailModal = async (inc: Incident) => {
     setSelectedIncident(inc);
     setShowDetailModal(true);
     setLoadingSimilar(true);
     setSimilarIncidents(null);
+    setAttachmentsList(inc.attachments || []);
+    loadAttachments(inc.id);
     try {
       const data = await fetchApi<SimilarIncidentListResponse>(`/incidents/${inc.id}/similar?limit=5`);
       setSimilarIncidents(data);
@@ -347,6 +466,38 @@ function IncidentsContent() {
       console.error('Lỗi lấy danh sách sự cố tương tự:', err);
     } finally {
       setLoadingSimilar(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedIncident) return;
+
+    setUploadingAttachment(true);
+    try {
+      await uploadIncidentAttachment(selectedIncident.id, file);
+      setSuccessMsg('Đã tải lên tập tin đính kèm thành công!');
+      setTimeout(() => setSuccessMsg(null), 4000);
+      loadAttachments(selectedIncident.id);
+      loadIncidents();
+    } catch (err: any) {
+      alert(err?.message || 'Không thể tải lên tập tin đính kèm');
+    } finally {
+      setUploadingAttachment(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: number) => {
+    if (!selectedIncident || !confirm('Bạn có chắc chắn muốn xóa tập tin đính kèm này?')) return;
+    try {
+      await deleteIncidentAttachment(selectedIncident.id, attachmentId);
+      setSuccessMsg('Đã xóa tập tin đính kèm!');
+      setTimeout(() => setSuccessMsg(null), 4000);
+      loadAttachments(selectedIncident.id);
+      loadIncidents();
+    } catch (err: any) {
+      alert(err?.message || 'Không thể xóa tập tin đính kèm');
     }
   };
 
@@ -368,8 +519,10 @@ function IncidentsContent() {
     }
 
     setFormSubmitting(true);
+    setUploadProgressMsg('Đang khởi tạo phiếu sự cố...');
+
     try {
-      await fetchApi<Incident>('/incidents', {
+      const createdIncident = await fetchApi<Incident>('/incidents', {
         method: 'POST',
         body: JSON.stringify({
           asset_id: parseInt(createFormData.asset_id),
@@ -380,18 +533,44 @@ function IncidentsContent() {
         }),
       });
 
+      let uploadedCount = 0;
+      if (pendingFiles.length > 0) {
+        for (let i = 0; i < pendingFiles.length; i++) {
+          const file = pendingFiles[i];
+          setUploadProgressMsg(`Đang tải lên tập tin đính kèm (${i + 1}/${pendingFiles.length}): ${file.name}...`);
+          try {
+            await uploadIncidentAttachment(createdIncident.id, file);
+            uploadedCount++;
+          } catch (attErr: any) {
+            console.error(`Upload file ${file.name} failed:`, attErr);
+            setFormError(
+              `Đã tạo phiếu sự cố [${createdIncident.ticket_code}] thành công, nhưng không thể tải lên tệp "${file.name}": ${attErr?.message || 'Lỗi lưu trữ'}`
+            );
+            setFormSubmitting(false);
+            setUploadProgressMsg(null);
+            loadIncidents();
+            return;
+          }
+        }
+      }
+
       setShowCreateModal(false);
-      setSuccessMsg('Gửi báo cáo sự cố thành công!');
-      setTimeout(() => setSuccessMsg(null), 4000);
+      const msg = uploadedCount > 0
+        ? `Gửi báo cáo sự cố thành công kèm theo ${uploadedCount} tệp đính kèm!`
+        : 'Gửi báo cáo sự cố thành công!';
+      setSuccessMsg(msg);
+      setTimeout(() => setSuccessMsg(null), 5000);
       loadIncidents();
     } catch (err: any) {
       setFormError(err?.message || 'Không thể gửi phiếu báo sự cố');
     } finally {
       setFormSubmitting(false);
+      setUploadProgressMsg(null);
     }
   };
 
   const handleUpdateSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!selectedIncident) return;
     setFormError(null);
@@ -826,11 +1005,125 @@ function IncidentsContent() {
                 />
               </div>
 
+              {/* ATTACHMENT SELECTION SECTION IN CREATE MODAL */}
+              <div className="pt-3 border-t border-slate-700/80 space-y-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="font-semibold text-slate-300 flex items-center space-x-1.5">
+                    <Paperclip className="w-4 h-4 text-amber-400" />
+                    <span>Hình ảnh / tài liệu sự cố ({pendingFiles.length}/5)</span>
+                  </label>
+
+                  <div className="flex items-center space-x-2">
+                    {/* Camera Input */}
+                    <input
+                      type="file"
+                      ref={createCameraInputRef}
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleAddPendingFiles}
+                    />
+                    <button
+                      type="button"
+                      disabled={formSubmitting || pendingFiles.length >= 5}
+                      onClick={() => createCameraInputRef.current?.click()}
+                      className="px-2.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Chụp ảnh trực tiếp từ thiết bị (Ưu tiên camera sau)"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Chụp ảnh</span>
+                    </button>
+
+                    {/* File Picker Input */}
+                    <input
+                      type="file"
+                      ref={createFilePickerInputRef}
+                      accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx"
+                      multiple
+                      className="hidden"
+                      onChange={handleAddPendingFiles}
+                    />
+                    <button
+                      type="button"
+                      disabled={formSubmitting || pendingFiles.length >= 5}
+                      onClick={() => createFilePickerInputRef.current?.click()}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Chọn ảnh hoặc tài liệu từ máy tính / thiết bị"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Chọn ảnh / tệp</span>
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-400 italic">
+                  * Giới hạn: tối đa 5 tệp, tối đa 10 MB/tệp (Hỗ trợ JPG, PNG, WEBP, PDF, DOCX, XLSX).
+                </p>
+
+                {/* Pending Files List */}
+                {pendingFiles.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                    {pendingFiles.map((file, idx) => {
+                      const isImg = file.type.startsWith('image/');
+                      const previewUrl = isImg ? URL.createObjectURL(file) : null;
+                      const sizeKb = (file.size / 1024).toFixed(1);
+
+                      return (
+                        <div
+                          key={idx}
+                          className="p-2 bg-slate-900/90 border border-slate-700/80 rounded-xl flex items-center justify-between gap-2 text-xs"
+                        >
+                          <div className="flex items-center space-x-2 overflow-hidden">
+                            {isImg && previewUrl ? (
+                              <img
+                                src={previewUrl}
+                                alt={file.name}
+                                className="w-9 h-9 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-950"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                            )}
+                            <div className="truncate">
+                              <div className="font-semibold text-slate-200 truncate" title={file.name}>
+                                {file.name}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                {sizeKb} KB
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={formSubmitting}
+                            onClick={() => handleRemovePendingFile(idx)}
+                            className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors shrink-0"
+                            title="Xóa tệp khỏi danh sách"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {uploadProgressMsg && (
+                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs flex items-center space-x-2 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                  <span>{uploadProgressMsg}</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700">
                 <button
                   type="button"
+                  disabled={formSubmitting}
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold disabled:opacity-50"
                 >
                   Hủy bỏ
                 </button>
@@ -842,13 +1135,14 @@ function IncidentsContent() {
                   {formSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Đang gửi...</span>
+                      <span>Đang xử lý...</span>
                     </>
                   ) : (
                     <span>Gửi báo cáo sự cố</span>
                   )}
                 </button>
               </div>
+
             </form>
           </div>
         </div>
@@ -1050,7 +1344,114 @@ function IncidentsContent() {
               </div>
             )}
 
+            {/* SEAWEEDFS ATTACHMENTS SECTION */}
+            <div className="pt-3 border-t border-slate-700/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <Paperclip className="w-4 h-4 text-amber-400" />
+                  <span>Tập tin đính kèm (SeaweedFS) ({attachmentsList.length}/5)</span>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.xlsx"
+                  />
+                  <button
+                    type="button"
+                    disabled={uploadingAttachment || attachmentsList.length >= 5}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center space-x-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {uploadingAttachment ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang tải lên...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>+ Tải lên đính kèm</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {attachmentsList.length === 0 ? (
+                <div className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-400 text-center">
+                  Chưa có tập tin đính kèm (Hỗ trợ định dạng: JPG, PNG, WEBP, PDF, DOCX, XLSX - Tối đa 10MB).
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {attachmentsList.map((att) => {
+                    const isImg = att.mime_type.startsWith('image/');
+                    const imgBlobUrl = previewBlobs[att.id];
+                    const sizeKb = (att.file_size / 1024).toFixed(1);
+
+                    return (
+                      <div
+                        key={att.id}
+                        className="p-2.5 bg-slate-900/80 border border-slate-700/70 rounded-xl flex items-center justify-between gap-2 text-xs hover:border-slate-600 transition-all"
+                      >
+                        <div className="flex items-center space-x-2.5 overflow-hidden">
+                          {isImg && imgBlobUrl ? (
+                            <img
+                              src={imgBlobUrl}
+                              alt={att.file_name}
+                              className="w-10 h-10 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-950"
+                            />
+                          ) : isImg ? (
+                            <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                              <ImageIcon className="w-5 h-5 animate-pulse" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                              <FileText className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="truncate">
+                            <div className="font-semibold text-slate-200 truncate" title={att.file_name}>
+                              {att.file_name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {sizeKb} KB • {att.mime_type.split('/')[1] || 'file'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadAttachment(att)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                            title="Tải về / Xem tập tin"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                          {(att.uploaded_by_id === user?.id || user?.role === 'ADMIN' || user?.role === 'IT_ASSET_MANAGER') && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAttachment(att.id)}
+                              className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
+                              title="Xóa tập tin đính kèm"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              )}
+            </div>
+
             {/* KNOWLEDGE BASE / SIMILAR INCIDENTS SECTION */}
+
             <div className="pt-3 border-t border-slate-700/80 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-sky-400 font-bold text-xs uppercase tracking-wider">

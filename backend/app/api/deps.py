@@ -1,5 +1,5 @@
 from typing import Generator, List, Callable, Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -20,11 +20,12 @@ reusable_oauth2 = OAuth2PasswordBearer(
 )
 
 def get_current_user(
-    token: str = Depends(reusable_oauth2),
+    token: Optional[str] = Depends(reusable_oauth2),
+    token_param: Optional[str] = Query(None, alias="token"),
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Dependency to extract and validate current authenticated user from Bearer token.
+    Dependency to extract and validate current authenticated user from Bearer token or Query token param.
     Prioritizes keycloak_user_id lookup, handles first-time identity linking by email,
     and performs safe transactional JIT provisioning for new users.
     """
@@ -34,10 +35,12 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if not token:
+    effective_token = token or token_param
+    if not effective_token:
         raise credentials_exception
 
-    payload = decode_access_token(token)
+    payload = decode_access_token(effective_token)
+
     if not payload:
         raise credentials_exception
 

@@ -4,6 +4,8 @@ from datetime import datetime
 from app.models.enums import IncidentCategory, IncidentPriority, IncidentStatus
 from app.schemas.user import UserResponse
 from app.schemas.asset import AssetResponse
+from app.schemas.incident_attachment import IncidentAttachmentResponse
+
 
 class IncidentBase(BaseModel):
     title: str = Field(..., max_length=150)
@@ -44,8 +46,10 @@ class IncidentResponse(IncidentBase):
     asset: Optional[AssetResponse] = None
     reporter: Optional[UserResponse] = None
     assigned_it: Optional[UserResponse] = None
+    attachments: List[IncidentAttachmentResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class IncidentListResponse(BaseModel):
     items: List[IncidentResponse]

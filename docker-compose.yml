@@ -50,6 +50,22 @@ services:
       postgres:
         condition: service_healthy
 
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.79
+    container_name: dx_asset_seaweedfs
+    restart: always
+    command: server -dir=/data -filer=true -master.port=9333 -volume.port=8080 -filer.port=8888 -s3=false
+    ports:
+      - "8888:8888"
+      - "9333:9333"
+    volumes:
+      - seaweedfs_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8888/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -62,10 +78,13 @@ services:
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
       - AI_ENABLED=${AI_ENABLED:-true}
       - AI_API_KEY=${AI_API_KEY:-}
+      - SEAWEEDFS_FILER_URL=${SEAWEEDFS_FILER_URL:-http://seaweedfs:8888}
     ports:
       - "8000:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+      seaweedfs:
         condition: service_healthy
 
   frontend:
@@ -83,3 +102,4 @@ services:
 
 volumes:
   postgres_data:
+  seaweedfs_data:

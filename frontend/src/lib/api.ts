@@ -258,3 +258,76 @@ export function getProcessMiningCases(
 export function getProcessMiningCase(caseId: number): Promise<ProcessMiningCaseDetail> {
   return fetchApi(`/process-mining/cases/${caseId}`);
 }
+
+export async function uploadIncidentAttachment(incidentId: number, file: File): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/incidents/${incidentId}/attachments`;
+  let token = getStoredToken();
+
+  if (token && isTokenExpired(token)) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) token = refreshed;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorMsg = `Upload tập tin thất bại (${response.status})`;
+    try {
+      const data = await response.json();
+      if (data.detail) errorMsg = data.detail;
+    } catch {}
+    throw new Error(errorMsg);
+  }
+
+  return response.json();
+}
+
+export async function deleteIncidentAttachment(incidentId: number, attachmentId: number): Promise<void> {
+  return fetchApi(`/incidents/${incidentId}/attachments/${attachmentId}`, {
+    method: 'DELETE',
+  });
+}
+
+export function getIncidentAttachmentFileUrl(incidentId: number, attachmentId: number): string {
+  const baseUrl = getApiBaseUrl();
+  return `${baseUrl}/incidents/${incidentId}/attachments/${attachmentId}/file`;
+}
+
+export async function fetchAttachmentBlob(incidentId: number, attachmentId: number): Promise<{ blobUrl: string; mimeType: string }> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/incidents/${incidentId}/attachments/${attachmentId}/file`;
+  let token = getStoredToken();
+
+  if (token && isTokenExpired(token)) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) token = refreshed;
+  }
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error(`Không thể tải dữ liệu tập tin (${response.status})`);
+  }
+
+  const blob = await response.blob();
+  const mimeType = response.headers.get('Content-Type') || blob.type || 'application/octet-stream';
+  const blobUrl = URL.createObjectURL(blob);
+  return { blobUrl, mimeType };
+}

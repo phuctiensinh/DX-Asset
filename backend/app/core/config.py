@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     KEYCLOAK_JWKS_URL: str = "http://localhost:8080/realms/dx-asset/protocol/openid-connect/certs"
     KEYCLOAK_CLIENT_ID: str = "dx-asset-frontend"
 
+    # SeaweedFS Attachment Storage
+    SEAWEEDFS_FILER_URL: str = "http://localhost:8888"
+    MAX_UPLOAD_SIZE_MB: int = 10
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

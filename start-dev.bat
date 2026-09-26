@@ -8,8 +8,8 @@ echo       DX-Asset Development Server
 echo ========================================
 echo.
 
-echo [1/5] Starting PostgreSQL + Keycloak...
-docker compose up -d postgres keycloak
+echo [1/5] Starting PostgreSQL + Keycloak + SeaweedFS...
+docker compose up -d postgres keycloak seaweedfs
 
 if errorlevel 1 (
     echo.
@@ -20,7 +20,7 @@ if errorlevel 1 (
 
 echo.
 echo Waiting for PostgreSQL + Keycloak...
-timeout /t 5 /nobreak >nul
+ping 127.0.0.1 -n 6 >nul
 
 echo.
 echo [2/5] Running database migrations...
@@ -36,11 +36,12 @@ if errorlevel 1 (
 
 echo.
 echo [3/5] Starting Backend...
+powershell -Command "Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
 start "DX-Asset Backend" cmd /k "cd /d D:\web\dx-asset\backend && .venv\Scripts\uvicorn.exe app.main:app --reload --port 8000"
 
 echo.
 echo Waiting for Backend...
-timeout /t 3 /nobreak >nul
+ping 127.0.0.1 -n 4 >nul
 
 echo.
 echo [4/5] Starting Frontend...
@@ -48,7 +49,7 @@ start "DX-Asset Frontend" cmd /k "cd /d D:\web\dx-asset\frontend && npm run dev"
 
 echo.
 echo Waiting for Frontend...
-timeout /t 5 /nobreak >nul
+ping 127.0.0.1 -n 6 >nul
 
 echo.
 echo ========================================

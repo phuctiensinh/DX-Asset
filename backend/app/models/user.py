@@ -26,6 +26,8 @@ class User(Base):
     assigned_incidents = relationship("Incident", back_populates="assigned_it", foreign_keys="Incident.assigned_it_id")
     performed_histories = relationship("AssetHistory", back_populates="performed_by", foreign_keys="AssetHistory.performed_by_id")
     skills = relationship("TechnicianSkill", back_populates="user", cascade="all, delete-orphan")
+    uploaded_attachments = relationship("IncidentAttachment", back_populates="uploaded_by", foreign_keys="IncidentAttachment.uploaded_by_id")
+
 
     def __repr__(self):
         return f"<User id={self.id} email='{self.email}' role='{self.role}'>"

@@ -30,6 +30,8 @@ class Incident(Base):
     reporter = relationship("User", back_populates="reported_incidents", foreign_keys=[reporter_id])
     assigned_it = relationship("User", back_populates="assigned_incidents", foreign_keys=[assigned_it_id])
     maintenances = relationship("Maintenance", back_populates="incident")
+    attachments = relationship("IncidentAttachment", back_populates="incident", cascade="all, delete-orphan")
+
 
     def __repr__(self):
         return f"<Incident id={self.id} code='{self.ticket_code}' priority='{self.priority}' status='{self.status}'>"
