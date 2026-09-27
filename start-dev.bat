@@ -8,8 +8,8 @@ echo       DX-Asset Development Server
 echo ========================================
 echo.
 
-echo [1/5] Starting PostgreSQL + Keycloak + SeaweedFS...
-docker compose up -d postgres keycloak seaweedfs
+echo [1/5] Starting PostgreSQL + Keycloak + SeaweedFS + Ollama...
+docker compose up -d postgres keycloak seaweedfs ollama
 
 if errorlevel 1 (
     echo.
@@ -19,7 +19,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Waiting for PostgreSQL + Keycloak...
+echo Waiting for PostgreSQL + Keycloak + Ollama...
 ping 127.0.0.1 -n 6 >nul
 
 echo.
@@ -60,8 +60,10 @@ echo ========================================
 echo       DX-Asset Started
 echo ========================================
 echo.
-echo PostgreSQL: Docker
+echo PostgreSQL: Docker (5432)
 echo Keycloak:   http://localhost:8080
+echo SeaweedFS:  http://localhost:8888
+echo Ollama:     http://localhost:11434
 echo Backend:    http://127.0.0.1:8000/docs
 echo Frontend:   http://localhost:3000
 echo.
