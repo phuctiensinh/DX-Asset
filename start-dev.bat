@@ -7,9 +7,27 @@ echo ========================================
 echo       DX-Asset Development Server
 echo ========================================
 echo.
+echo [0/5] Checking Docker Desktop status...
+docker info >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo ========================================================
+    echo THONG BAO: Docker Desktop chua duoc bat hoac dang khoi dong!
+    echo.
+    echo Vui long thuc hien:
+    echo 1. Mo ung dung Docker Desktop tren Windows.
+    echo 2. Cho bieu tuong Docker (ca voi) duoi khay he thong khoi dong xong.
+    echo 3. Chay lai file start-dev.bat nay.
+    echo ========================================================
+    echo.
+    pause
+    exit /b 1
+)
 
+echo.
 echo [1/5] Starting PostgreSQL + Keycloak + SeaweedFS + Ollama...
 docker compose up -d postgres keycloak seaweedfs ollama
+
 
 if errorlevel 1 (
     echo.
