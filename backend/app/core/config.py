@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     OLLAMA_ENABLED: bool = True
     OLLAMA_BASE_URL: str = "http://ollama:11434"
     OLLAMA_MODEL: str = "qwen2.5:3b"
-    OLLAMA_TIMEOUT_SECONDS: float = 10.0
+    OLLAMA_TIMEOUT_SECONDS: float = 30.0
 
 
     # Keycloak OIDC Settings
