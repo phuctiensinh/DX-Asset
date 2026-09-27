@@ -1,11 +1,22 @@
 import pytest
-from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-
+from fastapi.testclient import TestClient
 from app.main import app
-from app.core.database import SessionLocal, Base, engine
-from app.core.security import create_access_token
+
+from app.core.database import SessionLocal, Base, engine as default_engine
+from app.core.security import create_access_token, get_password_hash
 from app.models import User, UserRole
+
+
+# Use SQLite fallback engine if PostgreSQL container is offline
+try:
+    with default_engine.connect() as conn:
+        test_engine = default_engine
+except Exception:
+    sqlite_url = "sqlite:///./test_pytest.db"
+    test_engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+    SessionLocal.configure(bind=test_engine)
 
 @pytest.fixture(scope="module")
 def client(db: Session) -> TestClient:
@@ -14,8 +25,9 @@ def client(db: Session) -> TestClient:
 
 @pytest.fixture(scope="module")
 def db() -> Session:
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=test_engine)
     session = SessionLocal()
+
     # Check if admin user exists, if not seed database
     admin = session.query(User).filter(User.role == UserRole.ADMIN).first()
     if not admin:

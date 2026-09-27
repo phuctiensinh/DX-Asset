@@ -68,17 +68,79 @@ class AIAssistantService:
         if process_mining_response is not None:
             return process_mining_response
 
-        # Try Optional AI API Provider if API Key is configured
-        if current_user.role != UserRole.EMPLOYEE and settings.AI_ENABLED and settings.AI_API_KEY:
-            try:
-                llm_response = AIAssistantService._call_external_llm(db, current_user, clean_msg)
-                if llm_response:
-                    return llm_response
-            except Exception as e:
-                logger.warning(f"External AI Provider failed, falling back to rule-based engine: {e}")
-
         # 2. Rule-Based Intent Processing Engine (100% PostgreSQL real data query)
-        return AIAssistantService._process_rule_based_query(db, current_user, clean_msg, lower_msg)
+        rule_based_response = AIAssistantService._process_rule_based_query(db, current_user, clean_msg, lower_msg)
+
+        # 3. Enhance with Ollama Local AI if enabled & reachable
+        if getattr(settings, "OLLAMA_ENABLED", True):
+            ollama_response = AIAssistantService._call_ollama_llm(clean_msg, rule_based_response)
+            if ollama_response:
+                return ollama_response
+
+        return rule_based_response
+
+    @staticmethod
+    def _call_ollama_llm(clean_msg: str, rule_based_res: AssistantChatResponse) -> Optional[AssistantChatResponse]:
+        if not getattr(settings, "OLLAMA_ENABLED", True) or not getattr(settings, "OLLAMA_BASE_URL", None):
+            return None
+
+        # Do not send forbidden queries, rejected mutations, or help prompts without data to LLM
+        if rule_based_res.intent in ("MUTATION_REJECTED", "FORBIDDEN_GLOBAL_QUERY", "EMPLOYEE_SCOPE_ONLY", "UNKNOWN_HELP", "CAPACITY_SIMULATION_NEEDS_INPUT", "REPLACEMENT_SIMULATION_NEEDS_INPUT", "ALLOCATION_SIMULATION_NEEDS_INPUT"):
+            return None
+
+        import httpx
+
+        system_prompt = (
+            "Bạn là Trợ lý AI chính thức của hệ thống DX-Asset (Digital Asset Lifecycle Management Platform).\n"
+            "Nhiệm vụ của bạn:\n"
+            "1. Trả lời câu hỏi người dùng bằng tiếng Việt tự nhiên, lịch sự và định dạng bằng Markdown đẹp mắt.\n"
+            "2. CHỈ TRẢ LỜI dựa trên Dữ liệu thực tế được hệ thống truy vấn từ CSDL dưới đây.\n"
+            "3. KHÔNG tự bịa đặt dữ liệu hay đưa ra thông tin không có trong CSDL được cung cấp.\n"
+            "4. KHÔNG thực hiện các thao tác thay đổi/xóa dữ liệu, không tạo câu lệnh SQL, không tiết lộ mật khẩu hay bí mật hệ thống.\n"
+            "5. Giữ câu trả lời ngắn gọn, trực diện và chính xác."
+        )
+
+        user_content = (
+            f"DỮ LIỆU THỰC TẾ TRUY VẤN TỪ HỆ THỐNG:\n"
+            f"{rule_based_res.answer}\n\n"
+            f"CÂU HỎI CỦA NGƯỜI DÙNG: {clean_msg}"
+        )
+
+        url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat"
+        payload = {
+            "model": getattr(settings, "OLLAMA_MODEL", "qwen2.5:3b"),
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            "stream": False,
+            "options": {
+                "temperature": 0.2
+            }
+        }
+
+        try:
+            timeout_seconds = float(getattr(settings, "OLLAMA_TIMEOUT_SECONDS", 10.0))
+            timeout_config = httpx.Timeout(timeout_seconds, connect=3.0)
+            with httpx.Client(timeout=timeout_config) as client:
+                res = client.post(url, json=payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    answer_text = data.get("message", {}).get("content", "").strip()
+                    if answer_text:
+                        return AssistantChatResponse(
+                            answer=answer_text,
+                            intent=rule_based_res.intent,
+                            sources=rule_based_res.sources,
+                            is_fallback=False
+                        )
+                else:
+                    logger.warning(f"Ollama API returned HTTP status {res.status_code}: {res.text}")
+        except Exception as e:
+            logger.warning(f"Ollama integration call failed, falling back to Rule-Based engine: {e}")
+
+        return None
+
 
     @staticmethod
     def _process_rule_based_query(db: Session, current_user: User, clean_msg: str, lower_msg: str) -> AssistantChatResponse:
