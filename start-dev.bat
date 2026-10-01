@@ -16,7 +16,7 @@ if errorlevel 1 (
     echo.
     echo Vui long thuc hien:
     echo 1. Mo ung dung Docker Desktop tren Windows.
-    echo 2. Cho bieu tuong Docker (ca voi) duoi khay he thong khoi dong xong.
+    echo 2. Cho bieu tuong Docker [ca voi] duoi khay he thong khoi dong xong.
     echo 3. Chay lai file start-dev.bat nay.
     echo ========================================================
     echo.
