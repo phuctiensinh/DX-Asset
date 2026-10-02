@@ -16,6 +16,7 @@ import {
   Wrench,
   BrainCircuit,
   Users,
+  Building2,
 } from 'lucide-react';
 
 export function Navbar() {
@@ -25,15 +26,15 @@ export function Navbar() {
   const getRoleBadgeStyle = (role?: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+        return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'IT_ASSET_MANAGER':
-        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30';
+        return 'bg-indigo-100 text-indigo-700 border-indigo-200';
       case 'MANAGER':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'EMPLOYEE':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+        return 'bg-amber-100 text-amber-800 border-amber-200';
       default:
-        return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -60,12 +61,18 @@ export function Navbar() {
       ? [
           {
             href: '/users',
-            label: 'Quản lý người dùng',
+            label: 'Người dùng',
             icon: Users,
             active: pathname.startsWith('/users'),
           },
         ]
       : []),
+    {
+      href: '/departments',
+      label: 'Phòng ban',
+      icon: Building2,
+      active: pathname.startsWith('/departments'),
+    },
     {
       href: '/assets',
       label: 'Quản lý tài sản',
@@ -98,37 +105,35 @@ export function Navbar() {
     },
   ];
 
-
-
   return (
-    <header className="sticky top-0 z-30 bg-slate-800/90 backdrop-blur border-b border-slate-700/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-md">
+    <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/90 px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center space-x-6">
         {/* Brand */}
         <Link href="/dashboard" className="flex items-center space-x-3 group">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="font-bold text-lg text-white leading-tight">DX-Asset</div>
-            <div className="text-xs text-slate-400">Digital Asset Lifecycle</div>
+            <div className="font-extrabold text-lg text-slate-900 tracking-tight leading-tight">DX-Asset</div>
+            <div className="text-[11px] font-medium text-indigo-600">Digital Asset Lifecycle</div>
           </div>
         </Link>
 
         {/* Navigation Tabs */}
-        <nav className="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-700/60">
+        <nav className="hidden xl:flex items-center space-x-1 pl-4 border-l border-slate-200">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                   link.active
-                    ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={`w-4 h-4 ${link.active ? 'text-indigo-600' : 'text-slate-400'}`} />
                 <span>{link.label}</span>
               </Link>
             );
@@ -136,34 +141,36 @@ export function Navbar() {
         </nav>
       </div>
 
-      <div className="flex items-center space-x-4">
-        {/* Mobile Nav Link shortcut */}
-        <div className="flex md:hidden items-center space-x-2">
+      <div className="flex items-center space-x-3 sm:space-x-4">
+        {/* Compact Nav for Medium screens */}
+        <nav className="hidden md:flex xl:hidden items-center space-x-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`p-2 rounded-lg text-xs font-semibold ${
+                className={`p-2 rounded-xl text-xs font-semibold ${
                   link.active
-                    ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                    : 'text-slate-600 hover:bg-slate-100'
                 }`}
                 title={link.label}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
               </Link>
             );
           })}
-        </div>
+        </nav>
 
         {/* User info pill */}
-        <div className="hidden sm:flex items-center space-x-3 bg-slate-900/60 border border-slate-700/60 px-3.5 py-1.5 rounded-full text-xs">
-          <UserIcon className="w-4 h-4 text-sky-400" />
-          <span className="font-semibold text-slate-200">{user?.full_name}</span>
+        <div className="hidden sm:flex items-center space-x-2.5 bg-slate-50 border border-slate-200/80 px-3.5 py-1.5 rounded-full text-xs shadow-inner">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+            {user?.full_name?.charAt(0) || 'U'}
+          </div>
+          <span className="font-semibold text-slate-800">{user?.full_name}</span>
           <span
-            className={`px-2 py-0.5 rounded-md border font-medium text-[10px] ${getRoleBadgeStyle(
+            className={`px-2 py-0.5 rounded-md border font-bold text-[10px] ${getRoleBadgeStyle(
               user?.role
             )}`}
           >
@@ -173,7 +180,7 @@ export function Navbar() {
 
         <button
           onClick={logout}
-          className="flex items-center space-x-2 px-3.5 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-semibold rounded-xl transition-all"
+          className="flex items-center space-x-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-semibold rounded-xl transition-all shadow-sm"
         >
           <LogOut className="w-4 h-4" />
           <span className="hidden sm:inline">Đăng xuất</span>
@@ -182,3 +189,4 @@ export function Navbar() {
     </header>
   );
 }
+

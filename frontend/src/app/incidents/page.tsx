@@ -582,17 +582,15 @@ function IncidentsContent() {
         body: JSON.stringify({
           status: updateFormData.status,
           assigned_it_id: updateFormData.assigned_it_id ? parseInt(updateFormData.assigned_it_id) : undefined,
-          resolution_notes: updateFormData.resolution_notes.trim() || undefined,
-          repair_cost: parseFloat(updateFormData.repair_cost) || 0,
+          repair_cost: updateFormData.repair_cost ? parseFloat(updateFormData.repair_cost) : undefined,
         }),
       });
-
       setShowUpdateModal(false);
-      setSuccessMsg(`Cập nhật tiến độ xử lý phiếu ${selectedIncident.ticket_code} thành công!`);
+      setSuccessMsg('Cập nhật trạng thái sự cố thành công!');
       setTimeout(() => setSuccessMsg(null), 4000);
       loadIncidents();
     } catch (err: any) {
-      setFormError(err?.message || 'Không thể cập nhật tiến độ sự cố');
+      setFormError(err?.message || 'Không thể cập nhật sự cố');
     } finally {
       setFormSubmitting(false);
     }
@@ -601,36 +599,36 @@ function IncidentsContent() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-400 border border-red-500/40">Khẩn cấp (CRITICAL)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Khẩn cấp</span>;
       case 'HIGH':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/40">Cao (HIGH)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">Cao</span>;
       case 'MEDIUM':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-500/20 text-sky-400 border border-sky-500/40">Trung bình (MEDIUM)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-sky-50 text-sky-700 border border-sky-200">Trung bình</span>;
       case 'LOW':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/20 text-slate-300 border border-slate-500/40">Thấp (LOW)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">Thấp</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-700 text-slate-300">{priority}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">{priority}</span>;
     }
   };
 
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case 'OPEN':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30">Mới tạo (OPEN)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Mới tạo</span>;
       case 'IN_REVIEW':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30">Đang xem xét</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">Đang xem xét</span>;
       case 'IN_PROGRESS':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 animate-pulse">Đang xử lý</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 animate-pulse">Đang xử lý</span>;
       case 'WAITING_FOR_INFO':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">Chờ thông tin</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">Chờ thông tin</span>;
       case 'RESOLVED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Đã khắc phục</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Đã khắc phục</span>;
       case 'CLOSED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/30">Đã đóng</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">Đã đóng</span>;
       case 'CANCELLED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-500/10 text-zinc-400 border border-zinc-500/30">Đã hủy</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200">Đã hủy</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300">{statusStr}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">{statusStr}</span>;
     }
   };
 
@@ -638,12 +636,10 @@ function IncidentsContent() {
     if (!dateStr) return '—';
     try {
       const d = new Date(dateStr);
-      return d.toLocaleString('vi-VN', {
-        year: 'numeric',
+      return d.toLocaleDateString('vi-VN', {
         month: '2-digit',
         day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
+        year: 'numeric',
       });
     } catch {
       return dateStr;
@@ -651,29 +647,29 @@ function IncidentsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <div className="w-11 h-11 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shadow-sm">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                 Quản lý Báo hỏng & Sự cố Kỹ thuật
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Tiếp nhận và xử lý sự cố thiết bị doanh nghiệp. Tổng số phiếu: <span className="font-semibold text-rose-400">{total}</span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Tiếp nhận và xử lý sự cố thiết bị doanh nghiệp. Tổng số phiếu: <span className="font-semibold text-rose-600">{total}</span>
               </p>
             </div>
           </div>
 
           <button
             onClick={openCreateModal}
-            className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-rose-500/20 transition-all"
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-rose-600/20 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>+ Báo sự cố mới</span>
@@ -682,21 +678,21 @@ function IncidentsContent() {
 
         {/* Global Notifications */}
         {successMsg && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center space-x-2 animate-fadeIn">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center space-x-2 animate-fadeIn shadow-sm">
+            <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center space-x-2 shadow-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-rose-600" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Search & Filter Toolbar */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
             {/* Search Input */}
             <div className="sm:col-span-6 relative">
@@ -708,7 +704,7 @@ function IncidentsContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm mã phiếu (INC-...), tiêu đề, mã TS, người báo cáo..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 rounded-xl text-xs text-slate-100 placeholder-slate-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200/90 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none transition-all"
               />
             </div>
 
@@ -720,7 +716,7 @@ function IncidentsContent() {
                   setStatusFilter(e.target.value);
                   setSkip(0);
                 }}
-                className="w-full py-2.5 px-3 bg-slate-900/80 border border-slate-700 focus:border-rose-500 rounded-xl text-xs text-slate-200 outline-none"
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/90 focus:bg-white focus:border-rose-500 rounded-xl text-xs text-slate-700 outline-none transition-all"
               >
                 <option value="">Tất cả Trạng thái</option>
                 <option value="OPEN">Mới tạo (OPEN)</option>
@@ -741,7 +737,7 @@ function IncidentsContent() {
                   setPriorityFilter(e.target.value);
                   setSkip(0);
                 }}
-                className="w-full py-2.5 px-3 bg-slate-900/80 border border-slate-700 focus:border-rose-500 rounded-xl text-xs text-slate-200 outline-none"
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/90 focus:bg-white focus:border-rose-500 rounded-xl text-xs text-slate-700 outline-none transition-all"
               >
                 <option value="">Tất cả Mức ưu tiên</option>
                 <option value="CRITICAL">Khẩn cấp (CRITICAL)</option>
@@ -754,110 +750,107 @@ function IncidentsContent() {
         </div>
 
         {/* Table / List Area */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-12 flex flex-col items-center justify-center space-y-3">
-              <Loader2 className="w-8 h-8 text-rose-400 animate-spin" />
-              <span className="text-xs text-slate-400">Đang tải danh sách sự cố kỹ thuật...</span>
+              <Loader2 className="w-8 h-8 text-rose-600 animate-spin" />
+              <span className="text-xs text-slate-500">Đang tải danh sách sự cố kỹ thuật...</span>
             </div>
           ) : incidents.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <AlertTriangle className="w-12 h-12 text-slate-600 mx-auto" />
-              <div className="text-base font-semibold text-slate-300">Không có phiếu báo sự cố nào</div>
+              <AlertTriangle className="w-12 h-12 text-slate-300 mx-auto" />
+              <div className="text-base font-semibold text-slate-700">Không có phiếu báo sự cố nào</div>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Chưa có sự cố được báo cáo hoặc không tìm thấy dữ liệu khớp với bộ lọc.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-900/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-700/80">
+            <div className="w-full">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200 text-[11px]">
                   <tr>
-                    <th className="py-3.5 px-4">Mã Phiếu</th>
-                    <th className="py-3.5 px-4">Tài Sản Gặp Sự Cố</th>
-                    <th className="py-3.5 px-4">Tiêu Đề / Mô Tả</th>
-                    <th className="py-3.5 px-4">Phân Loại / Ưu Tiên</th>
-                    <th className="py-3.5 px-4">Trạng Thái</th>
-                    <th className="py-3.5 px-4">Người Báo / Phụ Trách</th>
-                    <th className="py-3.5 px-4">Ngày Tạo</th>
-                    <th className="py-3.5 px-4 text-right">Thao Tác</th>
+                    <th className="py-2.5 px-3">Mã Phiếu</th>
+                    <th className="py-2.5 px-3">Tài Sản</th>
+                    <th className="py-2.5 px-3">Tiêu Đề / Mô Tả</th>
+                    <th className="py-2.5 px-3">Phân Loại / Ưu Tiên</th>
+                    <th className="py-2.5 px-3">Trạng Thái</th>
+                    <th className="py-2.5 px-3">Người Báo / IT</th>
+                    <th className="py-2.5 px-3">Ngày Tạo</th>
+                    <th className="py-2.5 px-3 text-right">Thao Tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/60">
+                <tbody className="divide-y divide-slate-100">
                   {incidents.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-700/40 transition-colors">
-                      <td className="py-3.5 px-4 font-bold font-mono text-rose-400">
+                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 font-bold font-mono text-rose-600 whitespace-nowrap text-[11px]">
                         {item.ticket_code}
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-white">
-                        <div className="font-mono text-sky-400">
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">
+                        <div className="font-mono text-indigo-600 text-[11px] truncate max-w-[120px]" title={item.asset?.asset_code}>
                           {item.asset?.asset_code || `TS #${item.asset_id}`}
                         </div>
-                        <div className="text-slate-300 font-normal">{item.asset?.name}</div>
+                        <div className="text-slate-600 font-normal text-[11px] truncate max-w-[120px]" title={item.asset?.name}>{item.asset?.name}</div>
                       </td>
-                      <td className="py-3.5 px-4 max-w-xs">
-                        <div className="font-semibold text-slate-100 truncate">{item.title}</div>
-                        <div className="text-[11px] text-slate-400 truncate">{item.description}</div>
+                      <td className="py-2.5 px-3 max-w-[200px]">
+                        <div className="font-semibold text-slate-900 truncate" title={item.title}>{item.title}</div>
+                        <div className="text-[11px] text-slate-500 truncate" title={item.description}>{item.description}</div>
                       </td>
-                      <td className="py-3.5 px-4 space-y-1">
+                      <td className="py-2.5 px-3 space-y-0.5 whitespace-nowrap">
                         <div>{getPriorityBadge(item.priority)}</div>
-                        <div className="text-[10px] text-slate-400 font-mono flex items-center space-x-1">
+                        <div className="text-[10px] text-slate-500 font-mono flex items-center space-x-1">
                           <span>{item.category}</span>
                           {item.suggested_queue && (
-                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-[9px] border border-purple-500/30">
+                            <span className="px-1 py-0.2 rounded bg-purple-50 text-purple-700 font-mono text-[9px] border border-purple-200">
                               {item.suggested_queue}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {getStatusBadge(item.status)}
                       </td>
-                      <td className="py-3.5 px-4 space-y-1">
-                        <div className="text-slate-200">
-                          Báo bởi: <span className="font-semibold">{item.reporter?.full_name || 'N/A'}</span>
+                      <td className="py-2.5 px-3 whitespace-nowrap max-w-[140px]">
+                        <div className="text-slate-900 font-medium truncate" title={item.reporter?.full_name || 'N/A'}>
+                          {item.reporter?.full_name || 'N/A'}
                         </div>
-                        <div className="text-slate-400 text-[11px]">
-                          IT: {item.assigned_it?.full_name || <span className="italic text-slate-500">Chưa gán</span>}
+                        <div className="text-slate-500 text-[10px] truncate" title={item.assigned_it?.full_name || 'Chưa gán'}>
+                          IT: {item.assigned_it?.full_name || <span className="italic text-slate-400">Chưa gán</span>}
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]">
+                      <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] whitespace-nowrap">
                         {formatDate(item.created_at)}
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end space-x-1.5">
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => openDetailModal(item)}
-                            className="p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                             title="Xem chi tiết"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
                           {canManageIT && (
                             <>
                               <button
                                 onClick={() => openRecommendationModal(item)}
-                                className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
-                                title="Gợi ý & Đề xuất Kỹ thuật viên (Smart Routing)"
+                                className="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors"
+                                title="Đề xuất KTV (Smart Routing)"
                               >
-                                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                                <span>Đề xuất IT</span>
+                                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                               </button>
                               <button
                                 onClick={() => openUpdateModal(item)}
-                                className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
+                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
                                 title="Xử lý / Cập nhật sự cố"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
-                                <span>Xử lý</span>
                               </button>
                               <Link
                                 href="/maintenance"
-                                className="px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
-                                title="Chuyển sang trang Quản lý Bảo trì"
+                                className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors"
+                                title="Lập phiếu bảo trì"
                               >
                                 <Wrench className="w-3.5 h-3.5" />
-                                <span>Bảo trì</span>
                               </Link>
                             </>
                           )}
@@ -872,26 +865,26 @@ function IncidentsContent() {
 
           {/* Pagination Controls */}
           {total > limit && (
-            <div className="px-4 py-3.5 bg-slate-900/60 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+            <div className="px-4 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
               <div>
-                Hiển thị <span className="font-semibold text-white">{skip + 1}</span> -{' '}
-                <span className="font-semibold text-white">
+                Hiển thị <span className="font-semibold text-slate-900">{skip + 1}</span> -{' '}
+                <span className="font-semibold text-slate-900">
                   {Math.min(skip + limit, total)}
                 </span>{' '}
-                trên tổng số <span className="font-semibold text-white">{total}</span> phiếu sự cố
+                trên tổng số <span className="font-semibold text-slate-900">{total}</span> phiếu sự cố
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   disabled={skip === 0}
                   onClick={() => setSkip(Math.max(0, skip - limit))}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 font-medium"
                 >
                   Trang trước
                 </button>
                 <button
                   disabled={skip + limit >= total}
                   onClick={() => setSkip(skip + limit)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 font-medium"
                 >
                   Trang sau
                 </button>
@@ -903,38 +896,38 @@ function IncidentsContent() {
 
       {/* CREATE INCIDENT MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <AlertTriangle className="w-5 h-5 text-rose-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200/90 rounded-2xl shadow-2xl p-6 text-slate-800 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
                 <span>Báo cáo sự cố tài sản mới</span>
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreateSubmit} className="space-y-4 mt-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Chọn tài sản gặp sự cố <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Chọn tài sản gặp sự cố <span className="text-rose-600">*</span>
                 </label>
                 <select
                   required
                   value={createFormData.asset_id}
                   onChange={(e) => setCreateFormData({ ...createFormData, asset_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white font-mono"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900 font-mono"
                 >
                   <option value="">-- Chọn tài sản --</option>
                   {assetsList.map((asset) => (
@@ -946,8 +939,8 @@ function IncidentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Tiêu đề sự cố <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Tiêu đề sự cố <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -955,17 +948,17 @@ function IncidentsContent() {
                   value={createFormData.title}
                   onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
                   placeholder="VD: Màn hình không lên nguồn, quạt kêu to..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Phân loại sự cố</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Phân loại sự cố</label>
                   <select
                     value={createFormData.category}
                     onChange={(e) => setCreateFormData({ ...createFormData, category: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                   >
                     <option value="HARDWARE">Phần cứng (HARDWARE)</option>
                     <option value="SOFTWARE">Phần mềm (SOFTWARE)</option>
@@ -977,11 +970,11 @@ function IncidentsContent() {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Mức độ ưu tiên</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Mức độ ưu tiên</label>
                   <select
                     value={createFormData.priority}
                     onChange={(e) => setCreateFormData({ ...createFormData, priority: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                   >
                     <option value="LOW">Thấp (LOW)</option>
                     <option value="MEDIUM">Trung bình (MEDIUM)</option>
@@ -992,8 +985,8 @@ function IncidentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Mô tả chi tiết sự cố <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Mô tả chi tiết sự cố <span className="text-rose-600">*</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1001,15 +994,15 @@ function IncidentsContent() {
                   value={createFormData.description}
                   onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
                   placeholder="Mô tả hiện tượng, hoàn cảnh phát sinh lỗi..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                 />
               </div>
 
               {/* ATTACHMENT SELECTION SECTION IN CREATE MODAL */}
-              <div className="pt-3 border-t border-slate-700/80 space-y-2.5">
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <label className="font-semibold text-slate-300 flex items-center space-x-1.5">
-                    <Paperclip className="w-4 h-4 text-amber-400" />
+                  <label className="font-semibold text-slate-700 flex items-center space-x-1.5">
+                    <Paperclip className="w-4 h-4 text-amber-600" />
                     <span>Hình ảnh / tài liệu sự cố ({pendingFiles.length}/5)</span>
                   </label>
 
@@ -1027,7 +1020,7 @@ function IncidentsContent() {
                       type="button"
                       disabled={formSubmitting || pendingFiles.length >= 5}
                       onClick={() => createCameraInputRef.current?.click()}
-                      className="px-2.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       title="Chụp ảnh trực tiếp từ thiết bị (Ưu tiên camera sau)"
                     >
                       <Camera className="w-3.5 h-3.5" />
@@ -1047,7 +1040,7 @@ function IncidentsContent() {
                       type="button"
                       disabled={formSubmitting || pendingFiles.length >= 5}
                       onClick={() => createFilePickerInputRef.current?.click()}
-                      className="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-semibold flex items-center space-x-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                       title="Chọn ảnh hoặc tài liệu từ máy tính / thiết bị"
                     >
                       <Upload className="w-3.5 h-3.5" />
@@ -1056,7 +1049,7 @@ function IncidentsContent() {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-400 italic">
+                <p className="text-[11px] text-slate-500 italic">
                   * Giới hạn: tối đa 5 tệp, tối đa 10 MB/tệp (Hỗ trợ JPG, PNG, WEBP, PDF, DOCX, XLSX).
                 </p>
 
@@ -1071,25 +1064,25 @@ function IncidentsContent() {
                       return (
                         <div
                           key={idx}
-                          className="p-2 bg-slate-900/90 border border-slate-700/80 rounded-xl flex items-center justify-between gap-2 text-xs"
+                          className="p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-xs"
                         >
                           <div className="flex items-center space-x-2 overflow-hidden">
                             {isImg && previewUrl ? (
                               <img
                                 src={previewUrl}
                                 alt={file.name}
-                                className="w-9 h-9 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-950"
+                                className="w-9 h-9 object-cover rounded-lg border border-slate-200 shrink-0 bg-white"
                               />
                             ) : (
-                              <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                              <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
                                 <FileText className="w-4 h-4" />
                               </div>
                             )}
                             <div className="truncate">
-                              <div className="font-semibold text-slate-200 truncate" title={file.name}>
+                              <div className="font-semibold text-slate-800 truncate" title={file.name}>
                                 {file.name}
                               </div>
-                              <div className="text-[10px] text-slate-400 font-mono">
+                              <div className="text-[10px] text-slate-500 font-mono">
                                 {sizeKb} KB
                               </div>
                             </div>
@@ -1099,7 +1092,7 @@ function IncidentsContent() {
                             type="button"
                             disabled={formSubmitting}
                             onClick={() => handleRemovePendingFile(idx)}
-                            className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors shrink-0"
+                            className="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors shrink-0"
                             title="Xóa tệp khỏi danh sách"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1112,25 +1105,25 @@ function IncidentsContent() {
               </div>
 
               {uploadProgressMsg && (
-                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs flex items-center space-x-2 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-xs flex items-center space-x-2 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0 text-purple-600" />
                   <span>{uploadProgressMsg}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   disabled={formSubmitting}
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold disabled:opacity-50"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold shadow-lg shadow-rose-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-md shadow-rose-600/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -1150,47 +1143,47 @@ function IncidentsContent() {
 
       {/* UPDATE INCIDENT MODAL (ADMIN / IT MANAGER ONLY) */}
       {showUpdateModal && selectedIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Wrench className="w-5 h-5 text-rose-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200/90 rounded-2xl shadow-2xl p-6 text-slate-800 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <Wrench className="w-5 h-5 text-rose-600" />
                 <span>Xử lý phiếu: {selectedIncident.ticket_code}</span>
               </h3>
               <button
                 onClick={() => setShowUpdateModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleUpdateSubmit} className="space-y-4 mt-4 text-xs">
-              <div className="p-3 bg-slate-900/60 border border-slate-700/60 rounded-xl space-y-1">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
                 <div>
                   Tài sản:{' '}
-                  <span className="font-bold text-sky-400 font-mono">
+                  <span className="font-bold text-indigo-600 font-mono">
                     {selectedIncident.asset?.asset_code}
                   </span>{' '}
                   - {selectedIncident.asset?.name}
                 </div>
-                <div>Tiêu đề: <span className="font-semibold text-white">{selectedIncident.title}</span></div>
+                <div>Tiêu đề: <span className="font-semibold text-slate-900">{selectedIncident.title}</span></div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Cập nhật trạng thái phiếu</label>
+                <label className="block font-semibold text-slate-700 mb-1">Cập nhật trạng thái phiếu</label>
                 <select
                   value={updateFormData.status}
                   disabled={selectedIncident.status === 'CLOSED' || selectedIncident.status === 'CANCELLED'}
                   onChange={(e) => setUpdateFormData({ ...updateFormData, status: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {(VALID_STATUS_TRANSITIONS[selectedIncident.status] || [
                     { value: selectedIncident.status, label: selectedIncident.status }
@@ -1201,18 +1194,18 @@ function IncidentsContent() {
                   ))}
                 </select>
                 {(selectedIncident.status === 'CLOSED' || selectedIncident.status === 'CANCELLED') && (
-                  <p className="text-[11px] text-slate-400 mt-1 italic">
+                  <p className="text-[11px] text-slate-500 mt-1 italic">
                     Phiếu đã ở trạng thái kết thúc ({selectedIncident.status}), không thể chuyển trạng thái.
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Phân công cán bộ IT phụ trách</label>
+                <label className="block font-semibold text-slate-700 mb-1">Phân công cán bộ IT phụ trách</label>
                 <select
                   value={updateFormData.assigned_it_id}
                   onChange={(e) => setUpdateFormData({ ...updateFormData, assigned_it_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                 >
                   <option value="">-- Chưa gán cán bộ --</option>
                   {itUsersList.map((u) => (
@@ -1224,40 +1217,40 @@ function IncidentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Chi phí sửa chữa (VND)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Chi phí sửa chữa (VND)</label>
                 <input
                   type="number"
                   min="0"
                   step="1000"
                   value={updateFormData.repair_cost}
                   onChange={(e) => setUpdateFormData({ ...updateFormData, repair_cost: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white font-mono"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900 font-mono"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Ghi chú khắc phục / Phương án xử lý</label>
+                <label className="block font-semibold text-slate-700 mb-1">Ghi chú khắc phục / Phương án xử lý</label>
                 <textarea
                   rows={3}
                   value={updateFormData.resolution_notes}
                   onChange={(e) => setUpdateFormData({ ...updateFormData, resolution_notes: e.target.value })}
                   placeholder="Ghi rõ chi tiết phương án đã thay thế, sửa chữa..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-rose-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowUpdateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-semibold shadow-lg shadow-rose-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-md shadow-rose-600/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -1276,79 +1269,79 @@ function IncidentsContent() {
 
       {/* DETAIL MODAL */}
       {showDetailModal && selectedIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 space-y-4 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white border border-slate-200/90 rounded-2xl shadow-2xl p-6 text-slate-800 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-5 h-5 text-rose-400" />
-                <span className="font-mono text-rose-400 font-bold text-base">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+                <span className="font-mono text-rose-600 font-bold text-base">
                   {selectedIncident.ticket_code}
                 </span>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-white leading-snug">{selectedIncident.title}</h3>
+              <h3 className="text-lg font-bold text-slate-900 leading-snug">{selectedIncident.title}</h3>
               <div className="mt-2 flex items-center space-x-2">
                 {getStatusBadge(selectedIncident.status)}
                 {getPriorityBadge(selectedIncident.priority)}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200/80">
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Tài sản gặp sự cố</div>
-                <div className="font-semibold text-white mt-0.5">
+                <div className="text-slate-500 uppercase font-medium text-[10px]">Tài sản gặp sự cố</div>
+                <div className="font-semibold text-slate-900 mt-0.5">
                   [{selectedIncident.asset?.asset_code}] {selectedIncident.asset?.name}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Người báo cáo</div>
-                <div className="font-semibold text-slate-200 mt-0.5">
+                <div className="text-slate-500 uppercase font-medium text-[10px]">Người báo cáo</div>
+                <div className="font-semibold text-slate-800 mt-0.5">
                   {selectedIncident.reporter?.full_name} ({selectedIncident.reporter?.email})
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Cán bộ IT phụ trách</div>
-                <div className="font-semibold text-slate-200 mt-0.5">
+                <div className="text-slate-500 uppercase font-medium text-[10px]">Cán bộ IT phụ trách</div>
+                <div className="font-semibold text-slate-800 mt-0.5">
                   {selectedIncident.assigned_it?.full_name || 'Chưa phân công'}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Chi phí sửa chữa</div>
-                <div className="font-mono font-semibold text-emerald-400 mt-0.5">
+                <div className="text-slate-500 uppercase font-medium text-[10px]">Chi phí sửa chữa</div>
+                <div className="font-mono font-semibold text-emerald-600 mt-0.5">
                   {selectedIncident.repair_cost ? `${selectedIncident.repair_cost.toLocaleString('vi-VN')} VNĐ` : '0 VNĐ'}
                 </div>
               </div>
             </div>
 
             <div className="text-xs space-y-1">
-              <div className="text-slate-400 uppercase font-medium text-[10px]">Mô tả sự cố</div>
-              <div className="p-3 bg-slate-900/40 border border-slate-700/40 rounded-xl text-slate-300">
+              <div className="text-slate-500 uppercase font-medium text-[10px]">Mô tả sự cố</div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700">
                 {selectedIncident.description}
               </div>
             </div>
 
             {selectedIncident.resolution_notes && (
               <div className="text-xs space-y-1">
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Ghi chú khắc phục / Xử lý</div>
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300">
+                <div className="text-slate-500 uppercase font-medium text-[10px]">Ghi chú khắc phục / Xử lý</div>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800">
                   {selectedIncident.resolution_notes}
                 </div>
               </div>
             )}
 
             {/* SEAWEEDFS ATTACHMENTS SECTION */}
-            <div className="pt-3 border-t border-slate-700/80 space-y-3">
+            <div className="pt-3 border-t border-slate-100 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-                  <Paperclip className="w-4 h-4 text-amber-400" />
+                <div className="flex items-center space-x-2 text-amber-700 font-bold text-xs uppercase tracking-wider">
+                  <Paperclip className="w-4 h-4 text-amber-600" />
                   <span>Tập tin đính kèm (SeaweedFS) ({attachmentsList.length}/5)</span>
                 </div>
                 <div>
@@ -1363,11 +1356,11 @@ function IncidentsContent() {
                     type="button"
                     disabled={uploadingAttachment || attachmentsList.length >= 5}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center space-x-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {uploadingAttachment ? (
                       <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
                         <span>Đang tải lên...</span>
                       </>
                     ) : (
@@ -1381,7 +1374,7 @@ function IncidentsContent() {
               </div>
 
               {attachmentsList.length === 0 ? (
-                <div className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-400 text-center">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center">
                   Chưa có tập tin đính kèm (Hỗ trợ định dạng: JPG, PNG, WEBP, PDF, DOCX, XLSX - Tối đa 10MB).
                 </div>
               ) : (
@@ -1394,29 +1387,29 @@ function IncidentsContent() {
                     return (
                       <div
                         key={att.id}
-                        className="p-2.5 bg-slate-900/80 border border-slate-700/70 rounded-xl flex items-center justify-between gap-2 text-xs hover:border-slate-600 transition-all"
+                        className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-xs hover:border-slate-300 transition-all"
                       >
                         <div className="flex items-center space-x-2.5 overflow-hidden">
                           {isImg && imgBlobUrl ? (
                             <img
                               src={imgBlobUrl}
                               alt={att.file_name}
-                              className="w-10 h-10 object-cover rounded-lg border border-slate-700 shrink-0 bg-slate-950"
+                              className="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0 bg-white"
                             />
                           ) : isImg ? (
-                            <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
                               <ImageIcon className="w-5 h-5 animate-pulse" />
                             </div>
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
                               <FileText className="w-5 h-5" />
                             </div>
                           )}
                           <div className="truncate">
-                            <div className="font-semibold text-slate-200 truncate" title={att.file_name}>
+                            <div className="font-semibold text-slate-800 truncate" title={att.file_name}>
                               {att.file_name}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
+                            <div className="text-[10px] text-slate-500 font-mono">
                               {sizeKb} KB • {att.mime_type.split('/')[1] || 'file'}
                             </div>
                           </div>
@@ -1426,7 +1419,7 @@ function IncidentsContent() {
                           <button
                             type="button"
                             onClick={() => handleDownloadAttachment(att)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors shadow-sm"
                             title="Tải về / Xem tập tin"
                           >
                             <Download className="w-3.5 h-3.5" />
@@ -1435,7 +1428,7 @@ function IncidentsContent() {
                             <button
                               type="button"
                               onClick={() => handleDeleteAttachment(att.id)}
-                              className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
+                              className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
                               title="Xóa tập tin đính kèm"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1446,32 +1439,30 @@ function IncidentsContent() {
                     );
                   })}
                 </div>
-
               )}
             </div>
 
             {/* KNOWLEDGE BASE / SIMILAR INCIDENTS SECTION */}
-
-            <div className="pt-3 border-t border-slate-700/80 space-y-3">
+            <div className="pt-3 border-t border-slate-100 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-sky-400 font-bold text-xs uppercase tracking-wider">
-                  <BookOpen className="w-4 h-4 text-sky-400" />
+                <div className="flex items-center space-x-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
+                  <BookOpen className="w-4 h-4 text-indigo-600" />
                   <span>🔎 Sự cố tương tự trong Knowledge Base</span>
                 </div>
                 {similarIncidents && (
-                  <span className="text-[11px] text-slate-400">
-                    Tìm thấy: <strong className="text-sky-300">{similarIncidents.total_found}</strong> sự cố
+                  <span className="text-[11px] text-slate-500">
+                    Tìm thấy: <strong className="text-indigo-600">{similarIncidents.total_found}</strong> sự cố
                   </span>
                 )}
               </div>
 
               {loadingSimilar ? (
-                <div className="p-4 bg-slate-900/40 border border-slate-700/40 rounded-xl flex items-center justify-center space-x-2 text-xs text-slate-400">
-                  <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs text-slate-500">
+                  <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
                   <span>Đang truy vấn Knowledge Base...</span>
                 </div>
               ) : !similarIncidents || similarIncidents.items.length === 0 ? (
-                <div className="p-3 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-400 text-center">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center">
                   Chưa tìm thấy sự cố tương tự phù hợp trong Knowledge Base (Ngưỡng khớp score ≥ 30).
                 </div>
               ) : (
@@ -1479,24 +1470,24 @@ function IncidentsContent() {
                   {similarIncidents.items.map((item) => (
                     <div
                       key={item.incident_id}
-                      className="p-3 bg-slate-900/70 border border-slate-700/60 rounded-xl space-y-2 text-xs"
+                      className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="font-mono text-sky-300 font-bold">{item.ticket_code}</span>
-                            <span className="font-semibold text-slate-200">{item.title}</span>
+                            <span className="font-mono text-indigo-600 font-bold">{item.ticket_code}</span>
+                            <span className="font-semibold text-slate-900">{item.title}</span>
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
+                          <div className="text-[10px] text-slate-500 mt-0.5">
                             Tài sản: {item.asset_name} ({item.asset_code}) • {item.category}
                           </div>
                         </div>
                         <div className="flex flex-col items-end shrink-0">
-                          <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">
                             Khớp {item.similarity_score}%
                           </span>
                           {item.resolved_at && (
-                            <span className="text-[10px] text-slate-400 mt-0.5">
+                            <span className="text-[10px] text-slate-500 mt-0.5">
                               {formatDate(item.resolved_at)}
                             </span>
                           )}
@@ -1509,7 +1500,7 @@ function IncidentsContent() {
                           {item.similarity_reasons.map((reason, rIdx) => (
                             <span
                               key={rIdx}
-                              className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700"
+                              className="px-1.5 py-0.5 rounded bg-white text-[10px] text-slate-600 border border-slate-200"
                             >
                               ✓ {reason}
                             </span>
@@ -1519,21 +1510,21 @@ function IncidentsContent() {
 
                       {/* Resolution Notes */}
                       {item.resolution_notes && (
-                        <div className="p-2 bg-emerald-950/30 border border-emerald-500/20 rounded-lg text-emerald-200 text-[11px]">
-                          <strong className="text-emerald-400 font-semibold">Cách đã xử lý: </strong>
+                        <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-[11px]">
+                          <strong className="text-emerald-700 font-semibold">Cách đã xử lý: </strong>
                           {item.resolution_notes}
                         </div>
                       )}
 
                       {/* Linked Maintenance Info if present */}
                       {item.linked_maintenance && (
-                        <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                        <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
                           <div>
-                            Bảo trì: <span className="text-slate-300 font-mono font-medium">{item.linked_maintenance.maintenance_code}</span> ({item.linked_maintenance.status})
+                            Bảo trì: <span className="text-slate-800 font-mono font-medium">{item.linked_maintenance.maintenance_code}</span> ({item.linked_maintenance.status})
                           </div>
                           {item.linked_maintenance.duration_hours !== null && (
                             <div>
-                              Thời gian xử lý: <span className="text-amber-300 font-medium">{item.linked_maintenance.duration_hours} giờ</span>
+                              Thời gian xử lý: <span className="text-amber-700 font-medium">{item.linked_maintenance.duration_hours} giờ</span>
                             </div>
                           )}
                         </div>
@@ -1544,11 +1535,11 @@ function IncidentsContent() {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-100">
               <div>Ngày tạo: {formatDate(selectedIncident.created_at)}</div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
               >
                 Đóng
               </button>
@@ -1559,50 +1550,50 @@ function IncidentsContent() {
 
       {/* RECOMMENDATION MODAL (SMART ROUTING & TECHNICIAN RECOMMENDATION) */}
       {showRecommendationModal && selectedIncident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-2xl bg-slate-800 border border-purple-500/30 rounded-2xl shadow-2xl p-6 text-slate-100 my-8 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white border border-purple-200 rounded-2xl shadow-2xl p-6 text-slate-800 my-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
+                <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">
+                  <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                     Smart Routing & Đề xuất Kỹ thuật viên
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    Phiếu sự cố: <span className="font-mono text-purple-300 font-semibold">{selectedIncident.ticket_code}</span> - {selectedIncident.title}
+                  <p className="text-xs text-slate-500">
+                    Phiếu sự cố: <span className="font-mono text-purple-700 font-semibold">{selectedIncident.ticket_code}</span> - {selectedIncident.title}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowRecommendationModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* AI Classification & Queue Card */}
-            <div className="bg-slate-900/80 border border-purple-500/20 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
-                <div className="text-[10px] uppercase font-semibold text-slate-400">Danh mục Sự cố</div>
-                <div className="font-bold text-slate-100 mt-1 flex items-center space-x-1.5">
-                  <Cpu className="w-4 h-4 text-sky-400" />
+                <div className="text-[10px] uppercase font-semibold text-slate-500">Danh mục Sự cố</div>
+                <div className="font-bold text-slate-900 mt-1 flex items-center space-x-1.5">
+                  <Cpu className="w-4 h-4 text-indigo-600" />
                   <span>{selectedIncident.category}</span>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-semibold text-slate-400">Queue Xử lý Gợi ý</div>
-                <div className="font-mono font-bold text-purple-300 mt-1 flex items-center space-x-1.5">
-                  <Layers className="w-4 h-4 text-purple-400" />
+                <div className="text-[10px] uppercase font-semibold text-slate-500">Queue Xử lý Gợi ý</div>
+                <div className="font-mono font-bold text-purple-700 mt-1 flex items-center space-x-1.5">
+                  <Layers className="w-4 h-4 text-purple-600" />
                   <span>{recommendationsData?.suggested_queue || selectedIncident.suggested_queue || 'GENERAL_SUPPORT'}</span>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-semibold text-slate-400">Chế độ phân công</div>
-                <div className="font-semibold text-amber-300 mt-1 flex items-center space-x-1.5">
-                  <UserCheck className="w-4 h-4 text-amber-400" />
+                <div className="text-[10px] uppercase font-semibold text-slate-500">Chế độ phân công</div>
+                <div className="font-semibold text-amber-700 mt-1 flex items-center space-x-1.5">
+                  <UserCheck className="w-4 h-4 text-amber-600" />
                   <span>Xác nhận bởi Quản trị</span>
                 </div>
               </div>
@@ -1610,18 +1601,18 @@ function IncidentsContent() {
 
             {/* Candidates List */}
             <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
                 <span>Bảng xếp hạng Kỹ thuật viên phù hợp (100-pt Scoring)</span>
-                <span className="text-[11px] text-slate-500 font-normal">Skill (40) + Workload (40) + SLA (20)</span>
+                <span className="text-[11px] text-slate-400 font-normal">Skill (40) + Workload (40) + SLA (20)</span>
               </h4>
 
               {loadingRecommendations ? (
                 <div className="p-8 flex flex-col items-center justify-center space-y-2">
-                  <Loader2 className="w-7 h-7 text-purple-400 animate-spin" />
-                  <span className="text-xs text-slate-400">Đang phân tích dữ liệu kỹ năng & workload...</span>
+                  <Loader2 className="w-7 h-7 text-purple-600 animate-spin" />
+                  <span className="text-xs text-slate-500">Đang phân tích dữ liệu kỹ năng & workload...</span>
                 </div>
               ) : !recommendationsData || recommendationsData.recommendations.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400 border border-slate-700 rounded-xl">
+                <div className="p-6 text-center text-xs text-slate-500 border border-slate-200 rounded-xl">
                   Không tìm thấy Kỹ thuật viên phù hợp trong hệ thống.
                 </div>
               ) : (
@@ -1631,24 +1622,24 @@ function IncidentsContent() {
                       key={tech.user_id}
                       className={`p-4 rounded-xl border transition-all ${
                         idx === 0
-                          ? 'bg-purple-950/20 border-purple-500/50 shadow-lg shadow-purple-500/10'
-                          : 'bg-slate-900/60 border-slate-700/70 hover:border-slate-600'
+                          ? 'bg-purple-50/70 border-purple-200 shadow-sm'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             {idx === 0 && (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                                 ★ TOP 1 ĐỀ XUẤT
                               </span>
                             )}
-                            <span className="font-bold text-white text-sm">{tech.full_name}</span>
-                            <span className="text-xs text-slate-400">({tech.email})</span>
+                            <span className="font-bold text-slate-900 text-sm">{tech.full_name}</span>
+                            <span className="text-xs text-slate-500">({tech.email})</span>
                           </div>
                           <div className="flex flex-wrap gap-2 pt-1 text-[11px]">
                             {tech.reasons.map((r, rIdx) => (
-                              <span key={rIdx} className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                              <span key={rIdx} className="px-2 py-0.5 rounded bg-white text-slate-700 border border-slate-200">
                                 {r}
                               </span>
                             ))}
@@ -1657,15 +1648,15 @@ function IncidentsContent() {
 
                         <div className="flex items-center space-x-3 flex-shrink-0">
                           <div className="text-right">
-                            <div className="text-xs text-slate-400">Đồ thị Phù hợp</div>
-                            <div className="text-lg font-extrabold font-mono text-purple-300">
-                              {tech.total_score}<span className="text-xs text-slate-500">/100</span>
+                            <div className="text-xs text-slate-500">Đồ thị Phù hợp</div>
+                            <div className="text-lg font-extrabold font-mono text-purple-700">
+                              {tech.total_score}<span className="text-xs text-slate-400">/100</span>
                             </div>
                           </div>
                           <button
                             disabled={assigningTechId === tech.user_id}
                             onClick={() => handleAssignTechnician(selectedIncident.id, tech.user_id)}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
+                            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5 disabled:opacity-50"
                           >
                             {assigningTechId === tech.user_id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1684,13 +1675,13 @@ function IncidentsContent() {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-slate-700">
-              <div className="italic text-slate-500">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-100">
+              <div className="italic text-slate-400">
                 AI đóng vai trò hỗ trợ điều phối. Việc giao việc hoàn toàn nằm trong quyết định của bạn.
               </div>
               <button
                 onClick={() => setShowRecommendationModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
               >
                 Đóng
               </button>
@@ -1709,3 +1700,4 @@ export default function IncidentsPage() {
     </ProtectedRoute>
   );
 }
+

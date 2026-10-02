@@ -271,40 +271,40 @@ function AssetsContent() {
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case 'IN_STOCK':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Trong kho (In Stock)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">Trong kho (In Stock)</span>;
       case 'ASSIGNED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30">Đã cấp phát</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">Đã cấp phát</span>;
       case 'IN_MAINTENANCE':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">Đang bảo trì</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm">Đang bảo trì</span>;
       case 'DAMAGED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30">Hỏng hóc</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">Hỏng hóc</span>;
       case 'RETIRED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/30">Đã thanh lý</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">Đã thanh lý</span>;
       case 'LOST':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30">Mất mát</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">Mất mát</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-500/10 text-zinc-400 border border-zinc-500/30">{statusStr}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">{statusStr}</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
           <div>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
                 <Boxes className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   Quản lý Tài sản Doanh nghiệp
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Tổng số tài sản trong hệ thống: <span className="font-semibold text-sky-400">{total}</span>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tổng số tài sản trong hệ thống: <span className="font-bold text-indigo-600">{total}</span>
                 </p>
               </div>
             </div>
@@ -313,7 +313,7 @@ function AssetsContent() {
           {canEdit && (
             <button
               onClick={openCreateModal}
-              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-500/20 transition-all"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Thêm tài sản mới</span>
@@ -323,21 +323,21 @@ function AssetsContent() {
 
         {/* Global Notifications */}
         {successMsg && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center space-x-2 animate-fadeIn">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center space-x-2 shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center space-x-2 shadow-sm">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Search & Filter Toolbar */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
             {/* Search Input */}
             <div className="sm:col-span-6 relative">
@@ -349,7 +349,7 @@ function AssetsContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm mã tài sản, tên thiết bị, serial number..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl text-xs text-slate-100 placeholder-slate-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none transition-all font-medium"
               />
             </div>
 
@@ -361,7 +361,7 @@ function AssetsContent() {
                   setStatusFilter(e.target.value);
                   setSkip(0);
                 }}
-                className="w-full py-2.5 px-3 bg-slate-900/80 border border-slate-700 focus:border-sky-500 rounded-xl text-xs text-slate-200 outline-none"
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Trạng thái</option>
                 <option value="IN_STOCK">Trong kho (In Stock)</option>
@@ -381,7 +381,7 @@ function AssetsContent() {
                   setCategoryFilter(e.target.value);
                   setSkip(0);
                 }}
-                className="w-full py-2.5 px-3 bg-slate-900/80 border border-slate-700 focus:border-sky-500 rounded-xl text-xs text-slate-200 outline-none"
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Loại tài sản</option>
                 <option value="Laptop">Laptop</option>
@@ -395,11 +395,11 @@ function AssetsContent() {
           </form>
 
           {(search || statusFilter || categoryFilter) && (
-            <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-700/50">
-              <span className="text-slate-400">Đang áp dụng bộ lọc nâng cao</span>
+            <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+              <span className="text-slate-500">Đang áp dụng bộ lọc nâng cao</span>
               <button
                 onClick={handleResetFilters}
-                className="text-sky-400 hover:text-sky-300 font-semibold underline flex items-center space-x-1"
+                className="text-indigo-600 hover:text-indigo-700 font-semibold underline flex items-center space-x-1"
               >
                 <X className="w-3.5 h-3.5" />
                 <span>Xóa bộ lọc</span>
@@ -409,23 +409,23 @@ function AssetsContent() {
         </div>
 
         {/* Table / List Area */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-12 flex flex-col items-center justify-center space-y-3">
-              <Loader2 className="w-8 h-8 text-sky-400 animate-spin" />
-              <span className="text-xs text-slate-400">Đang tải danh sách tài sản...</span>
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+              <span className="text-xs text-slate-500">Đang tải danh sách tài sản...</span>
             </div>
           ) : assets.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <Boxes className="w-12 h-12 text-slate-600 mx-auto" />
-              <div className="text-base font-semibold text-slate-300">Không tìm thấy tài sản phù hợp</div>
+              <Boxes className="w-12 h-12 text-slate-300 mx-auto" />
+              <div className="text-base font-bold text-slate-800">Không tìm thấy tài sản phù hợp</div>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Vui lòng thử thay đổi từ khóa tìm kiếm hoặc xóa bỏ các bộ lọc đang áp dụng.
               </p>
               {(search || statusFilter || categoryFilter) && (
                 <button
                   onClick={handleResetFilters}
-                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-xs font-semibold rounded-xl text-slate-200 transition-colors"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-xs font-semibold rounded-xl text-slate-700 transition-colors"
                 >
                   Xóa bộ lọc
                 </button>
@@ -433,8 +433,8 @@ function AssetsContent() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-900/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-700/80">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                   <tr>
                     <th className="py-3.5 px-4">Mã TS</th>
                     <th className="py-3.5 px-4">Tên Tài Sản</th>
@@ -446,56 +446,56 @@ function AssetsContent() {
                     <th className="py-3.5 px-4 text-right">Thao Tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/60">
+                <tbody className="divide-y divide-slate-100">
                   {assets.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-700/40 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-sky-400 font-mono">
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3.5 px-4 font-extrabold text-indigo-600 font-mono">
                         {item.asset_code}
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-white">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">
                         <div>{item.name}</div>
                         {(item.brand || item.model) && (
-                          <div className="text-[11px] text-slate-400 font-normal">
+                          <div className="text-[11px] text-slate-500 font-normal">
                             {[item.brand, item.model].filter(Boolean).join(' - ')}
                           </div>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-300">
+                      <td className="py-3.5 px-4 font-semibold text-slate-700">
                         {item.category}
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-400">
+                      <td className="py-3.5 px-4 font-mono text-slate-500">
                         {item.serial_number || '—'}
                       </td>
                       <td className="py-3.5 px-4">
                         {getStatusBadge(item.status)}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-300">
+                      <td className="py-3.5 px-4 text-slate-700 font-medium">
                         <div>{item.department?.name || '—'}</div>
                         {item.location && (
-                          <div className="text-[11px] text-slate-400">{item.location}</div>
+                          <div className="text-[11px] text-slate-500">{item.location}</div>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
                         {item.current_user ? (
-                          <div className="font-semibold text-slate-200">
+                          <div className="font-bold text-slate-900">
                             {item.current_user.full_name}
                           </div>
                         ) : (
-                          <span className="text-slate-500 italic">Chưa cấp</span>
+                          <span className="text-slate-400 italic">Chưa cấp</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <Link
                             href={`/assignments?search=${encodeURIComponent(item.asset_code)}`}
-                            className="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 transition-colors"
+                            className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 transition-colors"
                             title="Xem lịch sử cấp phát"
                           >
                             <UserCheck className="w-4 h-4" />
                           </Link>
                           <button
                             onClick={() => openDetailModal(item)}
-                            className="p-1.5 rounded-lg bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                             title="Xem chi tiết"
                           >
                             <Eye className="w-4 h-4" />
@@ -503,7 +503,7 @@ function AssetsContent() {
                           {canEdit && (
                             <button
                               onClick={() => openEditModal(item)}
-                              className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 transition-colors"
+                              className="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-colors"
                               title="Sửa thông tin"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -520,26 +520,26 @@ function AssetsContent() {
 
           {/* Pagination Controls */}
           {total > limit && (
-            <div className="px-4 py-3.5 bg-slate-900/60 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+            <div className="px-4 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
               <div>
-                Hiển thị <span className="font-semibold text-white">{skip + 1}</span> -{' '}
-                <span className="font-semibold text-white">
+                Hiển thị <span className="font-bold text-slate-900">{skip + 1}</span> -{' '}
+                <span className="font-bold text-slate-900">
                   {Math.min(skip + limit, total)}
                 </span>{' '}
-                trên tổng số <span className="font-semibold text-white">{total}</span> tài sản
+                trên tổng số <span className="font-bold text-slate-900">{total}</span> tài sản
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   disabled={skip === 0}
                   onClick={() => setSkip(Math.max(0, skip - limit))}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-700 font-semibold shadow-sm"
                 >
                   Trang trước
                 </button>
                 <button
                   disabled={skip + limit >= total}
                   onClick={() => setSkip(skip + limit)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-700 font-semibold shadow-sm"
                 >
                   Trang sau
                 </button>
@@ -551,24 +551,24 @@ function AssetsContent() {
 
       {/* CREATE ASSET MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Plus className="w-5 h-5 text-sky-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <Plus className="w-5 h-5 text-indigo-600" />
                 <span>Thêm tài sản mới</span>
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 font-semibold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
@@ -576,8 +576,8 @@ function AssetsContent() {
             <form onSubmit={handleCreateSubmit} className="space-y-4 mt-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Mã tài sản <span className="text-red-400">*</span>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Mã tài sản <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -585,12 +585,12 @@ function AssetsContent() {
                     value={formData.asset_code}
                     onChange={(e) => setFormData({ ...formData, asset_code: e.target.value })}
                     placeholder="VD: LAP-003"
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Loại tài sản <span className="text-red-400">*</span>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Loại tài sản <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -598,14 +598,14 @@ function AssetsContent() {
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     placeholder="VD: Laptop, Monitor..."
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Tên tài sản <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Tên tài sản <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -613,50 +613,50 @@ function AssetsContent() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="VD: Laptop Apple MacBook Air M2"
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Thương hiệu (Brand)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Thương hiệu (Brand)</label>
                   <input
                     type="text"
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                     placeholder="VD: Apple, Dell..."
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Model</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Model</label>
                   <input
                     type="text"
                     value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                     placeholder="VD: Air M2 2023"
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Số Serial</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Số Serial</label>
                   <input
                     type="text"
                     value={formData.serial_number}
                     onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                     placeholder="SN-XXXXX"
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Trạng thái ban đầu</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Trạng thái ban đầu</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   >
                     <option value="IN_STOCK">Trong kho (In Stock)</option>
                     <option value="ASSIGNED">Đã cấp phát</option>
@@ -667,39 +667,39 @@ function AssetsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Vị trí lưu trữ / Lắp đặt</label>
+                <label className="block font-semibold text-slate-700 mb-1">Vị trí lưu trữ / Lắp đặt</label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   placeholder="VD: Kho IT Tầng 2"
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Mô tả / Ghi chú</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mô tả / Ghi chú</label>
                 <textarea
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Thông tin ghi chú chi tiết..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold shadow-lg shadow-sky-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -718,24 +718,24 @@ function AssetsContent() {
 
       {/* EDIT ASSET MODAL */}
       {showEditModal && selectedAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-sky-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-indigo-600" />
                 <span>Chỉnh sửa tài sản: {selectedAsset.asset_code}</span>
               </h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 font-semibold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
@@ -743,74 +743,74 @@ function AssetsContent() {
             <form onSubmit={handleEditSubmit} className="space-y-4 mt-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-400 mb-1">Mã tài sản (Cố định)</label>
+                  <label className="block font-semibold text-slate-500 mb-1">Mã tài sản (Cố định)</label>
                   <input
                     type="text"
                     disabled
                     value={formData.asset_code}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-500 font-mono cursor-not-allowed"
+                    className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-mono cursor-not-allowed font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Loại tài sản</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Loại tài sản</label>
                   <input
                     type="text"
                     required
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Tên tài sản</label>
+                <label className="block font-semibold text-slate-700 mb-1">Tên tài sản</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Thương hiệu</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Thương hiệu</label>
                   <input
                     type="text"
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Model</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Model</label>
                   <input
                     type="text"
                     value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Số Serial</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Số Serial</label>
                   <input
                     type="text"
                     value={formData.serial_number}
                     onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Trạng thái</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Trạng thái</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   >
                     <option value="IN_STOCK">Trong kho (In Stock)</option>
                     <option value="ASSIGNED">Đã cấp phát</option>
@@ -823,37 +823,37 @@ function AssetsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Vị trí lưu trữ / Lắp đặt</label>
+                <label className="block font-semibold text-slate-700 mb-1">Vị trí lưu trữ / Lắp đặt</label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Mô tả / Ghi chú</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mô tả / Ghi chú</label>
                 <textarea
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-sky-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-semibold shadow-lg shadow-sky-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -872,63 +872,64 @@ function AssetsContent() {
 
       {/* DETAIL MODAL */}
       {showDetailModal && selectedAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900 my-8 space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <Boxes className="w-5 h-5 text-sky-400" />
-                <span className="font-mono text-sky-400 font-bold text-base">
+                <Boxes className="w-5 h-5 text-indigo-600" />
+                <span className="font-mono text-indigo-600 font-extrabold text-base">
                   {selectedAsset.asset_code}
                 </span>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div>
-              <h3 className="text-xl font-bold text-white leading-snug">{selectedAsset.name}</h3>
+              <h3 className="text-xl font-extrabold text-slate-900 leading-snug">{selectedAsset.name}</h3>
               <div className="mt-2 flex items-center space-x-2">
                 {getStatusBadge(selectedAsset.status)}
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-700 text-slate-300">
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                   {selectedAsset.category}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-900/60 p-4 rounded-xl border border-slate-700/60">
+
+            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200/90 text-slate-700">
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Thương hiệu / Model</div>
-                <div className="font-semibold text-slate-200 mt-0.5">
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Thương hiệu / Model</div>
+                <div className="font-bold text-slate-900 mt-0.5">
                   {[selectedAsset.brand, selectedAsset.model].filter(Boolean).join(' ') || '—'}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Số Serial</div>
-                <div className="font-mono font-semibold text-slate-200 mt-0.5">
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Số Serial</div>
+                <div className="font-mono font-bold text-slate-900 mt-0.5">
                   {selectedAsset.serial_number || '—'}
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Phòng ban quản lý</div>
-                <div className="font-semibold text-slate-200 mt-0.5 flex items-center space-x-1.5">
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Phòng ban quản lý</div>
+                <div className="font-bold text-slate-900 mt-0.5 flex items-center space-x-1.5">
                   <Building2 className="w-3.5 h-3.5 text-slate-400" />
                   <span>{selectedAsset.department?.name || '—'}</span>
                 </div>
               </div>
               <div>
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Người đang giữ</div>
-                <div className="font-semibold text-slate-200 mt-0.5 flex items-center space-x-1.5">
-                  <UserIcon className="w-3.5 h-3.5 text-sky-400" />
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Người đang giữ</div>
+                <div className="font-bold text-slate-900 mt-0.5 flex items-center space-x-1.5">
+                  <UserIcon className="w-3.5 h-3.5 text-indigo-600" />
                   <span>{selectedAsset.current_user?.full_name || 'Chưa cấp phát'}</span>
                 </div>
               </div>
               <div className="col-span-2">
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Vị trí lắp đặt / kho</div>
-                <div className="font-semibold text-slate-200 mt-0.5">
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Vị trí lắp đặt / kho</div>
+                <div className="font-bold text-slate-900 mt-0.5">
                   {selectedAsset.location || '—'}
                 </div>
               </div>
@@ -936,8 +937,8 @@ function AssetsContent() {
 
             {selectedAsset.description && (
               <div className="text-xs space-y-1">
-                <div className="text-slate-400 uppercase font-medium text-[10px]">Mô tả chi tiết</div>
-                <div className="p-3 bg-slate-900/40 border border-slate-700/40 rounded-xl text-slate-300">
+                <div className="text-slate-400 font-bold uppercase text-[10px]">Mô tả chi tiết</div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium">
                   {selectedAsset.description}
                 </div>
               </div>
@@ -945,25 +946,25 @@ function AssetsContent() {
 
             {/* Asset Intelligence & Risk Health Card */}
             {intelLoading ? (
-              <div className="p-4 bg-slate-900/40 border border-slate-700/40 rounded-xl text-center text-xs text-slate-400 animate-pulse">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 animate-pulse font-medium">
                 Đang phân tích trí tuệ tài sản (Asset Intelligence)...
               </div>
             ) : intelDetail ? (
-              <div className="p-4 bg-gradient-to-r from-purple-950/40 to-slate-900 border border-purple-500/30 rounded-xl space-y-3">
+              <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-purple-400 text-xs font-semibold">
-                    <BrainCircuit className="w-4 h-4" />
+                  <div className="flex items-center space-x-2 text-indigo-700 text-xs font-bold">
+                    <BrainCircuit className="w-4 h-4 text-indigo-600" />
                     <span>Asset Intelligence & Risk Health</span>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${
+                    className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold border ${
                       intelDetail.health_risk.risk_level === 'LOW'
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : intelDetail.health_risk.risk_level === 'MEDIUM'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
                         : intelDetail.health_risk.risk_level === 'HIGH'
-                        ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        ? 'bg-orange-50 text-orange-800 border-orange-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
                     }`}
                   >
                     Risk: {intelDetail.health_risk.risk_level} ({intelDetail.health_risk.risk_score}/100)
@@ -971,36 +972,36 @@ function AssetsContent() {
                 </div>
 
                 <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
-                    <div className="text-[10px] text-slate-400">Sức khỏe</div>
-                    <div className="font-extrabold text-emerald-400 text-sm mt-0.5">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="text-[10px] text-slate-500 font-medium">Sức khỏe</div>
+                    <div className="font-extrabold text-emerald-600 text-sm mt-0.5">
                       {intelDetail.health_risk.health_score}%
                     </div>
                   </div>
-                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
-                    <div className="text-[10px] text-slate-400">Sự cố</div>
-                    <div className="font-bold text-white text-sm mt-0.5">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="text-[10px] text-slate-500 font-medium">Sự cố</div>
+                    <div className="font-extrabold text-slate-900 text-sm mt-0.5">
                       {intelDetail.metrics.incident_count}
                     </div>
                   </div>
-                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
-                    <div className="text-[10px] text-slate-400">MTTR</div>
-                    <div className="font-bold text-sky-400 text-sm mt-0.5">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="text-[10px] text-slate-500 font-medium">MTTR</div>
+                    <div className="font-extrabold text-indigo-600 text-sm mt-0.5">
                       {intelDetail.metrics.mttr_hours !== null ? `${intelDetail.metrics.mttr_hours}h` : 'N/A'}
                     </div>
                   </div>
-                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-700/50">
-                    <div className="text-[10px] text-slate-400">Chi phí sửa</div>
-                    <div className="font-bold text-amber-400 text-xs mt-0.5 truncate">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200">
+                    <div className="text-[10px] text-slate-500 font-medium">Chi phí sửa</div>
+                    <div className="font-extrabold text-amber-700 text-xs mt-0.5 truncate">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(intelDetail.metrics.total_repair_cost)}
                     </div>
                   </div>
                 </div>
 
                 {intelDetail.health_risk.warning_reasons.length > 0 && (
-                  <div className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg space-y-1">
-                    <div className="font-semibold flex items-center space-x-1">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 p-2.5 rounded-lg space-y-1">
+                    <div className="font-bold flex items-center space-x-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
                       <span>Cảnh báo rủi ro bất thường:</span>
                     </div>
                     <ul className="list-disc list-inside space-y-0.5 pl-1 text-[10px]">
@@ -1013,14 +1014,14 @@ function AssetsContent() {
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-700">
+            <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-100">
               <div className="flex items-center space-x-1.5">
-                <QrCode className="w-4 h-4 text-indigo-400" />
+                <QrCode className="w-4 h-4 text-indigo-600" />
                 <span className="font-mono text-[11px]">{selectedAsset.qr_code_url}</span>
               </div>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm"
               >
                 Đóng
               </button>

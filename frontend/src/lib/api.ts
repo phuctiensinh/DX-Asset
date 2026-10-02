@@ -102,6 +102,9 @@ export async function fetchApi<T>(
     } else {
       clearStoredTokens();
       token = null;
+      const errorObj = new Error('Phiên đăng nhập đã hết hạn.') as Error & { status?: number };
+      errorObj.status = 401;
+      throw errorObj;
     }
   }
 

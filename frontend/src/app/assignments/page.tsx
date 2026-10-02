@@ -304,22 +304,22 @@ function AssignmentsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
               <UserCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                 Lịch sử Cấp phát & Thu hồi Tài sản
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Quản lý quá trình bàn giao, luân chuyển thiết bị doanh nghiệp. Tổng số lượt: <span className="font-semibold text-indigo-400">{total}</span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Quản lý quá trình bàn giao, luân chuyển thiết bị doanh nghiệp. Tổng số lượt: <span className="font-bold text-indigo-600">{total}</span>
               </p>
             </div>
           </div>
@@ -327,7 +327,7 @@ function AssignmentsContent() {
           {canManage && (
             <button
               onClick={openCreateModal}
-              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-500/20 transition-all"
+              className="flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-500/20 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>+ Cấp phát tài sản</span>
@@ -337,21 +337,21 @@ function AssignmentsContent() {
 
         {/* Global Notifications */}
         {successMsg && (
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center space-x-2 animate-fadeIn">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center space-x-2 shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center space-x-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center space-x-2 shadow-sm">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Search & Filter Toolbar */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
             {/* Search Input */}
             <div className="sm:col-span-8 relative">
@@ -363,7 +363,7 @@ function AssignmentsContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm mã tài sản, tên thiết bị, tên nhân viên..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 rounded-xl text-xs text-slate-100 placeholder-slate-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl text-xs text-slate-900 placeholder-slate-400 outline-none transition-all font-medium"
               />
             </div>
 
@@ -375,7 +375,7 @@ function AssignmentsContent() {
                   setStatusFilter(e.target.value);
                   setSkip(0);
                 }}
-                className="w-full py-2.5 px-3 bg-slate-900/80 border border-slate-700 focus:border-indigo-500 rounded-xl text-xs text-slate-200 outline-none"
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Trạng thái Cấp phát</option>
                 <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
@@ -386,101 +386,107 @@ function AssignmentsContent() {
         </div>
 
         {/* Table / List Area */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-12 flex flex-col items-center justify-center space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-              <span className="text-xs text-slate-400">Đang tải lịch sử cấp phát tài sản...</span>
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+              <span className="text-xs text-slate-500">Đang tải lịch sử cấp phát tài sản...</span>
             </div>
           ) : assignments.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <UserCheck className="w-12 h-12 text-slate-600 mx-auto" />
-              <div className="text-base font-semibold text-slate-300">Không tìm thấy bản ghi cấp phát</div>
+              <UserCheck className="w-12 h-12 text-slate-300 mx-auto" />
+              <div className="text-base font-bold text-slate-800">Không tìm thấy bản ghi cấp phát</div>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
                 Chưa có tài sản nào được cấp phát hoặc không tìm thấy dữ liệu khớp với bộ lọc.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-900/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-700/80">
-                  <tr>
-                    <th className="py-3.5 px-4">Tài Sản</th>
-                    <th className="py-3.5 px-4">Người Tiếp Nhận</th>
-                    <th className="py-3.5 px-4">Ngày Cấp</th>
-                    <th className="py-3.5 px-4">Ngày Thu Hồi</th>
-                    <th className="py-3.5 px-4">Trạng Thái</th>
-                    <th className="py-3.5 px-4">Người Thực Hiện</th>
-                    <th className="py-3.5 px-4">Ghi Chú</th>
-                    {canManage && <th className="py-3.5 px-4 text-right">Thao Tác</th>}
+            <div className="w-full">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
+                  <tr className="whitespace-nowrap">
+                    <th className="py-2.5 px-3">Tài Sản</th>
+                    <th className="py-2.5 px-3">Người Tiếp Nhận</th>
+                    <th className="py-2.5 px-3">Ngày Cấp</th>
+                    <th className="py-2.5 px-3">Ngày Thu Hồi</th>
+                    <th className="py-2.5 px-3">Trạng Thái</th>
+                    <th className="py-2.5 px-3">Người Thực Hiện</th>
+                    <th className="py-2.5 px-3">Ghi Chú</th>
+                    {canManage && <th className="py-2.5 px-3 text-right">Thao Tác</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700/60">
+                <tbody className="divide-y divide-slate-100">
                   {assignments.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-700/40 transition-colors">
-                      <td className="py-3.5 px-4 font-medium text-white">
-                        <div className="font-mono text-indigo-400 font-bold">
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-2.5 px-3 font-medium text-slate-900 whitespace-nowrap">
+                        <div className="font-mono text-indigo-600 font-extrabold text-[11px]">
                           {item.asset?.asset_code || `TS #${item.asset_id}`}
                         </div>
-                        <div className="text-slate-200">{item.asset?.name}</div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-slate-100 flex items-center space-x-1.5">
-                          <UserIcon className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>{item.assigned_to_user?.full_name || `User #${item.assigned_to_user_id}`}</span>
+                        <div className="text-slate-800 font-bold truncate max-w-[140px]" title={item.asset?.name}>
+                          {item.asset?.name}
                         </div>
-                        <div className="text-[11px] text-slate-400">{item.assigned_to_user?.email}</div>
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <div className="font-bold text-slate-900 flex items-center space-x-1 truncate max-w-[140px]" title={item.assigned_to_user?.full_name || ''}>
+                          <UserIcon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                          <span className="truncate">{item.assigned_to_user?.full_name || `User #${item.assigned_to_user_id}`}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate max-w-[140px]" title={item.assigned_to_user?.email}>
+                          {item.assigned_to_user?.email}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap text-[11px]">
                         {formatDate(item.assigned_date)}
                       </td>
-                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                      <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap text-[11px]">
                         {item.status === 'ACTIVE' ? (
-                          <span className="text-sky-400 font-sans italic text-[11px]">Đang sử dụng</span>
+                          <span className="text-sky-600 font-sans italic text-[11px] font-semibold whitespace-nowrap">Đang sử dụng</span>
                         ) : (
                           formatDate(item.return_date)
                         )}
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {item.status === 'ACTIVE' ? (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/30">
-                            Đang hoạt động (ACTIVE)
+                          <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                            Đang hoạt động
                           </span>
                         ) : (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/30">
-                            Đã thu hồi (RETURNED)
+                          <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            Đã thu hồi
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400">
-                        {item.assigned_by_user?.full_name || 'Hệ thống'}
+                      <td className="py-2.5 px-3 text-slate-700 font-medium whitespace-nowrap max-w-[130px]">
+                        <div className="truncate text-[11px]" title={item.assigned_by_user?.full_name || 'Hệ thống'}>
+                          {item.assigned_by_user?.full_name || 'Hệ thống'}
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate" title={item.notes || ''}>
+                      <td className="py-2.5 px-3 text-slate-600 max-w-[150px] truncate text-[11px]" title={item.notes || ''}>
                         {item.notes || '—'}
                       </td>
                       {canManage && (
-                        <td className="py-3.5 px-4 text-right">
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
                           {item.status === 'ACTIVE' ? (
-                            <div className="flex items-center justify-end space-x-2">
+                            <div className="flex items-center justify-end space-x-1">
                               <button
                                 onClick={() => openTransferModal(item)}
-                                className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
+                                className="px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors text-[11px] font-bold flex items-center space-x-1"
                                 title="Chuyển sang nhân viên khác"
                               >
-                                <ArrowRightLeft className="w-3.5 h-3.5" />
-                                <span className="hidden lg:inline">Chuyển giao</span>
+                                <ArrowRightLeft className="w-3 h-3 text-amber-600" />
+                                <span>Chuyển</span>
                               </button>
                               <button
                                 onClick={() => openReturnModal(item)}
-                                className="px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors text-[11px] font-semibold flex items-center space-x-1"
-                                title="Thu hồi tài sản về kho"
+                                className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors text-[11px] font-bold flex items-center space-x-1"
+                                title="Thu hồi tài sản"
                               >
-                                <Undo2 className="w-3.5 h-3.5" />
+                                <Undo2 className="w-3 h-3 text-rose-600" />
                                 <span>Thu hồi</span>
                               </button>
                             </div>
                           ) : (
-                            <span className="text-slate-600 text-[11px] italic">Hoàn tất</span>
+                            <span className="text-[11px] text-slate-400 italic">Hoàn tất</span>
                           )}
                         </td>
                       )}
@@ -493,26 +499,26 @@ function AssignmentsContent() {
 
           {/* Pagination Controls */}
           {total > limit && (
-            <div className="px-4 py-3.5 bg-slate-900/60 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+            <div className="px-4 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
               <div>
-                Hiển thị <span className="font-semibold text-white">{skip + 1}</span> -{' '}
-                <span className="font-semibold text-white">
+                Hiển thị <span className="font-bold text-slate-900">{skip + 1}</span> -{' '}
+                <span className="font-bold text-slate-900">
                   {Math.min(skip + limit, total)}
                 </span>{' '}
-                trên tổng số <span className="font-semibold text-white">{total}</span> bản ghi
+                trên tổng số <span className="font-bold text-slate-900">{total}</span> bản ghi
               </div>
               <div className="flex items-center space-x-2">
                 <button
                   disabled={skip === 0}
                   onClick={() => setSkip(Math.max(0, skip - limit))}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-700 font-semibold shadow-sm"
                 >
                   Trang trước
                 </button>
                 <button
                   disabled={skip + limit >= total}
                   onClick={() => setSkip(skip + limit)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-200"
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 text-slate-700 font-semibold shadow-sm"
                 >
                   Trang sau
                 </button>
@@ -524,38 +530,38 @@ function AssignmentsContent() {
 
       {/* CREATE ASSIGNMENT MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <UserCheck className="w-5 h-5 text-indigo-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <UserCheck className="w-5 h-5 text-indigo-600" />
                 <span>Cấp phát tài sản cho nhân viên</span>
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 font-semibold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreateSubmit} className="space-y-4 mt-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Chọn tài sản trong kho (IN_STOCK) <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Chọn tài sản trong kho (IN_STOCK) <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
                   value={createFormData.asset_id}
                   onChange={(e) => setCreateFormData({ ...createFormData, asset_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-indigo-500 outline-none text-white font-mono"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900 font-mono"
                 >
                   <option value="">-- Chọn tài sản cần cấp --</option>
                   {availableAssets.map((asset) => (
@@ -565,21 +571,21 @@ function AssignmentsContent() {
                   ))}
                 </select>
                 {availableAssets.length === 0 && (
-                  <p className="text-[11px] text-amber-400 mt-1">
+                  <p className="text-[11px] text-amber-700 mt-1 font-medium">
                     Hiện không có tài sản nào đang ở trạng thái 'Trong kho' (IN_STOCK).
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Nhân viên tiếp nhận <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Nhân viên tiếp nhận <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
                   value={createFormData.user_id}
                   onChange={(e) => setCreateFormData({ ...createFormData, user_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-indigo-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 >
                   <option value="">-- Chọn nhân viên --</option>
                   {usersList.map((u) => (
@@ -591,11 +597,11 @@ function AssignmentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Phòng ban sử dụng (Tùy chọn)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Phòng ban sử dụng (Tùy chọn)</label>
                 <select
                   value={createFormData.department_id}
                   onChange={(e) => setCreateFormData({ ...createFormData, department_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-indigo-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 >
                   <option value="">-- Giữ nguyên theo nhân viên / Không đổi --</option>
                   {departmentsList.map((d) => (
@@ -607,38 +613,38 @@ function AssignmentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Ngày bàn giao</label>
+                <label className="block font-semibold text-slate-700 mb-1">Ngày bàn giao</label>
                 <input
                   type="date"
                   value={createFormData.assigned_date}
                   onChange={(e) => setCreateFormData({ ...createFormData, assigned_date: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-indigo-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Ghi chú bàn giao</label>
+                <label className="block font-semibold text-slate-700 mb-1">Ghi chú bàn giao</label>
                 <textarea
                   rows={2}
                   value={createFormData.notes}
                   onChange={(e) => setCreateFormData({ ...createFormData, notes: e.target.value })}
                   placeholder="Lý do cấp phát, phụ kiện đi kèm..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-indigo-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting || availableAssets.length === 0}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold shadow-lg shadow-indigo-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-md shadow-indigo-500/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -657,68 +663,68 @@ function AssignmentsContent() {
 
       {/* RETURN MODAL */}
       {showReturnModal && selectedAssignment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <Undo2 className="w-5 h-5 text-red-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <Undo2 className="w-5 h-5 text-rose-600" />
                 <span>Xác nhận Thu hồi Tài sản</span>
               </h3>
               <button
                 onClick={() => setShowReturnModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 font-semibold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleReturnSubmit} className="space-y-4 mt-4 text-xs">
-              <div className="p-3 bg-slate-900/60 border border-slate-700/60 rounded-xl space-y-1">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-slate-700">
                 <div>
                   Tài sản:{' '}
-                  <span className="font-bold text-indigo-400 font-mono">
+                  <span className="font-extrabold text-indigo-600 font-mono">
                     {selectedAssignment.asset?.asset_code}
                   </span>{' '}
                   - {selectedAssignment.asset?.name}
                 </div>
                 <div>
                   Người đang giữ:{' '}
-                  <span className="font-semibold text-white">
+                  <span className="font-bold text-slate-900">
                     {selectedAssignment.assigned_to_user?.full_name}
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Ghi chú / Lý do thu hồi</label>
+                <label className="block font-semibold text-slate-700 mb-1">Ghi chú / Lý do thu hồi</label>
                 <textarea
                   rows={3}
                   value={returnNotes}
                   onChange={(e) => setReturnNotes(e.target.value)}
                   placeholder="VD: Hết hạn sử dụng, trả máy chuyển công tác..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-red-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-rose-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowReturnModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-semibold shadow-lg shadow-red-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-md shadow-rose-500/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -737,53 +743,53 @@ function AssignmentsContent() {
 
       {/* TRANSFER MODAL */}
       {showTransferModal && selectedAssignment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 text-slate-100">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-700">
-              <h3 className="text-lg font-bold text-white flex items-center space-x-2">
-                <ArrowRightLeft className="w-5 h-5 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-6 text-slate-900">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <ArrowRightLeft className="w-5 h-5 text-amber-600" />
                 <span>Chuyển giao Tài sản</span>
               </h3>
               <button
                 onClick={() => setShowTransferModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 font-semibold">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{formError}</span>
               </div>
             )}
 
             <form onSubmit={handleTransferSubmit} className="space-y-4 mt-4 text-xs">
-              <div className="p-3 bg-slate-900/60 border border-slate-700/60 rounded-xl space-y-1">
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-slate-700">
                 <div>
                   Tài sản:{' '}
-                  <span className="font-bold text-indigo-400 font-mono">
+                  <span className="font-extrabold text-indigo-600 font-mono">
                     {selectedAssignment.asset?.asset_code}
                   </span>
                 </div>
                 <div>
                   Người giữ hiện tại:{' '}
-                  <span className="font-semibold text-slate-300">
+                  <span className="font-bold text-slate-900">
                     {selectedAssignment.assigned_to_user?.full_name}
                   </span>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">
-                  Nhân viên tiếp nhận mới <span className="text-red-400">*</span>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Nhân viên tiếp nhận mới <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
                   value={transferFormData.target_user_id}
                   onChange={(e) => setTransferFormData({ ...transferFormData, target_user_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-amber-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-500 outline-none text-slate-900"
                 >
                   <option value="">-- Chọn nhân viên nhận tài sản --</option>
                   {usersList
@@ -797,11 +803,11 @@ function AssignmentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Phòng ban mới (Tùy chọn)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Phòng ban mới (Tùy chọn)</label>
                 <select
                   value={transferFormData.department_id}
                   onChange={(e) => setTransferFormData({ ...transferFormData, department_id: e.target.value })}
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-amber-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-500 outline-none text-slate-900"
                 >
                   <option value="">-- Cập nhật theo phòng ban người nhận mới --</option>
                   {departmentsList.map((d) => (
@@ -813,28 +819,28 @@ function AssignmentsContent() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Ghi chú chuyển giao</label>
+                <label className="block font-semibold text-slate-700 mb-1">Ghi chú chuyển giao</label>
                 <textarea
                   rows={2}
                   value={transferFormData.notes}
                   onChange={(e) => setTransferFormData({ ...transferFormData, notes: e.target.value })}
                   placeholder="Lý do bàn giao giữa 2 nhân viên..."
-                  className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl focus:border-amber-500 outline-none text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-amber-500 outline-none text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-700">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={formSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white font-semibold shadow-lg shadow-amber-500/20 disabled:opacity-60"
+                  className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-md shadow-amber-500/20 disabled:opacity-60"
                 >
                   {formSubmitting ? (
                     <>
@@ -850,6 +856,7 @@ function AssignmentsContent() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

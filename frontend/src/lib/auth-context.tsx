@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, TokenResponse, LoginRequest } from '@/types/auth';
-import { fetchApi, getStoredToken, setStoredToken, setStoredRefreshToken, clearStoredTokens } from '@/lib/api';
+import { fetchApi, getStoredToken, getStoredRefreshToken, setStoredToken, setStoredRefreshToken, clearStoredTokens, isTokenExpired } from '@/lib/api';
 import { loginWithKeycloak, logoutKeycloak } from '@/lib/oidc';
 import { useRouter } from 'next/navigation';
 
@@ -29,6 +29,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadCurrentUser = useCallback(async (tokenOverride?: string): Promise<User | null> => {
     const token = tokenOverride || getStoredToken();
     if (!token) {
+      setUser(null);
+      setIsLoading(false);
+      return null;
+    }
+
+    const refreshToken = getStoredRefreshToken();
+    if (isTokenExpired(token) && !refreshToken) {
+      clearStoredTokens();
       setUser(null);
       setIsLoading(false);
       return null;

@@ -67,16 +67,16 @@ function AuthCallbackContent() {
 
   if (errorMessage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-        <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl p-6 text-center text-slate-100 shadow-2xl">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 mx-auto mb-4">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-6 text-center text-slate-800 shadow-xl">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 mx-auto mb-4">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Đăng nhập Không Thành công</h2>
-          <p className="text-sm text-slate-300 mb-6">{errorMessage}</p>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Đăng nhập Không Thành công</h2>
+          <p className="text-sm text-slate-600 mb-6">{errorMessage}</p>
           <button
             onClick={() => router.push('/login')}
-            className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition-all text-sm shadow-md"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all text-sm shadow-md shadow-indigo-600/20"
           >
             Quay lại trang Đăng nhập
           </button>
@@ -86,13 +86,13 @@ function AuthCallbackContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="flex flex-col items-center space-y-4">
-        <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 animate-pulse">
-          <ShieldCheck className="w-7 h-7" />
+        <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-md animate-pulse">
+          <ShieldCheck className="w-8 h-8" />
         </div>
-        <div className="flex items-center space-x-3 text-slate-300 font-medium text-sm">
-          <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
+        <div className="flex items-center space-x-3 text-slate-700 font-medium text-sm">
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
           <span>Đang hoàn tất xác thực từ Keycloak OIDC...</span>
         </div>
       </div>
@@ -104,13 +104,13 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50">
           <div className="flex flex-col items-center space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 animate-pulse">
-              <ShieldCheck className="w-7 h-7" />
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-md animate-pulse">
+              <ShieldCheck className="w-8 h-8" />
             </div>
-            <div className="flex items-center space-x-3 text-slate-300 font-medium text-sm">
-              <Loader2 className="w-5 h-5 animate-spin text-sky-400" />
+            <div className="flex items-center space-x-3 text-slate-700 font-medium text-sm">
+              <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
               <span>Đang tải tham số xác thực...</span>
             </div>
           </div>

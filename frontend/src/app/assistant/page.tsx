@@ -147,25 +147,25 @@ function AssistantContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 flex flex-col space-y-4">
         {/* Assistant Header Banner */}
-        <div className="bg-gradient-to-r from-sky-900/40 via-indigo-900/30 to-slate-800/80 border border-slate-700/70 rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
               <Bot className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-xl font-bold text-white">Trợ lý AI Quản lý Tài sản</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold">
+                <h1 className="text-xl font-bold text-slate-900">Trợ lý AI Quản lý Tài sản</h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
                   Read-Only Mode
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5 flex items-center space-x-2">
-                <Database className="w-3.5 h-3.5 text-sky-400 inline" />
+              <p className="text-xs text-slate-500 mt-0.5 flex items-center space-x-2">
+                <Database className="w-3.5 h-3.5 text-indigo-600 inline" />
                 <span>Truy vấn thời gian thực trên PostgreSQL (Không tự bịa dữ liệu)</span>
               </p>
             </div>
@@ -174,10 +174,10 @@ function AssistantContent() {
           <div className="flex items-center space-x-2 self-end sm:self-auto">
             <button
               onClick={clearChat}
-              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-all"
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all"
               title="Xóa trò chuyện"
             >
-              <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+              <Trash2 className="w-3.5 h-3.5 text-slate-500" />
               <span>Xóa chat</span>
             </button>
           </div>
@@ -185,8 +185,8 @@ function AssistantContent() {
 
         {/* Suggested Prompt Chips */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-          <span className="text-xs font-semibold text-slate-400 shrink-0 flex items-center space-x-1">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-xs font-semibold text-slate-500 shrink-0 flex items-center space-x-1">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
             <span>Gợi ý:</span>
           </span>
           {suggestedQuestions.map((q, idx) => (
@@ -194,7 +194,7 @@ function AssistantContent() {
               key={idx}
               onClick={() => handleSend(q)}
               disabled={loading}
-              className="px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs text-slate-200 hover:text-sky-300 whitespace-nowrap transition-all shrink-0 disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 text-xs text-slate-700 hover:text-indigo-600 font-medium whitespace-nowrap transition-all shrink-0 disabled:opacity-50 shadow-sm"
             >
               {q}
             </button>
@@ -202,7 +202,7 @@ function AssistantContent() {
         </div>
 
         {/* Chat Messages Window */}
-        <div className="flex-1 bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col space-y-4 min-h-[480px] max-h-[600px] overflow-y-auto">
+        <div className="flex-1 bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col space-y-4 min-h-[480px] max-h-[600px] overflow-y-auto">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -214,10 +214,10 @@ function AssistantContent() {
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold border ${
                   msg.sender === 'user'
-                    ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                    ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
                     : msg.intent === 'MUTATION_REJECTED'
-                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                    : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                    ? 'bg-rose-50 text-rose-600 border-rose-200'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
                 {msg.sender === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-5 h-5" />}
@@ -228,15 +228,15 @@ function AssistantContent() {
                 <div
                   className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                     msg.sender === 'user'
-                      ? 'bg-sky-600 text-white rounded-tr-none shadow-md'
+                      ? 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
                       : msg.intent === 'MUTATION_REJECTED'
-                      ? 'bg-rose-950/40 border border-rose-500/40 text-rose-200 rounded-tl-none shadow-md'
-                      : 'bg-slate-900/80 border border-slate-700/60 text-slate-200 rounded-tl-none shadow-md'
+                      ? 'bg-rose-50 border border-rose-200 text-rose-800 rounded-tl-none shadow-sm'
+                      : 'bg-slate-50 border border-slate-200 text-slate-800 rounded-tl-none shadow-sm'
                   }`}
                 >
                   {msg.intent === 'MUTATION_REJECTED' && (
-                    <div className="flex items-center space-x-1.5 text-rose-400 font-bold mb-1.5 text-xs">
-                      <ShieldAlert className="w-4 h-4 shrink-0" />
+                    <div className="flex items-center space-x-1.5 text-rose-700 font-bold mb-1.5 text-xs">
+                      <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600" />
                       <span>Thông báo từ chối thao tác (Read-Only Guard)</span>
                     </div>
                   )}
@@ -245,18 +245,18 @@ function AssistantContent() {
 
                   {/* Sources Cards */}
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-700/60 space-y-1.5">
-                      <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    <div className="mt-3 pt-3 border-t border-slate-200 space-y-1.5">
+                      <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         Nguồn tham chiếu dữ liệu thật:
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {msg.sources.map((src, i) => (
                           <div
                             key={i}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-[11px] text-sky-300 font-mono flex items-center space-x-1.5"
+                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] text-indigo-600 font-mono font-semibold flex items-center space-x-1.5 shadow-sm"
                           >
-                            {src.type === 'asset' && <Boxes className="w-3 h-3 text-sky-400" />}
-                            {src.type === 'incident' && <AlertTriangle className="w-3 h-3 text-rose-400" />}
+                            {src.type === 'asset' && <Boxes className="w-3 h-3 text-indigo-500" />}
+                            {src.type === 'incident' && <AlertTriangle className="w-3 h-3 text-rose-500" />}
                             <span>{src.code || src.name}</span>
                           </div>
                         ))}
@@ -266,7 +266,7 @@ function AssistantContent() {
                 </div>
 
                 <div
-                  className={`text-[10px] text-slate-500 ${
+                  className={`text-[10px] text-slate-400 ${
                     msg.sender === 'user' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -279,11 +279,11 @@ function AssistantContent() {
           {/* Loading Indicator Bubble */}
           {loading && (
             <div className="flex items-start space-x-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5 animate-spin" />
               </div>
-              <div className="p-4 bg-slate-900/80 border border-slate-700/60 rounded-2xl rounded-tl-none text-xs text-slate-400 flex items-center space-x-2">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-sky-400" />
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-none text-xs text-slate-500 flex items-center space-x-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-600" />
                 <span>Đang truy vấn cơ sở dữ liệu PostgreSQL...</span>
               </div>
             </div>
@@ -293,7 +293,7 @@ function AssistantContent() {
         </div>
 
         {/* Input Bar */}
-        <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-2.5 shadow-xl flex items-center space-x-2">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-2.5 shadow-sm flex items-center space-x-2">
           <input
             type="text"
             value={input}
@@ -301,12 +301,12 @@ function AssistantContent() {
             onKeyDown={handleKeyDown}
             disabled={loading}
             placeholder="Nhập câu hỏi tra cứu tài sản bằng tiếng Việt (ví dụ: Có bao nhiêu laptop đang cấp phát?)..."
-            className="flex-1 bg-slate-900/80 border border-slate-700/60 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-all disabled:opacity-50"
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-indigo-500 transition-all disabled:opacity-50"
           />
           <button
             onClick={() => handleSend()}
             disabled={loading || !input.trim()}
-            className="px-4 py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-slate-700 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-lg shadow-sky-500/20 disabled:shadow-none shrink-0"
+            className="px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-semibold rounded-xl text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md shadow-indigo-600/20 disabled:shadow-none shrink-0"
           >
             <span>Gửi</span>
             <Send className="w-4 h-4" />
