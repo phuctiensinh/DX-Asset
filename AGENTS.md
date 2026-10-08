@@ -32,7 +32,7 @@ The main developer is:
 * Name: Nguyễn Phạm Đại Phúc
 * University: Trường Đại học Thủ Dầu Một
 * Major: Software Engineering / Kỹ thuật Phần mềm
-* Current level: Third-year university student
+* Current level: Third-year university student.
 
 The developer is familiar with basic programming and web development but may need explanations for unfamiliar technologies, architectural decisions, deployment processes, authentication systems, database design, and AI integration.
 
