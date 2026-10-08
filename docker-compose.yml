@@ -107,11 +107,16 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
       - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-10}
       - SEAWEEDFS_FILER_URL=${SEAWEEDFS_FILER_URL:-http://seaweedfs:8888}
+      # Issuer must match what the browser sees (localhost); JWKS is fetched inside the Docker network
+      - KEYCLOAK_ISSUER_URL=http://localhost:8080/realms/dx-asset
+      - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/dx-asset/protocol/openid-connect/certs
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
+      keycloak:
+        condition: service_started
       seaweedfs:
         condition: service_healthy
       ollama:

@@ -71,7 +71,7 @@ def seed_database():
         users_data = [
             {
                 "email": "2424801030008@student.tdmu.edu.vn",
-                "full_name": "Nguyễn Phạm Đại Phúc (System Owner)",
+                "full_name": "Nguyễn Phạm Đại Phúc",
                 "role": UserRole.ADMIN,
                 "dept_code": "ADMINISTRATION",
             },
