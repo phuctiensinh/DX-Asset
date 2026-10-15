@@ -137,7 +137,7 @@ def create_assignment(
     if active_asm or asset.status == AssetStatus.ASSIGNED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tài sản '{asset.asset_code}' đã có lượt cấp phát đang hoạt động (ACTIVE)."
+            detail=f"Tài sản '{asset.asset_code}' đã có lượt cấp phát đang hoạt động."
         )
 
     # 6. Create Assignment

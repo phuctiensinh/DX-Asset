@@ -7,60 +7,18 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
-### Changed
+## [1.0.0] - 2026-10-15
 
-- The whole user interface is now consistently Vietnamese: internal codes (`IN_STOCK`, `IN_PROGRESS`, `ADMIN`, `HARDWARE_SUPPORT`, risk levels, ...) are shown as Vietnamese labels from the shared `frontend/src/lib/labels.ts`; English headings, buttons, placeholders and HTTP codes in messages were translated.
-- Backend messages shown to users are Vietnamese: API error details, request validation errors (new global handler for HTTP 422), asset history details, smart-routing and similar-incident reasons, optimization assumptions/warnings, asset risk reasons and AI assistant answers. Status codes inside these texts use `backend/app/core/labels.py`.
-- The AI assistant answers process questions in Vietnamese and accepts real ticket codes (e.g. "Phiếu INC-2026-001 đã trải qua những bước nào?"); `CASE-<id>` is still accepted.
-- Keycloak login and registration pages are Vietnamese via the new `dx-asset` login theme (`docker/keycloak/themes/dx-asset`); the realm uses it by default.
-
-### Fixed
-
-- "Đăng ký tài khoản mới" now opens the Keycloak registration form directly (`/registrations` endpoint) instead of the login page.
-
-### Changed
-
-- Redesigned the Process Mining page as "Phân tích quy trình xử lý": all text is in Vietnamese, with a "how to read this page" guide, typical processing/response times, common paths ("Luồng 1, 2…"), slowest transitions ranked, and the data-quality details moved into a collapsible section.
-- Internal codes (`INCIDENT_CREATED`, `IN_PROGRESS`, `variant-<hash>`, `CASE-001`, user IDs) are no longer shown to users; the page shows Vietnamese labels, ticket codes, titles and people's names instead. The API keeps the codes unchanged.
-- The "Đến ngày" filter is now inclusive of the selected day.
+First public MVP release for the OLP 2026 open-source software competition.
 
 ### Added
 
 - Process Mining case list and detail API responses include `reference_code` and `title`; case events include `performed_by_name` and `target_user_name`.
 
-### Added
-
 - AI triage suggestion on the incident report form: the local Ollama model suggests category and priority, and the user chooses whether to apply it (`POST /api/v1/incidents/ai/triage-suggestion`).
 - AI incident summary in the incident detail view (`POST /api/v1/incidents/{id}/ai/summary`; employees only for incidents they reported).
 - AI troubleshooting steps for IT staff, based on the incident and similar resolved incidents (`POST /api/v1/incidents/{id}/ai/troubleshooting`; ADMIN and IT_ASSET_MANAGER).
 - Every AI feature falls back to rule-based results when Ollama is off, slow or returns invalid output, and the UI labels whether a result came from AI or from the fallback.
-
-### Changed
-
-- `POST /api/v1/incidents/{id}/classify` now uses Ollama for queue classification, with keyword rules as fallback.
-- Default `OLLAMA_TIMEOUT_SECONDS` raised from 10 to 30 so the first request after loading the model does not time out.
-
-### Fixed
-
-- `start-dev.bat` now points the local backend to `http://localhost:11434`; before this, local dev could never reach Ollama and always used the fallback.
-
-### Fixed
-
-- Fixed newly registered Keycloak users getting `401`/`500` on `/auth/me`: `SYSTEM_OWNER_EMAIL` was not defined in `app/api/deps.py`.
-- Fixed the Docker backend rejecting every Keycloak token: JWKS is now fetched via the `keycloak` service name, and `pyjwt[crypto]` is installed for RS256 verification.
-- Fixed the Ollama healthcheck, which always failed and blocked the Docker backend from starting.
-- Fixed `docker compose up` failing on machines without an NVIDIA GPU; GPU support moved to the optional `docker-compose.gpu.yml`.
-
-### Changed
-
-- The frontend Docker image now builds and runs in production mode (`next build` + `next start`) instead of the dev server.
-- Added `.dockerignore` files so host `node_modules`, `.next` and `.venv` are not copied into images.
-- Added the `ollama-pull` one-shot service that downloads the AI model automatically.
-- `.sh` files are forced to LF line endings so the backend container works when cloned on Windows.
-- `start-dev.bat` uses the GPU when `nvidia-smi` is available and stops the Docker backend/frontend to free ports 8000/3000.
-- Rewrote the README installation guide (Docker mode, local dev mode, accounts, common commands, troubleshooting).
-
-### Added
 
 - Added Phase 14 read-only allocation, technician-capacity, and replacement/depreciation simulations, plus transparent replacement-priority recommendations.
 - Added a role-protected Optimization API and responsive `/intelligence/optimization` page; recommendations are never applied automatically.
@@ -143,12 +101,44 @@ and this project adheres to Semantic Versioning.
   - Updated AI Assistant service (`app/services/ai_assistant.py`) with `MNT-` maintenance code lookup and maintenance stats support.
   - Automated unit test suite (`tests/test_maintenances.py`) with 65 total passing tests.
 
-
 ### Changed
+
+- The whole user interface is now consistently Vietnamese: internal codes (`IN_STOCK`, `IN_PROGRESS`, `ADMIN`, `HARDWARE_SUPPORT`, risk levels, ...) are shown as Vietnamese labels from the shared `frontend/src/lib/labels.ts`; English headings, buttons, placeholders and HTTP codes in messages were translated.
+- Backend messages shown to users are Vietnamese: API error details, request validation errors (new global handler for HTTP 422), asset history details, smart-routing and similar-incident reasons, optimization assumptions/warnings, asset risk reasons and AI assistant answers. Status codes inside these texts use `backend/app/core/labels.py`.
+- The AI assistant answers process questions in Vietnamese and accepts real ticket codes (e.g. "Phiếu INC-2026-001 đã trải qua những bước nào?"); `CASE-<id>` is still accepted.
+- Keycloak login and registration pages are Vietnamese via the new `dx-asset` login theme (`docker/keycloak/themes/dx-asset`); the realm uses it by default.
+
+- Redesigned the Process Mining page as "Phân tích quy trình xử lý": all text is in Vietnamese, with a "how to read this page" guide, typical processing/response times, common paths ("Luồng 1, 2…"), slowest transitions ranked, and the data-quality details moved into a collapsible section.
+- Internal codes (`INCIDENT_CREATED`, `IN_PROGRESS`, `variant-<hash>`, `CASE-001`, user IDs) are no longer shown to users; the page shows Vietnamese labels, ticket codes, titles and people's names instead. The API keeps the codes unchanged.
+- The "Đến ngày" filter is now inclusive of the selected day.
+
+- `POST /api/v1/incidents/{id}/classify` now uses Ollama for queue classification, with keyword rules as fallback.
+- Default `OLLAMA_TIMEOUT_SECONDS` raised from 10 to 30 so the first request after loading the model does not time out.
+
+- The frontend Docker image now builds and runs in production mode (`next build` + `next start`) instead of the dev server.
+- Added `.dockerignore` files so host `node_modules`, `.next` and `.venv` are not copied into images.
+- Added the `ollama-pull` one-shot service that downloads the AI model automatically.
+- `.sh` files are forced to LF line endings so the backend container works when cloned on Windows.
+- `start-dev.bat` uses the GPU when `nvidia-smi` is available and stops the Docker backend/frontend to free ports 8000/3000.
+- Rewrote the README installation guide (Docker mode, local dev mode, accounts, common commands, troubleshooting).
 
 - Configured the development environment for Node.js, Python, Docker, and PostgreSQL.
 - Configured PostgreSQL connection for the local Docker development environment.
 
+### Fixed
+
+- "Đăng ký tài khoản mới" now opens the Keycloak registration form directly (`/registrations` endpoint) instead of the login page.
+
+- `start-dev.bat` now points the local backend to `http://localhost:11434`; before this, local dev could never reach Ollama and always used the fallback.
+
+- Fixed newly registered Keycloak users getting `401`/`500` on `/auth/me`: `SYSTEM_OWNER_EMAIL` was not defined in `app/api/deps.py`.
+- Fixed the Docker backend rejecting every Keycloak token: JWKS is now fetched via the `keycloak` service name, and `pyjwt[crypto]` is installed for RS256 verification.
+- Fixed the Ollama healthcheck, which always failed and blocked the Docker backend from starting.
+- Fixed `docker compose up` failing on machines without an NVIDIA GPU; GPU support moved to the optional `docker-compose.gpu.yml`.
+
 ### Notes
 
 - Phase 5A, 5B, 5C, Phase 6 (Asset Assignment), and Phase 7 (Incident Management) are fully implemented and verified.
+
+[Unreleased]: https://github.com/phuctiensinh/DX-Asset/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/phuctiensinh/DX-Asset/releases/tag/v1.0.0

@@ -305,7 +305,7 @@ class AIAssistantService:
                 ])
                 for a in assigned_assets:
                     sources.append(AssistantSource(type="asset", id=a.id, code=a.asset_code, name=a.name))
-                answer = f"Hệ thống hiện có **{total_assigned}** tài sản đang ở trạng thái cấp phát (ASSIGNED). Dưới đây là các tài sản mới nhất:\n{asset_list_str}"
+                answer = f"Hệ thống hiện có **{total_assigned}** tài sản đang được cấp phát. Dưới đây là các tài sản mới nhất:\n{asset_list_str}"
             else:
                 answer = "Hiện tại không có tài sản nào đang ở trạng thái cấp phát."
             return AssistantChatResponse(answer=answer, intent="ASSIGNED_ASSETS_QUERY", sources=sources, is_fallback=True)

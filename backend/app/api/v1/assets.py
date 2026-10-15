@@ -221,7 +221,7 @@ def soft_delete_asset(
         asset_id=asset.id,
         action_type=AssetActionType.STATUS_CHANGED,
         performed_by_id=current_user.id,
-        details="Tài sản đã được thanh lý (RETIRED) khỏi hệ thống.",
+        details="Tài sản đã được thanh lý khỏi hệ thống.",
     )
     db.add(history)
 
