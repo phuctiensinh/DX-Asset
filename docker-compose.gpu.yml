@@ -1,0 +1,11 @@
+# Tùy chọn: cho Ollama dùng GPU NVIDIA (cần driver NVIDIA + Docker Desktop hỗ trợ GPU).
+# Cách dùng: docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

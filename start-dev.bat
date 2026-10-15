@@ -26,7 +26,12 @@ if errorlevel 1 (
 
 echo.
 echo [1/5] Starting PostgreSQL + Keycloak + SeaweedFS + Ollama...
-docker compose up -d postgres keycloak seaweedfs ollama
+rem Use the NVIDIA GPU for Ollama when available
+set "COMPOSE_FILES=-f docker-compose.yml"
+where nvidia-smi >nul 2>&1 && set "COMPOSE_FILES=-f docker-compose.yml -f docker-compose.gpu.yml"
+rem Stop the Docker backend/frontend (if running) so ports 8000/3000 are free for local dev
+docker compose stop backend frontend >nul 2>&1
+docker compose %COMPOSE_FILES% up -d postgres keycloak seaweedfs ollama
 
 
 if errorlevel 1 (

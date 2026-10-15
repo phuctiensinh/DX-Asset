@@ -15,9 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN chmod +x docker-entrypoint.sh
+# Strip Windows CRLF line endings, if any, so the script runs on Linux
+RUN sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 
 EXPOSE 8000
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-

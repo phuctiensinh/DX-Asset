@@ -46,33 +46,136 @@
 
 ---
 
-## 🚀 Hướng dẫn Cài đặt & Chạy ứng dụng từ Mã nguồn
+## 🚀 Hướng dẫn Cài đặt & Chạy ứng dụng
 
-### Yêu cầu Tiền đề
-- Docker & Docker Compose (v2.x)
-- Git (v2.x)
+Có 2 cách chạy. **Cách A (Docker)** là cách khuyến nghị cho người mới clone về: chỉ cần cài Docker, không cần cài Python hay Node.js.
 
-### Các bước Chạy ứng dụng bằng Docker Compose (1 lệnh)
+### Yêu cầu
 
-1. **Clone mã nguồn**:
+| Thành phần | Cách A (Docker) | Cách B (Dev local) |
+|---|---|---|
+| Git | ✅ | ✅ |
+| Docker Desktop (Compose v2) | ✅ | ✅ (chạy PostgreSQL, Keycloak, SeaweedFS, Ollama) |
+| Python 3.12 | – | ✅ |
+| Node.js 20 | – | ✅ |
+
+Tài nguyên máy: RAM trống tối thiểu ~6 GB, ổ đĩa trống ~8 GB (model AI `qwen2.5:3b` nặng ~1.9 GB).
+
+---
+
+### Cách A — Chạy toàn bộ bằng Docker (khuyến nghị)
+
+1. **Clone mã nguồn**
    ```bash
-   git clone https://github.com/ten-nhom/dx-asset.git
-   cd dx-asset
+   git clone https://github.com/phuctiensinh/DX-Asset.git
+   cd DX-Asset
    ```
 
-2. **Cấu hình biến môi trường**:
+2. **Tạo file biến môi trường** (Windows PowerShell dùng `copy` thay cho `cp`)
    ```bash
    cp .env.example .env
    ```
+   Có thể giữ nguyên giá trị mặc định khi chạy thử trên máy cá nhân. Khi triển khai thật, **bắt buộc** đổi `SECRET_KEY`, `POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`.
 
-3. **Khởi chạy toàn bộ hệ thống bằng Docker Compose**:
+3. **Build và khởi động**
    ```bash
-   docker compose up -d
+   docker compose up -d --build
+   ```
+   Lần đầu mất khoảng 5–10 phút (tải image, build frontend/backend, tải model AI). Backend tự động chạy migration và nạp dữ liệu mẫu khi khởi động.
+
+4. **Kiểm tra trạng thái**
+   ```bash
+   docker compose ps -a
+   ```
+   Các service phải ở trạng thái `Up` / `healthy`. Riêng `dx_asset_ollama_pull` là job tải model AI một lần, chạy xong sẽ `Exited (0)`, đó là bình thường.
+
+5. **Truy cập**
+
+   | Dịch vụ | Địa chỉ |
+   |---|---|
+   | Ứng dụng web | http://localhost:3000 |
+   | API docs (Swagger) | http://localhost:8000/docs |
+   | Keycloak Admin Console | http://localhost:8080 (tài khoản lấy từ `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` trong `.env`) |
+
+> ⚠️ Luôn truy cập bằng `localhost`, **không** dùng `127.0.0.1` hay IP máy. Token đăng nhập gắn với địa chỉ `localhost`; dùng địa chỉ khác sẽ bị lỗi 401.
+
+#### Dùng GPU NVIDIA cho AI (tùy chọn)
+
+Mặc định Ollama chạy bằng CPU để chạy được trên mọi máy. Nếu máy có card NVIDIA:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+---
+
+### Cách B — Chạy dev local (dành cho người phát triển)
+
+Backend và frontend chạy trực tiếp trên máy (có hot-reload); các dịch vụ hạ tầng chạy bằng Docker.
+
+1. Tạo file môi trường:
+   ```bash
+   cp .env.example .env
+   cp frontend/.env.local.example frontend/.env.local
+   ```
+2. Cài thư viện backend (tạo virtualenv trong `backend/.venv`):
+   ```bash
+   cd backend
+   python -m venv .venv
+   .venv\Scripts\pip install -r requirements.txt
+   cd ..
+   ```
+3. Cài thư viện frontend:
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+4. Trên Windows, chạy `start-dev.bat`. Script sẽ khởi động hạ tầng Docker, chạy migration, mở backend (cổng 8000) và frontend (cổng 3000). Script tự dùng GPU nếu phát hiện `nvidia-smi`, và tự dừng container `backend`/`frontend` của Cách A để tránh trùng cổng.
+5. Nạp dữ liệu mẫu (chỉ cần lần đầu):
+   ```bash
+   cd backend
+   .venv\Scripts\python -m scripts.seed_data
+   ```
+6. Tải model AI (chỉ cần lần đầu):
+   ```bash
+   docker exec dx_asset_ollama ollama pull qwen2.5:3b
    ```
 
-4. **Truy cập ứng dụng**:
-   - **Frontend App**: `http://localhost:3000`
-   - **Backend REST API Specs**: `http://localhost:8000/docs`
+---
+
+### Tài khoản đăng nhập
+
+Hệ thống dùng **Keycloak SSO**. Mỗi máy có một Keycloak riêng, được tạo mới từ `docker/keycloak/realm-export.json`, nên **tài khoản không được chia sẻ giữa các máy**.
+
+- **Người dùng mới**: tại trang đăng nhập, bấm **"Đăng ký Tài khoản Mới"**, điền thông tin. Sau khi đăng ký, tài khoản được tạo tự động với vai trò `EMPLOYEE`.
+- **Quản trị viên (ADMIN)**: hệ thống chỉ cho phép **một** tài khoản ADMIN duy nhất (System Owner), gắn với email `2424801030008@student.tdmu.edu.vn`. Đăng ký Keycloak bằng đúng email này sẽ được liên kết với tài khoản ADMIN có sẵn trong dữ liệu mẫu.
+- ADMIN có thể đổi vai trò người dùng khác (`IT_ASSET_MANAGER`, `MANAGER`, `EMPLOYEE`) tại trang **Người dùng**.
+
+---
+
+### Lệnh Docker thường dùng
+
+| Mục đích | Lệnh |
+|---|---|
+| Xem log backend | `docker compose logs -f backend` |
+| Dừng hệ thống (giữ dữ liệu) | `docker compose stop` |
+| Khởi động lại | `docker compose up -d` |
+| Build lại sau khi `git pull` / sửa code | `docker compose up -d --build` |
+| Xóa container (giữ dữ liệu) | `docker compose down` |
+| ⚠️ Xóa **toàn bộ dữ liệu** (DB, tài khoản Keycloak, file đính kèm, model AI) | `docker compose down -v` |
+
+---
+
+### Xử lý sự cố thường gặp
+
+| Hiện tượng | Nguyên nhân & cách xử lý |
+|---|---|
+| Đăng nhập/đăng ký xong bị quay về trang Login, console báo `401` ở `/auth/me` | Truy cập bằng `localhost:3000` (không dùng `127.0.0.1`). Xóa Local Storage của trang (F12 → Application → Local Storage) rồi thử lại. Xem lý do cụ thể bằng `docker compose logs backend`. Nếu Keycloak vừa khởi động, đợi ~1 phút. |
+| `port is already allocated` (5432, 8080, 3000, 8000…) | Có chương trình khác đang dùng cổng đó. Với PostgreSQL, đổi `POSTGRES_PORT` trong `.env` (ví dụ `5433`). Nếu đang chạy Cách B thì tắt cửa sổ backend/frontend local trước khi chạy Cách A. |
+| `could not select device driver "nvidia"` | Máy không có GPU NVIDIA: chạy lệnh mặc định, không thêm `docker-compose.gpu.yml`. |
+| Trợ lý AI phản hồi chậm hoặc không trả lời | Model đang tải hoặc chạy bằng CPU. Kiểm tra bằng `docker compose logs ollama-pull`. Khi AI không sẵn sàng, hệ thống dùng chế độ gợi ý dự phòng (rule-based). |
+| Backend báo `exec ./docker-entrypoint.sh: no such file or directory` | File `.sh` bị đổi sang định dạng xuống dòng Windows (CRLF). Repo đã cấu hình `.gitattributes` và Dockerfile để tự xử lý; nếu vẫn gặp, chạy `docker compose build --no-cache backend`. |
+| Tải image bị lỗi `unexpected EOF` | Mạng chập chờn khi tải image, chạy lại lệnh `docker compose up -d --build`. |
 
 ---
 

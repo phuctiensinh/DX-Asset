@@ -7,6 +7,22 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed newly registered Keycloak users getting `401`/`500` on `/auth/me`: `SYSTEM_OWNER_EMAIL` was not defined in `app/api/deps.py`.
+- Fixed the Docker backend rejecting every Keycloak token: JWKS is now fetched via the `keycloak` service name, and `pyjwt[crypto]` is installed for RS256 verification.
+- Fixed the Ollama healthcheck, which always failed and blocked the Docker backend from starting.
+- Fixed `docker compose up` failing on machines without an NVIDIA GPU; GPU support moved to the optional `docker-compose.gpu.yml`.
+
+### Changed
+
+- The frontend Docker image now builds and runs in production mode (`next build` + `next start`) instead of the dev server.
+- Added `.dockerignore` files so host `node_modules`, `.next` and `.venv` are not copied into images.
+- Added the `ollama-pull` one-shot service that downloads the AI model automatically.
+- `.sh` files are forced to LF line endings so the backend container works when cloned on Windows.
+- `start-dev.bat` uses the GPU when `nvidia-smi` is available and stops the Docker backend/frontend to free ports 8000/3000.
+- Rewrote the README installation guide (Docker mode, local dev mode, accounts, common commands, troubleshooting).
+
 ### Added
 
 - Added Phase 14 read-only allocation, technician-capacity, and replacement/depreciation simulations, plus transparent replacement-priority recommendations.

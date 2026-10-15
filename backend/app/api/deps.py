@@ -14,6 +14,9 @@ from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger(__name__)
 
+# The only account allowed to hold the ADMIN role
+SYSTEM_OWNER_EMAIL = "2424801030008@student.tdmu.edu.vn"
+
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login",
     auto_error=False

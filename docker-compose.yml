@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dx_password_secret}
       POSTGRES_DB: ${POSTGRES_DB:-dx_asset_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-keycloak-db.sql:/docker-entrypoint-initdb.d/01-init-keycloak-db.sql
@@ -77,18 +77,25 @@ services:
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_NUM_PARALLEL=2
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/11434"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 15s
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # GPU NVIDIA (tùy chọn): xem docker-compose.gpu.yml
+
+  # One-shot job: tải model AI vào volume ollama_storage (chỉ tải lần đầu, các lần sau bỏ qua rất nhanh)
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: dx_asset_ollama_pull
+    restart: "no"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["ollama"]
+    command: ["pull", "${OLLAMA_MODEL:-qwen2.5:3b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
 
   backend:
     build:
@@ -103,10 +110,12 @@ services:
       - AI_ENABLED=${AI_ENABLED:-true}
       - AI_API_KEY=${AI_API_KEY:-}
       - OLLAMA_ENABLED=${OLLAMA_ENABLED:-true}
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      # Service addresses inside the Docker network (not read from .env, which targets local dev)
+      - OLLAMA_BASE_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
       - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-10}
-      - SEAWEEDFS_FILER_URL=${SEAWEEDFS_FILER_URL:-http://seaweedfs:8888}
+      - SEAWEEDFS_FILER_URL=http://seaweedfs:8888
+      - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-10}
       # Issuer must match what the browser sees (localhost); JWKS is fetched inside the Docker network
       - KEYCLOAK_ISSUER_URL=http://localhost:8080/realms/dx-asset
       - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/dx-asset/protocol/openid-connect/certs
@@ -116,7 +125,7 @@ services:
       postgres:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
       seaweedfs:
         condition: service_healthy
       ollama:
@@ -126,10 +135,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # Browser-facing URLs, baked into the frontend bundle at build time
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+        NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
+        NEXT_PUBLIC_KEYCLOAK_REALM: dx-asset
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: dx-asset-frontend
     container_name: dx_asset_frontend
     restart: always
-    environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1
     ports:
       - "3000:3000"
     depends_on:

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, SYSTEM_OWNER_EMAIL
 from app.models.user import User
 from app.models.technician_skill import TechnicianSkill
 from app.models.enums import UserRole
@@ -19,8 +19,6 @@ from app.services.smart_routing import SmartRoutingService
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-SYSTEM_OWNER_EMAIL = "2424801030008@student.tdmu.edu.vn"
 
 @router.get("", response_model=List[UserResponse])
 def list_users(
