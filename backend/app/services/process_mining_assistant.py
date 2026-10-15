@@ -5,9 +5,14 @@ from enum import Enum
 from typing import Optional
 
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.labels import vi
 from app.models.enums import UserRole
+from app.models.incident import Incident
+from app.models.maintenance import Maintenance
+from app.models.process_case import ProcessCase
 from app.models.user import User
 from app.schemas.assistant import AssistantChatResponse, AssistantSource
 from app.schemas.process_mining import ProcessCaseDetail
@@ -27,7 +32,10 @@ _ANALYTICS_ROLES = {
     UserRole.IT_ASSET_MANAGER,
     UserRole.MANAGER,
 }
+# Legacy internal reference ("CASE-023"), still accepted as input
 _CASE_ID = re.compile(r"\bCASE\s*[-#]?\s*(\d+)\b", re.IGNORECASE)
+# Business ticket codes shown to users: INC-2026-001, MNT-T-006B29, ...
+_TICKET_CODE = re.compile(r"\b((?:INC|MNT)-[A-Z0-9][A-Z0-9.\-]*)", re.IGNORECASE)
 _DURATION_TERMS = (
     "mất bao lâu", "mat bao lau", "bao lâu để xử lý", "bao lau de xu ly",
     "thời gian xử lý", "thoi gian xu ly", "mất thời gian", "mat thoi gian",
@@ -38,10 +46,31 @@ _DETAIL_TERMS = (
     "di qua nhung buoc", "đã đi qua", "da di qua", "timeline", "case detail",
     "case history", "what steps", "which steps", "steps in",
 )
+# For ticket codes "chi tiết" alone is not enough: "chi tiết phiếu INC-..." is the ticket-detail intent
+_JOURNEY_TERMS = (
+    "đã trải qua", "da trai qua", "đi qua những bước", "di qua nhung buoc", "đã đi qua",
+    "da di qua", "những bước nào", "nhung buoc nao", "hành trình", "hanh trinh", "timeline",
+)
 
 
 def _case_requested(lower_message: str) -> bool:
     return "case" in lower_message or "process case" in lower_message
+
+
+def _duration(seconds: float) -> str:
+    """Human readable Vietnamese duration, e.g. '2 ngày 3 giờ' or '40 giây'."""
+    total = max(0, int(seconds))
+    days, rest = divmod(total, 86400)
+    hours, rest = divmod(rest, 3600)
+    minutes, secs = divmod(rest, 60)
+    parts = []
+    if days:
+        parts.append(f"{days} ngày")
+    if hours:
+        parts.append(f"{hours} giờ")
+    if minutes and len(parts) < 2:
+        parts.append(f"{minutes} phút")
+    return " ".join(parts) if parts else f"{secs} giây"
 
 
 class ProcessMiningAssistantService:
@@ -52,23 +81,28 @@ class ProcessMiningAssistantService:
         lower = message.lower()
         has_case_id = _CASE_ID.search(message) is not None
         case_requested = _case_requested(lower)
+        has_ticket = _TICKET_CODE.search(message) is not None
 
         if case_requested and any(term in lower for term in _DURATION_TERMS):
             return ProcessMiningAssistantIntent.CASE_DURATION
         if case_requested and (has_case_id or any(term in lower for term in _DETAIL_TERMS)):
             return ProcessMiningAssistantIntent.CASE_DETAIL
+        if has_ticket and any(term in lower for term in _DURATION_TERMS):
+            return ProcessMiningAssistantIntent.CASE_DURATION
+        if has_ticket and any(term in lower for term in _JOURNEY_TERMS):
+            return ProcessMiningAssistantIntent.CASE_DETAIL
 
         if any(term in lower for term in (
             "bottleneck", "bottlenecks", "điểm nghẽn", "diem nghen",
             "bước nào đang chậm", "buoc nao dang cham", "đoạn nào chậm",
-            "doan nao cham", "slowest", "process delay",
+            "doan nao cham", "chậm ở bước nào", "cham o buoc nao", "slowest", "process delay",
         )):
             return ProcessMiningAssistantIntent.BOTTLENECKS
 
         if any(term in lower for term in (
-            "biến thể quy trình", "bien the quy trinh", "biến thể quy trình",
-            "các biến thể", "cac bien the", "process variants", "process variant",
-            "workflow variants", "event sequence variants",
+            "biến thể quy trình", "bien the quy trinh",
+            "các biến thể", "cac bien the", "luồng xử lý nào", "luong xu ly nao",
+            "process variants", "process variant", "workflow variants", "event sequence variants",
         )):
             return ProcessMiningAssistantIntent.VARIANTS
 
@@ -77,6 +111,7 @@ class ProcessMiningAssistantService:
             "tinh hinh process mining", "tổng quan quy trình", "tong quan quy trinh",
             "quy trình xử lý sự cố hiện tại", "quy trinh xu ly su co hien tai",
             "quy trình xử lý incident hiện tại", "quy trinh xu ly incident hien tai",
+            "phân tích quy trình", "phan tich quy trinh",
             "process mining summary", "process mining overview", "current process overview",
             "current incident workflow", "process mining status", "process mining",
             "process-mining",
@@ -84,12 +119,32 @@ class ProcessMiningAssistantService:
             return ProcessMiningAssistantIntent.SUMMARY
 
         # A request for case detail/duration without an ID is still recognized so
-        # the assistant asks for an exact ID instead of falling through elsewhere.
+        # the assistant asks for an exact code instead of falling through elsewhere.
         if case_requested and any(term in lower for term in _DURATION_TERMS):
             return ProcessMiningAssistantIntent.CASE_DURATION
         if case_requested and any(term in lower for term in _DETAIL_TERMS):
             return ProcessMiningAssistantIntent.CASE_DETAIL
         return None
+
+    @staticmethod
+    def _resolve_case_id(db: Session, message: str) -> tuple[Optional[int], Optional[str]]:
+        """Return (process case id, code the user asked about). The id is None when nothing matches."""
+        legacy = _CASE_ID.search(message)
+        if legacy is not None:
+            return int(legacy.group(1)), legacy.group(0).upper()
+        ticket = _TICKET_CODE.search(message)
+        if ticket is None:
+            return None, None
+        code = ticket.group(1).rstrip(".").upper()
+        incident = db.query(Incident.id).filter(func.upper(Incident.ticket_code) == code).first()
+        if incident is not None:
+            case = db.query(ProcessCase.id).filter(ProcessCase.incident_id == incident.id).first()
+            return (case.id if case else None), code
+        maintenance = db.query(Maintenance.id).filter(func.upper(Maintenance.maintenance_code) == code).first()
+        if maintenance is not None:
+            case = db.query(ProcessCase.id).filter(ProcessCase.maintenance_id == maintenance.id).first()
+            return (case.id if case else None), code
+        return None, code
 
     @staticmethod
     def process_chat(
@@ -104,7 +159,7 @@ class ProcessMiningAssistantService:
         if current_user.role not in _ANALYTICS_ROLES:
             raise HTTPException(
                 status_code=403,
-                detail="Nhân viên không có quyền truy cập dữ liệu Process Mining toàn hệ thống.",
+                detail="Nhân viên không có quyền xem số liệu phân tích quy trình toàn hệ thống.",
             )
 
         if intent == ProcessMiningAssistantIntent.SUMMARY:
@@ -114,22 +169,19 @@ class ProcessMiningAssistantService:
         if intent == ProcessMiningAssistantIntent.BOTTLENECKS:
             return ProcessMiningAssistantService._bottlenecks(db)
 
-        match = _CASE_ID.search(message)
-        if match is None:
-            subject = "thời gian xử lý" if intent == ProcessMiningAssistantIntent.CASE_DURATION else "chi tiết case"
+        case_id, requested_code = ProcessMiningAssistantService._resolve_case_id(db, message)
+        if requested_code is None:
+            subject = "thời gian xử lý" if intent == ProcessMiningAssistantIntent.CASE_DURATION else "các bước đã diễn ra"
             return ProcessMiningAssistantService._response(
-                f"Vui lòng cung cấp Case ID chính xác để tra cứu {subject} (ví dụ: CASE-023).",
+                f"Vui lòng cung cấp mã phiếu để tra cứu {subject} (ví dụ: INC-2026-001).",
                 intent,
             )
 
-        case_id = int(match.group(1))
-        detail = ProcessMiningService.get_case_detail(db, case_id)
+        detail = ProcessMiningService.get_case_detail(db, case_id) if case_id is not None else None
         if detail is None:
-            code = ProcessMiningAssistantService._case_code(case_id)
             return ProcessMiningAssistantService._response(
-                f"Không tìm thấy {code} trong Process Mining.",
+                f"Không tìm thấy phiếu {requested_code} trong dữ liệu phân tích quy trình.",
                 intent,
-                ProcessMiningAssistantService._case_source(case_id),
             )
         if intent == ProcessMiningAssistantIntent.CASE_DURATION:
             return ProcessMiningAssistantService._case_duration(detail)
@@ -149,42 +201,40 @@ class ProcessMiningAssistantService:
         )
 
     @staticmethod
+    def _page_source(name: str) -> AssistantSource:
+        return AssistantSource(type="process_mining", name=name, details="/intelligence/process-mining")
+
+    @staticmethod
     def _summary(db: Session) -> AssistantChatResponse:
         result = ProcessMiningService.get_summary(db)
         answer = (
-            f"Process Mining ghi nhận **{result.total_cases} case** và **{result.total_events} event**. "
-            f"Theo định nghĩa hoàn thành hiện tại của service: **{result.completed_cases} case hoàn thành**, "
-            f"**{result.incomplete_cases} chưa hoàn thành**. Nguồn event gồm **{result.live_events} LIVE** "
-            f"và **{result.backfill_events} BACKFILL**."
+            f"Hệ thống đang phân tích **{result.total_cases} phiếu** với **{result.total_events} bước thao tác** đã ghi nhận: "
+            f"**{result.completed_cases} phiếu đã hoàn tất**, **{result.incomplete_cases} phiếu chưa hoàn tất**. "
+            f"Trong đó **{result.live_events} bước được ghi nhận trực tiếp** và "
+            f"**{result.backfill_events} bước được tái dựng từ dữ liệu cũ**."
         )
         if result.total_cases == 0 or result.total_events == 0:
             answer += "\nDữ liệu hiện tại chưa đủ để mô tả các bước của quy trình."
         if result.observed_flow:
-            answer += "\n\nObserved flow có ghi nhận:"
+            answer += "\n\nCác bước chuyển tiếp thường gặp:"
             for edge in result.observed_flow[:5]:
                 duration = (
-                    f"median {edge.median_duration:g} giây"
+                    f"thường mất {_duration(edge.median_duration)}"
                     if edge.median_duration is not None
-                    else "chưa có median thời gian"
+                    else "chưa đủ dữ liệu thời gian"
                 )
-                answer += f"\n- {edge.from_event.value} → {edge.to_event.value}: {edge.count} observations, {duration}."
+                answer += f"\n- {vi(edge.from_event)} → {vi(edge.to_event)}: {edge.count} lượt, {duration}."
         else:
-            answer += "\nChưa có observed-flow transition trong tập dữ liệu này."
-        notes = [result.cohort.coverage_note]
+            answer += "\nChưa có bước chuyển tiếp nào trong dữ liệu hiện tại."
+        notes = ["các bước tái dựng từ dữ liệu cũ có thể không đầy đủ."]
         if result.data_quality.ambiguous_timestamp_events:
             notes.append(
-                f"Có {result.data_quality.ambiguous_timestamp_events} event có timestamp mơ hồ; "
-                "các khoảng thời gian liên quan không được dùng để kết luận."
+                f"Có {result.data_quality.ambiguous_timestamp_events} bước không rõ thời điểm chính xác "
+                "nên không được dùng để tính thời gian."
             )
-        answer += "\n\nLưu ý dữ liệu: " + " ".join(notes)
+        answer += "\n\nLưu ý: " + " ".join(notes)
         return ProcessMiningAssistantService._response(
-            answer,
-            ProcessMiningAssistantIntent.SUMMARY,
-            AssistantSource(
-                type="process_mining",
-                name="Process Mining Summary",
-                details="/intelligence/process-mining",
-            ),
+            answer, ProcessMiningAssistantIntent.SUMMARY, ProcessMiningAssistantService._page_source("Phân tích quy trình: tổng quan")
         )
 
     @staticmethod
@@ -192,25 +242,19 @@ class ProcessMiningAssistantService:
         result = ProcessMiningService.get_variants(db)
         if result.variants:
             rows = [
-                f"- {' → '.join(event.value for event in variant.event_sequence)}: "
-                f"{variant.case_count} case ({variant.percentage:.1f}%)."
-                for variant in result.variants[:10]
+                f"- Luồng {index}: {' → '.join(vi(event) for event in variant.event_sequence)} "
+                f"({variant.case_count} phiếu, {variant.percentage:.1f}%)."
+                for index, variant in enumerate(result.variants[:10], start=1)
             ]
             answer = (
-                f"Có {len(result.variants)} biến thể trong tập dữ liệu có event "
-                f"(mẫu số {result.denominator_cases} case):\n" + "\n".join(rows)
+                f"Có {len(result.variants)} luồng xử lý khác nhau trên tổng số {result.denominator_cases} phiếu:\n"
+                + "\n".join(rows)
             )
         else:
-            answer = "Chưa có event trong tập dữ liệu này để xác định biến thể quy trình."
-        answer += f"\n\nLưu ý dữ liệu: {result.cohort.coverage_note}"
+            answer = "Chưa có dữ liệu để xác định các luồng xử lý."
+        answer += "\n\nLưu ý: các bước tái dựng từ dữ liệu cũ có thể không đầy đủ."
         return ProcessMiningAssistantService._response(
-            answer,
-            ProcessMiningAssistantIntent.VARIANTS,
-            AssistantSource(
-                type="process_mining",
-                name="Process Mining Variants",
-                details="/intelligence/process-mining",
-            ),
+            answer, ProcessMiningAssistantIntent.VARIANTS, ProcessMiningAssistantService._page_source("Phân tích quy trình: các luồng xử lý")
         )
 
     @staticmethod
@@ -218,85 +262,74 @@ class ProcessMiningAssistantService:
         min_sample = 5  # ProcessMiningService/API current default threshold.
         result = ProcessMiningService.get_bottlenecks(db, min_sample=min_sample)
         if result:
+            ranked = sorted(result, key=lambda item: item.median_duration, reverse=True)[:10]
             lines = [
-                f"- {item.from_event.value} → {item.to_event.value}: {item.count} observations, "
-                f"median {item.median_duration:g} giây."
-                for item in result[:10]
+                f"- {vi(item.from_event)} → {vi(item.to_event)}: {item.count} lượt, "
+                f"thường mất {_duration(item.median_duration)}."
+                for item in ranked
             ]
-            answer = "Process Mining ghi nhận các bottleneck đạt ngưỡng phân tích:\n" + "\n".join(lines)
+            answer = "Các bước chuyển tiếp mất nhiều thời gian nhất (xếp từ chậm nhất):\n" + "\n".join(lines)
         else:
             answer = (
-                "Hiện chưa có đủ dữ liệu để xác định bottleneck: không có transition nào đạt "
-                f"ngưỡng tối thiểu {min_sample} observations của service."
+                "Chưa đủ dữ liệu để xác định bước bị chậm: chưa có bước chuyển tiếp nào "
+                f"đạt tối thiểu {min_sample} lượt."
             )
         return ProcessMiningAssistantService._response(
-            answer,
-            ProcessMiningAssistantIntent.BOTTLENECKS,
-            AssistantSource(
-                type="process_mining",
-                name="Process Mining Bottlenecks",
-                details="/intelligence/process-mining",
-            ),
+            answer, ProcessMiningAssistantIntent.BOTTLENECKS, ProcessMiningAssistantService._page_source("Phân tích quy trình: bước bị chậm")
         )
 
     @staticmethod
-    def _case_code(case_id: int) -> str:
-        return f"CASE-{case_id:03d}"
+    def _case_label(detail: ProcessCaseDetail) -> str:
+        return detail.reference_code or "phiếu này"
 
     @staticmethod
-    def _case_source(case_id: int) -> AssistantSource:
+    def _case_source(detail: ProcessCaseDetail) -> AssistantSource:
         return AssistantSource(
             type="process_mining",
-            id=case_id,
-            code=ProcessMiningAssistantService._case_code(case_id),
-            name="Process Mining Case",
+            id=detail.case_id,
+            code=detail.reference_code,
+            name=detail.title or "Hành trình xử lý phiếu",
             details="/intelligence/process-mining",
         )
 
     @staticmethod
     def _case_duration(detail: ProcessCaseDetail) -> AssistantChatResponse:
-        code = ProcessMiningAssistantService._case_code(detail.case_id)
+        label = ProcessMiningAssistantService._case_label(detail)
         if detail.processing_time is None:
             answer = (
-                f"{code} hiện chưa có processing time hoàn chỉnh theo Process Mining "
-                "(service trả về null), nên dữ liệu hiện tại chưa đủ để kết luận thời gian xử lý. "
-                "Incident chỉ được tính hoàn thành khi có event CLOSED; Maintenance khi có event COMPLETED."
+                f"Phiếu {label} chưa hoàn tất nên chưa tính được tổng thời gian xử lý. "
+                "Phiếu sự cố được tính hoàn tất khi được đóng; phiếu bảo trì khi được đánh dấu hoàn thành."
             )
         else:
-            answer = f"Processing time của {code} theo Process Mining là **{detail.processing_time:g} giây**."
+            answer = f"Tổng thời gian xử lý phiếu {label} là **{_duration(detail.processing_time)}**."
         return ProcessMiningAssistantService._response(
-            answer,
-            ProcessMiningAssistantIntent.CASE_DURATION,
-            ProcessMiningAssistantService._case_source(detail.case_id),
+            answer, ProcessMiningAssistantIntent.CASE_DURATION, ProcessMiningAssistantService._case_source(detail)
         )
 
     @staticmethod
     def _case_detail(detail: ProcessCaseDetail) -> AssistantChatResponse:
-        code = ProcessMiningAssistantService._case_code(detail.case_id)
-        answer = f"Timeline đã được ghi nhận của {code} ({detail.case_type.value}):"
+        label = ProcessMiningAssistantService._case_label(detail)
+        answer = f"Các bước phiếu {label} ({vi(detail.case_type).lower()}) đã trải qua:"
         if detail.events:
-            for event in detail.events:
+            for index, event in enumerate(detail.events, start=1):
+                # The same code (IN_PROGRESS, CANCELLED) means different things for incidents and maintenance
+                kind = "MaintenanceStatus" if event.event_type.value.startswith("MAINTENANCE_") else "IncidentStatus"
                 if event.from_status is not None and event.to_status is not None:
-                    status = f" ({event.from_status} → {event.to_status})"
+                    status = f" ({vi(event.from_status, kind)} → {vi(event.to_status, kind)})"
                 elif event.to_status is not None:
-                    status = f" (recorded status: {event.to_status})"
+                    status = f" (trạng thái: {vi(event.to_status, kind)})"
                 elif event.from_status is not None:
-                    status = f" (from status: {event.from_status})"
+                    status = f" (từ trạng thái: {vi(event.from_status, kind)})"
                 else:
                     status = ""
-                answer += (
-                    f"\n{event.sequence}. {event.event_type.value}{status} "
-                    f"[{event.source.value}]"
-                )
+                rebuilt = " — tái dựng từ dữ liệu cũ" if event.source.value == "BACKFILL" else ""
+                answer += f"\n{index}. {vi(event.event_type)}{status}{rebuilt}"
         else:
-            answer += "\nChưa có event nào được ghi nhận cho case này."
+            answer += "\nChưa có bước nào được ghi nhận cho phiếu này."
         if detail.processing_time is None:
-            answer += "\nProcessing time: chưa có giá trị hoàn chỉnh từ Process Mining."
+            answer += "\nTổng thời gian xử lý: chưa hoàn tất."
         else:
-            answer += f"\nProcessing time: {detail.processing_time:g} giây."
-        answer += "\nNguồn LIVE/BACKFILL được hiển thị theo từng event; BACKFILL không được xem là LIVE."
+            answer += f"\nTổng thời gian xử lý: {_duration(detail.processing_time)}."
         return ProcessMiningAssistantService._response(
-            answer,
-            ProcessMiningAssistantIntent.CASE_DETAIL,
-            ProcessMiningAssistantService._case_source(detail.case_id),
+            answer, ProcessMiningAssistantIntent.CASE_DETAIL, ProcessMiningAssistantService._case_source(detail)
         )

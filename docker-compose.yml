@@ -39,6 +39,8 @@ services:
       - "8080:8080"
     volumes:
       - ./docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      # Vietnamese login/registration pages (Keycloak 24 has no built-in Vietnamese)
+      - ./docker/keycloak/themes/dx-asset:/opt/keycloak/themes/dx-asset
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080"]
       interval: 10s

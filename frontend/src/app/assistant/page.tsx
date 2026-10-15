@@ -71,9 +71,9 @@ function AssistantContent() {
 
   const suggestedQuestions = [
     'Quy trình xử lý sự cố hiện tại thế nào?',
-    'Có những biến thể quy trình nào?',
-    'Đâu là bottleneck hiện tại?',
-    'CASE-023 đã trải qua những bước nào?',
+    'Các phiếu thường đi theo những luồng xử lý nào?',
+    'Quy trình đang bị chậm ở bước nào?',
+    'Phiếu INC-2026-001 đã trải qua những bước nào?',
     'Có bao nhiêu tài sản đang được cấp phát?',
     'Tài sản nào chưa được cấp phát?',
     'Có những sự cố nào đang xử lý?',
@@ -161,12 +161,12 @@ function AssistantContent() {
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-bold text-slate-900">Trợ lý AI Quản lý Tài sản</h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
-                  Read-Only Mode
+                  Chỉ tra cứu
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5 flex items-center space-x-2">
                 <Database className="w-3.5 h-3.5 text-indigo-600 inline" />
-                <span>Truy vấn thời gian thực trên PostgreSQL (Không tự bịa dữ liệu)</span>
+                <span>Trả lời dựa trên dữ liệu thật của hệ thống, không tự bịa dữ liệu</span>
               </p>
             </div>
           </div>
@@ -237,7 +237,7 @@ function AssistantContent() {
                   {msg.intent === 'MUTATION_REJECTED' && (
                     <div className="flex items-center space-x-1.5 text-rose-700 font-bold mb-1.5 text-xs">
                       <ShieldAlert className="w-4 h-4 shrink-0 text-rose-600" />
-                      <span>Thông báo từ chối thao tác (Read-Only Guard)</span>
+                      <span>Trợ lý chỉ tra cứu, không thực hiện thay đổi dữ liệu</span>
                     </div>
                   )}
 
@@ -284,7 +284,7 @@ function AssistantContent() {
               </div>
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-none text-xs text-slate-500 flex items-center space-x-2">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-600" />
-                <span>Đang truy vấn cơ sở dữ liệu PostgreSQL...</span>
+                <span>Đang tra cứu dữ liệu...</span>
               </div>
             </div>
           )}

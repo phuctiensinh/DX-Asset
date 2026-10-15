@@ -16,7 +16,10 @@ from app.models.enums import (
     ProcessEventTimestampQuality,
     ProcessEventType,
 )
+from app.models.incident import Incident
+from app.models.maintenance import Maintenance
 from app.models.process_case import ProcessCase
+from app.models.user import User
 from app.models.process_event import ProcessEvent
 from app.schemas.process_mining import (
     DurationStatistics,
@@ -191,6 +194,32 @@ def _maintenance_durations(events: list[ProcessEvent]) -> list[float]:
     return durations
 
 
+def _case_references(db: Session, cases: list[ProcessCase]) -> dict[int, tuple[str, str]]:
+    """Map case id -> (ticket/maintenance code, title) of the linked business record."""
+    incident_ids = [case.incident_id for case in cases if case.incident_id is not None]
+    maintenance_ids = [case.maintenance_id for case in cases if case.maintenance_id is not None]
+    incidents = {
+        row.id: (row.ticket_code, row.title)
+        for row in db.query(Incident.id, Incident.ticket_code, Incident.title).filter(Incident.id.in_(incident_ids))
+    } if incident_ids else {}
+    maintenances = {
+        row.id: (row.maintenance_code, row.title)
+        for row in db.query(Maintenance.id, Maintenance.maintenance_code, Maintenance.title).filter(Maintenance.id.in_(maintenance_ids))
+    } if maintenance_ids else {}
+    references: dict[int, tuple[str, str]] = {}
+    for case in cases:
+        reference = incidents.get(case.incident_id) if case.incident_id is not None else maintenances.get(case.maintenance_id)
+        if reference is not None:
+            references[case.id] = reference
+    return references
+
+
+def _user_names(db: Session, user_ids: set[int]) -> dict[int, str]:
+    if not user_ids:
+        return {}
+    return {row.id: row.full_name for row in db.query(User.id, User.full_name).filter(User.id.in_(user_ids))}
+
+
 def _event_sources(events: list[ProcessEvent]) -> set[str]:
     return {_value(event.source) for event in events}
 
@@ -267,11 +296,11 @@ class ProcessMiningService:
         source = _value(filters.source) if filters.source is not None else "ALL"
         eventful_cases = sum(bool(events_by_case.get(case.id)) for case in cases)
         note = (
-            "Metrics describe the selected event-log slice. BACKFILL logs may be partial; "
-            "source coverage is reported separately and no missing workflow is inferred."
+            "Số liệu tính trên phần nhật ký thao tác đã chọn. Dữ liệu tái dựng từ lịch sử có thể thiếu bước; "
+            "nguồn dữ liệu được thống kê riêng và hệ thống không tự suy đoán các bước bị thiếu."
         )
         if filters.date_from is not None or filters.date_to is not None:
-            note += " Date window uses occurred_at with inclusive date_from and exclusive date_to."
+            note += " Khoảng ngày tính theo thời điểm thao tác, gồm ngày bắt đầu và không gồm ngày kết thúc."
         return ProcessMiningCohort(
             source=source,
             case_type=filters.case_type,
@@ -488,8 +517,8 @@ class ProcessMiningService:
             total_rework_events=rework_events,
             eligible_cases=eligible,
             denominator_description=(
-                f"{source_label} Incident cases with at least one observed status transition or an observed "
-                "CLOSED event in the selected date cohort; cases with creation only are excluded."
+                f"Phiếu sự cố ({source_label}) có ít nhất một lần đổi trạng thái hoặc đã đóng trong khoảng thời gian đã chọn; "
+                "không tính các phiếu mới chỉ được tạo."
             ),
             rework_rate=(rework_cases / eligible) if eligible else None,
         )
@@ -512,7 +541,7 @@ class ProcessMiningService:
                     event_id=event.id,
                     from_status=event.from_status,
                     to_status=event.to_status,
-                    reason="Observed transition is not present in Incident VALID_TRANSITIONS.",
+                    reason="Bước chuyển trạng thái này không nằm trong quy trình chuẩn của phiếu sự cố.",
                 ))
         eligible = bool(transitions)
         deviating = bool(deviations)
@@ -522,7 +551,7 @@ class ProcessMiningService:
             deviating_cases=1 if eligible and deviating else 0,
             conformance_rate=(0.0 if deviating else 1.0) if eligible else None,
             deviations=deviations,
-            note="Observed Incident status transitions only; optional assignment and maintenance steps are not required.",
+            note="Chỉ xét các bước chuyển trạng thái của phiếu sự cố; bước phân công và bảo trì là tùy chọn.",
         )
 
     @staticmethod
@@ -547,7 +576,7 @@ class ProcessMiningService:
             deviating_cases=deviating,
             conformance_rate=conforming / eligible if eligible else None,
             deviations=[deviation for result in per_case for deviation in result.deviations],
-            note="Observed Incident status transitions only; optional assignment and maintenance steps are not required.",
+            note="Chỉ xét các bước chuyển trạng thái của phiếu sự cố; bước phân công và bảo trì là tùy chọn.",
         )
 
     @staticmethod
@@ -583,6 +612,11 @@ class ProcessMiningService:
         completion = _case_completion_event(case, events)
         processing = _processing_seconds(case, events) if completion is not None else None
         first_action = _first_action_seconds(case, events)
+        reference_code, title = _case_references(db, [case]).get(case.id, (None, None))
+        names = _user_names(
+            db,
+            {user_id for event in events for user_id in (event.performed_by_id, event.target_user_id) if user_id is not None},
+        )
         rework_events = sum(
             _value(event.event_type) == _INCIDENT_STATUS
             and event.from_status == IncidentStatus.RESOLVED.value
@@ -595,6 +629,8 @@ class ProcessMiningService:
             case_type=case.case_type,
             incident_id=case.incident_id,
             maintenance_id=case.maintenance_id,
+            reference_code=reference_code,
+            title=title,
             source_coverage=[ProcessEventSource(value) for value in sorted(source_coverage)],
             events=[
                 ProcessEventDetail(
@@ -604,6 +640,8 @@ class ProcessMiningService:
                     to_status=event.to_status,
                     performed_by_id=event.performed_by_id,
                     target_user_id=event.target_user_id,
+                    performed_by_name=names.get(event.performed_by_id),
+                    target_user_name=names.get(event.target_user_id),
                     occurred_at=event.occurred_at,
                     source=event.source,
                     timestamp_quality=event.timestamp_quality,
@@ -669,6 +707,7 @@ class ProcessMiningService:
             ).distinct().all():
                 coverage[case_id].add(_value(source))
 
+        references = _case_references(db, cases)
         items = []
         for case in cases:
             events = events_by_case.get(case.id, [])
@@ -679,6 +718,8 @@ class ProcessMiningService:
                 case_type=case.case_type,
                 incident_id=case.incident_id,
                 maintenance_id=case.maintenance_id,
+                reference_code=references.get(case.id, (None, None))[0],
+                title=references.get(case.id, (None, None))[1],
                 created_at=case.created_at,
                 event_count=len(events),
                 source_coverage=[ProcessEventSource(value) for value in sorted(coverage.get(case.id, set()))],

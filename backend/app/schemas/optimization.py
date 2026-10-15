@@ -66,9 +66,9 @@ class ReplacementSimulationRequest(BaseModel):
     @model_validator(mode="after")
     def validate_residual(self):
         if self.residual_value is not None and self.residual_value_rate is not None:
-            raise ValueError("Provide residual_value or residual_value_rate, not both")
+            raise ValueError("Chỉ nhập giá trị còn lại hoặc tỷ lệ giá trị còn lại, không nhập cả hai.")
         if self.residual_value is not None and self.residual_value > self.unit_cost:
-            raise ValueError("residual_value cannot exceed unit_cost")
+            raise ValueError("Giá trị còn lại không được lớn hơn giá mỗi tài sản.")
         return self
 
 

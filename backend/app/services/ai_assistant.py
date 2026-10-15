@@ -4,6 +4,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 
+from app.core.labels import vi
 from app.core.config import settings
 from app.models.user import User
 from app.models.asset import Asset
@@ -158,12 +159,12 @@ class AIAssistantService:
                 asset = own.filter(func.upper(Asset.asset_code) == asset_code.group(1).upper()).first()
                 if asset:
                     sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
-                    return AssistantChatResponse(answer=f"Tài sản của bạn: **{asset.name}** (`{asset.asset_code}`), trạng thái **{asset.status}**, danh mục {asset.category}.", intent="ASSET_DETAIL", sources=sources, is_fallback=True)
+                    return AssistantChatResponse(answer=f"Tài sản của bạn: **{asset.name}** (`{asset.asset_code}`), trạng thái **{vi(asset.status)}**, danh mục {asset.category}.", intent="ASSET_DETAIL", sources=sources, is_fallback=True)
             matches = own.order_by(Asset.asset_code).limit(10).all()
             if any(k in lower_msg for k in ("tài sản", "thiết bị", "được giao", "của tôi", "của mình")):
                 for asset in matches:
                     sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
-                answer = "Tài sản hiện đang được giao cho bạn:\n" + "\n".join(f"- **{a.name}** (`{a.asset_code}`) — {a.status}" for a in matches) if matches else "Hiện bạn không có tài sản nào được giao."
+                answer = "Tài sản hiện đang được giao cho bạn:\n" + "\n".join(f"- **{a.name}** (`{a.asset_code}`) — {vi(a.status)}" for a in matches) if matches else "Hiện bạn không có tài sản nào được giao."
                 return AssistantChatResponse(answer=answer, intent="MY_ASSIGNED_ASSETS", sources=sources, is_fallback=True)
             return AssistantChatResponse(answer="Nhân viên chỉ có thể tra cứu tài sản hiện đang được giao cho mình. Hãy hỏi về mã tài sản hoặc danh sách tài sản của bạn.", intent="EMPLOYEE_SCOPE_ONLY", sources=[], is_fallback=True)
 
@@ -171,19 +172,19 @@ class AIAssistantService:
         if any(term in lower_msg for term in ("nên ưu tiên thay", "ưu tiên thay thế", "tài sản nào nên thay", "replacement priority")):
             result = OptimizationService.get_replacement_recommendations(db, limit=5)
             for item in result.items:
-                sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.name, details=f"Score {item.replacement_recommendation_score}"))
-            answer = "Đề xuất ưu tiên xem xét thay thế (heuristic, không phải kết luận tối ưu):\n" + "\n".join(f"- **{i.name}** (`{i.asset_code}`): {i.priority_level}, score {i.replacement_recommendation_score}/100 — {'; '.join(i.reasons)}" for i in result.items) if result.items else "Chưa có dữ liệu tài sản để lập đề xuất."
+                sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.name, details=f"Điểm {item.replacement_recommendation_score}"))
+            answer = "Đề xuất ưu tiên xem xét thay thế (tính theo quy tắc kinh nghiệm, không phải kết luận tối ưu):\n" + "\n".join(f"- **{i.name}** (`{i.asset_code}`): ưu tiên {vi(i.priority_level, 'IncidentPriority').lower()}, điểm {i.replacement_recommendation_score}/100 — {'; '.join(i.reasons)}" for i in result.items) if result.items else "Chưa có dữ liệu tài sản để lập đề xuất."
             return AssistantChatResponse(answer=answer, intent="REPLACEMENT_PRIORITY", sources=sources, is_fallback=True)
 
         if "sla" in lower_msg and any(t in lower_msg for t in ("kỹ thuật viên", "it", "nhân sự", "technician")):
             nums = [float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", lower_msg)]
             if len(nums) < 3:
-                return AssistantChatResponse(answer="Để mô phỏng, vui lòng cung cấp SLA hiện tại (ngày), SLA mục tiêu (ngày), số sự cố dự kiến và năng lực xử lý mỗi kỹ thuật viên mỗi ngày.", intent="CAPACITY_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
+                return AssistantChatResponse(answer="Để mô phỏng, vui lòng cung cấp thời hạn xử lý hiện tại (ngày), thời hạn xử lý mục tiêu (ngày), số sự cố dự kiến và năng lực xử lý mỗi kỹ thuật viên mỗi ngày.", intent="CAPACITY_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
             # Natural language commonly gives current/target SLA and incident count; capacity remains explicit.
             if len(nums) < 4:
                 return AssistantChatResponse(answer="Còn thiếu năng lực xử lý sự cố mỗi kỹ thuật viên mỗi ngày. Vui lòng cung cấp giá trị này để tính kịch bản.", intent="CAPACITY_SIMULATION_NEEDS_INPUT", sources=[], is_fallback=True)
             result = OptimizationService.simulate_capacity(CapacityRequest(current_sla_days=nums[0], target_sla_days=nums[1], expected_incidents=int(nums[2]), incidents_per_technician_per_day=nums[3]))
-            return AssistantChatResponse(answer=f"Ước tính cần **{result.estimated_required_technicians} kỹ thuật viên** theo giả định năng lực đã nhập. Đây là ước tính kịch bản, không thay đổi SLA thật.", intent="CAPACITY_SIMULATION", sources=[AssistantSource(type="simulation", name="User-provided simulation parameters")], is_fallback=True)
+            return AssistantChatResponse(answer=f"Ước tính cần **{result.estimated_required_technicians} kỹ thuật viên** theo giả định năng lực đã nhập. Đây là ước tính kịch bản, không thay đổi thời hạn xử lý thật.", intent="CAPACITY_SIMULATION", sources=[AssistantSource(type="simulation", name="Thông số mô phỏng do người dùng nhập")], is_fallback=True)
 
         if any(term in lower_msg for term in ("khấu hao", "giá mỗi chiếc", "giá mỗi laptop", "giá 15 triệu")):
             nums = [float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", lower_msg)]
@@ -193,7 +194,7 @@ class AIAssistantService:
             unit_cost = nums[1] * 1_000_000 if "triệu" in lower_msg else nums[1]
             horizon = int(nums[3]) if len(nums) > 3 else int(nums[2])
             result = OptimizationService.simulate_replacement(ReplacementSimulationRequest(quantity=int(nums[0]), unit_cost=unit_cost, useful_life_years=nums[2], simulation_horizon_years=max(1, horizon)))
-            return AssistantChatResponse(answer=f"Mô phỏng theo tham số người dùng: tổng chi phí {result.total_initial_cost:,.0f} VNĐ; khấu hao đường thẳng ước tính {result.annual_depreciation:,.0f} VNĐ/năm. Đây không phải số liệu kế toán thực tế.", intent="REPLACEMENT_SIMULATION", sources=[AssistantSource(type="simulation", name="User-provided simulation parameters")], is_fallback=True)
+            return AssistantChatResponse(answer=f"Mô phỏng theo tham số người dùng: tổng chi phí {result.total_initial_cost:,.0f} VNĐ; khấu hao đường thẳng ước tính {result.annual_depreciation:,.0f} VNĐ/năm. Đây không phải số liệu kế toán thực tế.", intent="REPLACEMENT_SIMULATION", sources=[AssistantSource(type="simulation", name="Thông số mô phỏng do người dùng nhập")], is_fallback=True)
 
         category_aliases = {
             "laptop": "Laptop", "máy tính xách tay": "Laptop", "desktop": "Desktop PC",
@@ -216,7 +217,7 @@ class AIAssistantService:
             result = OptimizationService.simulate_allocation(db, AllocationRequest(department_id=department.id, asset_category=requested_category, requested_quantity=int(number_match.group(1))))
             for item in result.candidates:
                 sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.name))
-            return AssistantChatResponse(answer=f"Có {result.available_quantity} tài sản {result.asset_category} IN_STOCK; yêu cầu {result.requested_quantity}, thiếu {result.shortage_quantity}. Ứng viên chỉ là đề xuất và chưa được cấp phát.", intent="ALLOCATION_SIMULATION", sources=sources, is_fallback=True)
+            return AssistantChatResponse(answer=f"Có {result.available_quantity} tài sản {result.asset_category} trong kho; yêu cầu {result.requested_quantity}, thiếu {result.shortage_quantity}. Ứng viên chỉ là đề xuất và chưa được cấp phát.", intent="ALLOCATION_SIMULATION", sources=sources, is_fallback=True)
 
         # A. Check for specific Asset Code lookup by scanning all word tokens in user message
         tokens = re.findall(r"([a-zA-Z0-9\-_]{3,50})", clean_msg)
@@ -230,7 +231,7 @@ class AIAssistantService:
                 asset = db.query(Asset).filter(func.upper(Asset.asset_code) == code_upper).first()
                 if asset:
                     sources.append(AssistantSource(
-                        type="asset", id=asset.id, code=asset.asset_code, name=asset.name, details=f"Status: {asset.status}"
+                        type="asset", id=asset.id, code=asset.asset_code, name=asset.name, details=f"Trạng thái: {vi(asset.status)}"
                     ))
                     
                     holder_name = "Chưa có người giữ (Trong kho)"
@@ -241,7 +242,7 @@ class AIAssistantService:
 
                     answer = (
                         f"Thông tin tài sản **{asset.name}** (`{asset.asset_code}`):\n"
-                        f"- Trạng thái: **{asset.status}**\n"
+                        f"- Trạng thái: **{vi(asset.status)}**\n"
                         f"- Danh mục: {asset.category}\n"
                         f"- Người đang giữ: **{holder_name}**\n"
                         f"- Phòng ban: {dept_name}\n"
@@ -256,14 +257,14 @@ class AIAssistantService:
             incident = db.query(Incident).filter(func.upper(Incident.ticket_code) == ticket_code).first()
             if incident:
                 sources.append(AssistantSource(
-                    type="incident", id=incident.id, code=incident.ticket_code, name=incident.title, details=f"Status: {incident.status}"
+                    type="incident", id=incident.id, code=incident.ticket_code, name=incident.title, details=f"Trạng thái: {vi(incident.status)}"
                 ))
-                reporter_name = incident.reporter.full_name if incident.reporter else "N/A"
+                reporter_name = incident.reporter.full_name if incident.reporter else "Chưa có"
                 it_name = incident.assigned_it.full_name if incident.assigned_it else "Chưa phân công"
                 answer = (
                     f"Phiếu sự cố **{incident.ticket_code}** - {incident.title}:\n"
-                    f"- Trạng thái: **{incident.status}**\n"
-                    f"- Mức độ ưu tiên: {incident.priority}\n"
+                    f"- Trạng thái: **{vi(incident.status)}**\n"
+                    f"- Mức độ ưu tiên: {vi(incident.priority)}\n"
                     f"- Người báo cáo: {reporter_name}\n"
                     f"- IT xử lý: {it_name}\n"
                     f"- Chi phí sửa chữa: {incident.repair_cost:,.0f} VNĐ\n"
@@ -278,13 +279,13 @@ class AIAssistantService:
             maintenance = db.query(Maintenance).filter(func.upper(Maintenance.maintenance_code) == mnt_code).first()
             if maintenance:
                 sources.append(AssistantSource(
-                    type="maintenance", id=maintenance.id, code=maintenance.maintenance_code, name=maintenance.title, details=f"Status: {maintenance.status}"
+                    type="maintenance", id=maintenance.id, code=maintenance.maintenance_code, name=maintenance.title, details=f"Trạng thái: {vi(maintenance.status)}"
                 ))
                 tech_name = maintenance.technician.full_name if maintenance.technician else "Chưa phân công"
-                asset_code = maintenance.asset.asset_code if maintenance.asset else "N/A"
+                asset_code = maintenance.asset.asset_code if maintenance.asset else "Chưa có"
                 answer = (
                     f"Phiếu bảo trì **{maintenance.maintenance_code}** - {maintenance.title}:\n"
-                    f"- Trạng thái: **{maintenance.status}**\n"
+                    f"- Trạng thái: **{vi(maintenance.status)}**\n"
                     f"- Tài sản: `{asset_code}` ({maintenance.asset.name if maintenance.asset else ''})\n"
                     f"- Kỹ thuật viên: {tech_name}\n"
                     f"- Chi phí sửa chữa: {maintenance.repair_cost:,.0f} VNĐ\n"
@@ -299,7 +300,7 @@ class AIAssistantService:
             total_assigned = db.query(func.count(Asset.id)).filter(Asset.status == AssetStatus.ASSIGNED).scalar() or 0
             if assigned_assets:
                 asset_list_str = "\n".join([
-                    f"- **{a.name}** (`{a.asset_code}`) - Người giữ: **{a.current_user.full_name if a.current_user else 'N/A'}**"
+                    f"- **{a.name}** (`{a.asset_code}`) - Người giữ: **{a.current_user.full_name if a.current_user else 'Chưa có'}**"
                     for a in assigned_assets
                 ])
                 for a in assigned_assets:
@@ -321,7 +322,7 @@ class AIAssistantService:
             if target_user:
                 held_assets = db.query(Asset).filter(Asset.current_user_id == target_user.id).all()
                 if held_assets:
-                    asset_list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - {a.status}" for a in held_assets])
+                    asset_list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - {vi(a.status)}" for a in held_assets])
                     for a in held_assets:
                         sources.append(AssistantSource(type="asset", id=a.id, code=a.asset_code, name=a.name))
                     answer = f"Nhân viên **{target_user.full_name}** ({target_user.email}) hiện đang giữ {len(held_assets)} tài sản:\n{asset_list_str}"
@@ -337,9 +338,9 @@ class AIAssistantService:
                 asset_list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - Danh mục: {a.category}" for a in in_stock_assets])
                 for a in in_stock_assets:
                     sources.append(AssistantSource(type="asset", id=a.id, code=a.asset_code, name=a.name))
-                answer = f"Hệ thống hiện có **{total_in_stock}** tài sản đang có sẵn (IN_STOCK) chưa cấp phát. Dưới đây là các tài sản mới nhất:\n{asset_list_str}"
+                answer = f"Hệ thống hiện có **{total_in_stock}** tài sản đang có sẵn trong kho, chưa cấp phát. Dưới đây là các tài sản mới nhất:\n{asset_list_str}"
             else:
-                answer = "Hiện tại không có tài sản nào ở trạng thái có sẵn (IN_STOCK)."
+                answer = "Hiện tại không có tài sản nào ở trạng thái có sẵn trong kho."
             return AssistantChatResponse(answer=answer, intent="UNASSIGNED_ASSETS", sources=sources, is_fallback=True)
 
         # M1. Intent: Top Failure Assets Query ("hay hỏng nhất", "hỏng nhiều nhất", "nhiều sự cố nhất")
@@ -349,7 +350,7 @@ class AIAssistantService:
                 lines = []
                 for tf in top_failures:
                     sources.append(AssistantSource(type="asset", id=tf.asset_id, code=tf.asset_code, name=tf.asset_name))
-                    top_cat_str = f" (Chủ yếu lỗi: {tf.top_category})" if tf.top_category else ""
+                    top_cat_str = f" (Chủ yếu lỗi: {vi(tf.top_category, 'IncidentCategory').lower()})" if tf.top_category else ""
                     lines.append(f"- **{tf.asset_name}** (`{tf.asset_code}`): **{tf.incident_count}** sự cố{top_cat_str}")
                 answer = "Top 5 tài sản có tần suất báo lỗi/sự cố nhiều nhất:\n" + "\n".join(lines)
             else:
@@ -382,7 +383,7 @@ class AIAssistantService:
                 for item in high_risk_items:
                     sources.append(AssistantSource(type="asset", id=item.asset_id, code=item.asset_code, name=item.asset_name))
                     reasons = "; ".join(item.warning_reasons) if item.warning_reasons else "Vận hành bình thường"
-                    lines.append(f"- **{item.asset_name}** (`{item.asset_code}`) - Risk: **{item.risk_level}** ({item.risk_score}/100)\n  *Lý do*: {reasons}")
+                    lines.append(f"- **{item.asset_name}** (`{item.asset_code}`) - Mức rủi ro: **{vi(item.risk_level, 'RiskLevel')}** ({item.risk_score}/100)\n  *Lý do*: {reasons}")
                 answer = f"Danh sách tài sản có chỉ số rủi ro cao / bị cảnh báo trong hệ thống:\n" + "\n".join(lines)
             else:
                 answer = "Hiện tại không có tài sản nào bị xếp loại rủi ro cao hoặc bất thường."
@@ -399,16 +400,16 @@ class AIAssistantService:
                         if detail:
                             sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
                             cost_str = f"{detail.metrics.total_repair_cost:,.0f}".replace(",", ".")
-                            mttr_str = f"{detail.metrics.mttr_hours:.1f} giờ" if detail.metrics.mttr_hours is not None else "N/A"
+                            mttr_str = f"{detail.metrics.mttr_hours:.1f} giờ" if detail.metrics.mttr_hours is not None else "Chưa có"
                             reasons_str = "\n".join([f"  - {r}" for r in detail.health_risk.warning_reasons]) if detail.health_risk.warning_reasons else "  - Không có cảnh báo bất thường."
 
                             answer = (
                                 f"Báo cáo phân tích trí tuệ tài sản **{asset.name}** (`{asset.asset_code}`):\n"
-                                f"- Điểm sức khỏe (Health Score): **{detail.health_risk.health_score}/100**\n"
-                                f"- Mức độ rủi ro (Risk Level): **{detail.health_risk.risk_level}** ({detail.health_risk.risk_score}/100)\n"
+                                f"- Điểm sức khỏe: **{detail.health_risk.health_score}/100**\n"
+                                f"- Mức độ rủi ro: **{vi(detail.health_risk.risk_level, 'RiskLevel')}** ({detail.health_risk.risk_score}/100)\n"
                                 f"- Số lượt sự cố: {detail.metrics.incident_count}\n"
                                 f"- Tổng chi phí sửa chữa: **{cost_str} VNĐ**\n"
-                                f"- MTTR (Thời gian sửa trung bình): {mttr_str}\n"
+                                f"- Thời gian sửa trung bình: {mttr_str}\n"
                                 f"- Cảnh báo rủi ro:\n{reasons_str}"
                             )
                             intent_name = "ASSET_REPAIR_COST_QUERY" if "tiền" in lower_msg or "chi phí" in lower_msg else "ASSET_HEALTH_QUERY"
@@ -418,7 +419,7 @@ class AIAssistantService:
         if "bảo trì" in lower_msg or "hỏng" in lower_msg or "hư hỏng" in lower_msg or "damaged" in lower_msg:
             maint_assets = db.query(Asset).filter(Asset.status.in_([AssetStatus.IN_MAINTENANCE, AssetStatus.DAMAGED])).all()
             if maint_assets:
-                list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - Trạng thái: **{a.status}**" for a in maint_assets])
+                list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - Trạng thái: **{vi(a.status)}**" for a in maint_assets])
                 for a in maint_assets:
                     sources.append(AssistantSource(type="asset", id=a.id, code=a.asset_code, name=a.name))
                 answer = f"Có **{len(maint_assets)}** tài sản đang gặp sự cố hỏng hóc hoặc bảo trì:\n{list_str}"
@@ -432,7 +433,7 @@ class AIAssistantService:
                 Incident.status.in_([IncidentStatus.OPEN, IncidentStatus.IN_REVIEW, IncidentStatus.IN_PROGRESS, IncidentStatus.WAITING_FOR_INFO])
             ).all()
             if pending_incidents:
-                list_str = "\n".join([f"- **{inc.ticket_code}**: {inc.title} (Ưu tiên: {inc.priority}, Trạng thái: **{inc.status}**)" for inc in pending_incidents])
+                list_str = "\n".join([f"- **{inc.ticket_code}**: {inc.title} (Ưu tiên: {vi(inc.priority)}, Trạng thái: **{vi(inc.status)}**)" for inc in pending_incidents])
                 for inc in pending_incidents:
                     sources.append(AssistantSource(type="incident", id=inc.id, code=inc.ticket_code, name=inc.title))
                 answer = f"Hiện có **{len(pending_incidents)}** sự cố đang trong quá trình tiếp nhận và xử lý:\n{list_str}"
@@ -463,8 +464,8 @@ class AIAssistantService:
                 history_items = []
                 for h in histories:
                     asset = db.query(Asset).filter(Asset.id == h.asset_id).first()
-                    asset_info = f"{asset.name} (`{asset.asset_code}`)" if asset else f"Asset #{h.asset_id}"
-                    history_items.append(f"- [{h.action_type}] **{asset_info}**: {h.details or 'Không có chi tiết'}")
+                    asset_info = f"{asset.name} (`{asset.asset_code}`)" if asset else "Tài sản không xác định"
+                    history_items.append(f"- [{vi(h.action_type)}] **{asset_info}**: {h.details or 'Không có chi tiết'}")
                     if asset:
                         sources.append(AssistantSource(type="asset", id=asset.id, code=asset.asset_code, name=asset.name))
                 answer = "Nhật ký lịch sử biến động tài sản gần đây nhất:\n" + "\n".join(history_items)
@@ -540,11 +541,11 @@ class AIAssistantService:
                             f"  *Cách khắc phục*: {item.resolution_notes}"
                         )
                     answer = (
-                        f"Tìm thấy **{sim_res.total_found}** sự cố tương tự trong Knowledge Base cho phiếu **{target_inc.ticket_code}** ({target_inc.title}):\n"
+                        f"Tìm thấy **{sim_res.total_found}** sự cố tương tự trong các sự cố đã xử lý cho phiếu **{target_inc.ticket_code}** ({target_inc.title}):\n"
                         + "\n".join(items_str_list)
                     )
                 else:
-                    answer = f"Chưa có sự cố tương tự nào đạt ngưỡng phù hợp trong Knowledge Base cho phiếu **{target_inc.ticket_code}**."
+                    answer = f"Chưa có sự cố tương tự nào đạt ngưỡng phù hợp trong các sự cố đã xử lý cho phiếu **{target_inc.ticket_code}**."
             else:
                 answer = "Chưa có dữ liệu phiếu sự cố trong hệ thống để tìm kiếm tương tự."
             return AssistantChatResponse(answer=answer, intent="SIMILAR_INCIDENT_QUERY", sources=sources, is_fallback=True)
@@ -561,10 +562,10 @@ class AIAssistantService:
                 items_str = []
                 for inc in resolved_incidents:
                     sources.append(AssistantSource(type="incident", id=inc.id, code=inc.ticket_code, name=inc.title))
-                    items_str.append(f"- **[{inc.category}] {inc.ticket_code}** ({inc.title}): {inc.resolution_notes}")
-                answer = f"Tổng hợp tri thức giải quyết sự cố gần đây từ Knowledge Base:\n" + "\n".join(items_str)
+                    items_str.append(f"- **[{vi(inc.category)}] {inc.ticket_code}** ({inc.title}): {inc.resolution_notes}")
+                answer = f"Tổng hợp tri thức giải quyết sự cố gần đây từ các sự cố đã xử lý:\n" + "\n".join(items_str)
             else:
-                answer = "Hiện chưa có bài học kinh nghiệm xử lý sự cố nào được ghi nhận trong Knowledge Base."
+                answer = "Hiện chưa có bài học kinh nghiệm xử lý sự cố nào được ghi nhận trong các sự cố đã xử lý."
             return AssistantChatResponse(answer=answer, intent="KNOWLEDGE_BASE_QUERY", sources=sources, is_fallback=True)
 
         # N. Check if search query matches any Asset by Name (e.g., "laptop dell", "macbook", "máy in")
@@ -574,7 +575,7 @@ class AIAssistantService:
         ).limit(5).all()
 
         if matched_assets:
-            list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - {a.status} ({a.category})" for a in matched_assets])
+            list_str = "\n".join([f"- **{a.name}** (`{a.asset_code}`) - {vi(a.status)} ({a.category})" for a in matched_assets])
             for a in matched_assets:
                 sources.append(AssistantSource(type="asset", id=a.id, code=a.asset_code, name=a.name))
             answer = f"Tìm thấy **{len(matched_assets)}** tài sản phù hợp với từ khóa **'{clean_msg}'**:\n{list_str}"

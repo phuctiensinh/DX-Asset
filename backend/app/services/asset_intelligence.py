@@ -3,6 +3,7 @@ from typing import List, Dict, Tuple, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, or_, and_
 
+from app.core.labels import vi
 from app.models.asset import Asset
 from app.models.incident import Incident
 from app.models.maintenance import Maintenance
@@ -197,9 +198,9 @@ class AssetIntelligenceService:
         warning_reasons: List[str] = []
 
         if status_val == AssetStatus.DAMAGED.value:
-            warning_reasons.append("Tài sản hiện đang bị hỏng (DAMAGED)")
+            warning_reasons.append("Tài sản hiện đang bị hỏng")
         elif status_val == AssetStatus.IN_MAINTENANCE.value:
-            warning_reasons.append("Tài sản hiện đang trong quá trình bảo trì (IN_MAINTENANCE)")
+            warning_reasons.append("Tài sản hiện đang trong quá trình bảo trì")
 
         if metrics.incident_count >= 3:
             warning_reasons.append(f"Tài sản có {metrics.incident_count} sự cố trong lịch sử vận hành")
@@ -211,11 +212,11 @@ class AssetIntelligenceService:
             warning_reasons.append(f"Chi phí sửa chữa {formatted_cost} VNĐ vượt ngưỡng cảnh báo (2 triệu VNĐ)")
 
         if metrics.has_repeated_failure:
-            cats_str = ", ".join(metrics.repeated_categories)
-            warning_reasons.append(f"Lỗi danh mục ({cats_str}) lặp lại nhiều hơn 1 lần trong 60 ngày qua")
+            cats_str = ", ".join(vi(c, "IncidentCategory").lower() for c in metrics.repeated_categories)
+            warning_reasons.append(f"Lỗi {cats_str} lặp lại nhiều hơn 1 lần trong 60 ngày qua")
 
         if metrics.mttr_hours is not None and metrics.mttr_hours >= 48.0:
-            warning_reasons.append(f"Thời gian khắc phục trung bình (MTTR) kéo dài ({metrics.mttr_hours:.1f} giờ)")
+            warning_reasons.append(f"Thời gian khắc phục trung bình kéo dài ({metrics.mttr_hours:.1f} giờ)")
 
         component_scores = ComponentScores(
             incident_score=round(incident_score, 1),

@@ -109,6 +109,9 @@ def process_case_sandbox(db: Session):
         ("Chi tiết case đó", ProcessMiningAssistantIntent.CASE_DETAIL),
         ("How long does this case take?", ProcessMiningAssistantIntent.CASE_DURATION),
         ("Cho tôi chi tiết case", ProcessMiningAssistantIntent.CASE_DETAIL),
+        ("Phiếu INC-2026-001 đã trải qua những bước nào?", ProcessMiningAssistantIntent.CASE_DETAIL),
+        ("Phiếu MNT-T-006B29 mất bao lâu?", ProcessMiningAssistantIntent.CASE_DURATION),
+        ("Quy trình đang bị chậm ở bước nào?", ProcessMiningAssistantIntent.BOTTLENECKS),
     ],
 )
 def test_detects_vietnamese_and_english_process_mining_intents(message, expected):
@@ -119,6 +122,7 @@ def test_non_process_mining_asset_incident_and_mutation_intents_are_not_reclassi
     for message in (
         "AST-LAP-001 đang ở đâu?",
         "INC-001 đang ở trạng thái nào?",
+        "Chi tiết phiếu INC-001",
         "Tạo incident mới cho laptop này",
     ):
         assert ProcessMiningAssistantService.detect_intent(message) is None
@@ -144,14 +148,16 @@ def test_process_mining_results_use_existing_service_and_exact_case_data(
 
     summary = AIAssistantService.process_chat(db, admin_user, "tình hình process mining")
     assert summary is not None and summary.intent == "PROCESS_MINING_SUMMARY"
-    assert f"**{before_case_count + 5} case**" in summary.answer
-    assert f"**{before_event_count + 11} event**" in summary.answer
-    assert "LIVE" in summary.answer and "BACKFILL" in summary.answer
+    assert f"**{before_case_count + 5} phiếu**" in summary.answer
+    assert f"**{before_event_count + 11} bước thao tác**" in summary.answer
+    assert "ghi nhận trực tiếp" in summary.answer and "tái dựng từ dữ liệu cũ" in summary.answer
+    assert "INCIDENT_" not in summary.answer and "LIVE" not in summary.answer
     assert summary.sources[0].type == "process_mining"
 
     variants = AIAssistantService.process_chat(db, admin_user, "process variants")
     assert variants is not None and variants.intent == "PROCESS_MINING_VARIANTS"
-    assert "INCIDENT_CREATED → TECHNICIAN_ASSIGNED" in variants.answer
+    assert "Tạo phiếu sự cố → Phân công kỹ thuật viên" in variants.answer
+    assert "variant-" not in variants.answer
 
     expected_bottlenecks = ProcessMiningService.get_bottlenecks(db)
     bottlenecks = AIAssistantService.process_chat(db, admin_user, "đâu là bottleneck?")
@@ -161,8 +167,7 @@ def test_process_mining_results_use_existing_service_and_exact_case_data(
         if item.from_event == ProcessEventType.INCIDENT_CREATED
         and item.to_event == ProcessEventType.TECHNICIAN_ASSIGNED
     )
-    assert "INCIDENT_CREATED → TECHNICIAN_ASSIGNED" in bottlenecks.answer
-    assert f"{expected_transition.count} observations" in bottlenecks.answer
+    assert f"Tạo phiếu sự cố → Phân công kỹ thuật viên: {expected_transition.count} lượt" in bottlenecks.answer
 
     completed = AIAssistantService.process_chat(
         db, admin_user, f"CASE-{cases[0].id:03d} mất bao lâu?"
@@ -174,22 +179,24 @@ def test_process_mining_results_use_existing_service_and_exact_case_data(
         db, admin_user, f"CASE-{cases[1].id:03d} mất bao lâu?"
     )
     assert incomplete is not None and incomplete.intent == "PROCESS_MINING_CASE_DURATION"
-    assert "chưa có processing time hoàn chỉnh" in incomplete.answer
+    assert "chưa hoàn tất" in incomplete.answer
 
     detail = AIAssistantService.process_chat(
         db, admin_user, f"CASE-{cases[0].id:03d} đã trải qua những bước nào?"
     )
     assert detail is not None and detail.intent == "PROCESS_MINING_CASE_DETAIL"
-    assert "1. INCIDENT_CREATED (recorded status: OPEN)" in detail.answer
+    assert "1. Tạo phiếu sự cố (trạng thái: Mới tạo)" in detail.answer
     assert "None →" not in detail.answer
-    assert "2. TECHNICIAN_ASSIGNED" in detail.answer
-    assert "3. INCIDENT_STATUS_CHANGED (RESOLVED → CLOSED)" in detail.answer
-    assert detail.sources[0].code == f"CASE-{cases[0].id:03d}"
+    assert "2. Phân công kỹ thuật viên" in detail.answer
+    assert "3. Cập nhật trạng thái sự cố (Đã khắc phục → Đã đóng)" in detail.answer
+    reference_code = ProcessMiningService.get_case_detail(db, cases[0].id).reference_code
+    assert reference_code and detail.sources[0].code == reference_code
+    assert reference_code in detail.answer
 
     missing_id = AIAssistantService.process_chat(db, admin_user, "Chi tiết case đó")
-    assert missing_id is not None and "cung cấp Case ID" in missing_id.answer
+    assert missing_id is not None and "cung cấp mã phiếu" in missing_id.answer
     missing_case = AIAssistantService.process_chat(db, admin_user, "Chi tiết CASE-999999999")
-    assert missing_case is not None and "Không tìm thấy CASE-999999999" in missing_case.answer
+    assert missing_case is not None and "Không tìm thấy phiếu CASE-999999999" in missing_case.answer
 
 
 @pytest.mark.parametrize("message", [

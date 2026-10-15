@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi } from '@/lib/api';
+import { roleLabel } from '@/lib/labels';
 import {
   UserCheck,
   Plus,
@@ -378,8 +379,8 @@ function AssignmentsContent() {
                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Trạng thái Cấp phát</option>
-                <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-                <option value="RETURNED">Đã thu hồi (RETURNED)</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="RETURNED">Đã thu hồi</option>
               </select>
             </div>
           </div>
@@ -420,7 +421,7 @@ function AssignmentsContent() {
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-2.5 px-3 font-medium text-slate-900 whitespace-nowrap">
                         <div className="font-mono text-indigo-600 font-extrabold text-[11px]">
-                          {item.asset?.asset_code || `TS #${item.asset_id}`}
+                          {item.asset?.asset_code || 'Tài sản không xác định'}
                         </div>
                         <div className="text-slate-800 font-bold truncate max-w-[140px]" title={item.asset?.name}>
                           {item.asset?.name}
@@ -429,7 +430,7 @@ function AssignmentsContent() {
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         <div className="font-bold text-slate-900 flex items-center space-x-1 truncate max-w-[140px]" title={item.assigned_to_user?.full_name || ''}>
                           <UserIcon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                          <span className="truncate">{item.assigned_to_user?.full_name || `User #${item.assigned_to_user_id}`}</span>
+                          <span className="truncate">{item.assigned_to_user?.full_name || 'Người dùng không xác định'}</span>
                         </div>
                         <div className="text-[10px] text-slate-500 truncate max-w-[140px]" title={item.assigned_to_user?.email}>
                           {item.assigned_to_user?.email}
@@ -555,7 +556,7 @@ function AssignmentsContent() {
             <form onSubmit={handleCreateSubmit} className="space-y-4 mt-4 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  Chọn tài sản trong kho (IN_STOCK) <span className="text-rose-500">*</span>
+                  Chọn tài sản trong kho <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
@@ -572,7 +573,7 @@ function AssignmentsContent() {
                 </select>
                 {availableAssets.length === 0 && (
                   <p className="text-[11px] text-amber-700 mt-1 font-medium">
-                    Hiện không có tài sản nào đang ở trạng thái 'Trong kho' (IN_STOCK).
+                    Hiện không có tài sản nào đang ở trạng thái 'Trong kho'.
                   </p>
                 )}
               </div>
@@ -590,7 +591,7 @@ function AssignmentsContent() {
                   <option value="">-- Chọn nhân viên --</option>
                   {usersList.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.full_name} ({u.email}) - {u.role}
+                      {u.full_name} ({u.email}) - {roleLabel(u.role)}
                     </option>
                   ))}
                 </select>

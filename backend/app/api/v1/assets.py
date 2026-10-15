@@ -11,6 +11,7 @@ from app.models.asset import Asset
 from app.models.department import Department
 from app.models.history import AssetHistory
 from app.schemas.asset import AssetCreate, AssetUpdate, AssetResponse, AssetListResponse
+from app.core.labels import vi
 
 router = APIRouter()
 
@@ -187,7 +188,7 @@ def update_asset(
             asset_id=asset.id,
             action_type=AssetActionType.STATUS_CHANGED,
             performed_by_id=current_user.id,
-            details=f"Cập nhật trạng thái từ '{old_status}' sang '{asset.status}'",
+            details=f"Cập nhật trạng thái từ '{vi(old_status, 'AssetStatus')}' sang '{vi(asset.status)}'",
         )
         db.add(history)
 

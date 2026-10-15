@@ -83,6 +83,11 @@ def test_triage_endpoint_validates_input(client: TestClient, employee_token: str
     headers = {"Authorization": f"Bearer {employee_token}"}
     res = client.post("/api/v1/incidents/ai/triage-suggestion", json={"title": "", "description": "abc"}, headers=headers)
     assert res.status_code == 422
+    # Validation errors come back as one Vietnamese sentence, not Pydantic's English list
+    assert res.json()["detail"] == "Dữ liệu không hợp lệ: Tiêu đề quá ngắn hoặc đang để trống."
+
+    res = client.post("/api/v1/incidents/ai/triage-suggestion", json={"title": "abc"}, headers=headers)
+    assert res.json()["detail"] == "Dữ liệu không hợp lệ: Mô tả là bắt buộc."
 
 
 def test_triage_endpoint_requires_login(client: TestClient):

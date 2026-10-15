@@ -34,7 +34,7 @@ def get_current_user(
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -123,7 +123,7 @@ def get_current_user(
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is inactive"
+            detail="Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."
         )
 
     return user
@@ -137,7 +137,7 @@ class RoleChecker:
         if current_user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Operation not permitted for this user role"
+                detail="Vai trò của bạn không có quyền thực hiện thao tác này."
             )
         return current_user
 

@@ -42,6 +42,7 @@ from app.services.incident_ai import IncidentAIService
 from app.services.storage_service import StorageService
 from app.utils.file_validation import validate_file_security
 from app.services.process_event_writer import create_process_event, get_or_create_incident_case
+from app.core.labels import vi
 
 
 router = APIRouter()
@@ -176,7 +177,7 @@ def create_incident(
     if asset.status in (AssetStatus.RETIRED, AssetStatus.INACTIVE):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{asset.status}', không thể gửi báo hỏng."
+            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{vi(asset.status)}', không thể gửi báo hỏng."
         )
 
     # 3. Generate or verify unique ticket code
@@ -271,7 +272,7 @@ def update_incident(
         if new_status not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Không thể chuyển trạng thái phiếu từ '{incident.status}' sang '{new_status}'."
+                detail=f"Không thể chuyển trạng thái phiếu từ '{vi(incident.status)}' sang '{vi(new_status, 'IncidentStatus')}'."
             )
         # Prevent resolving or closing incident if linked maintenance is active
         if new_status in (IncidentStatus.RESOLVED, IncidentStatus.CLOSED):
@@ -282,7 +283,7 @@ def update_incident(
             if active_mnt:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Không thể hoàn thành phiếu sự cố khi đợt bảo trì liên kết [{active_mnt.maintenance_code}] đang ở trạng thái '{active_mnt.status}'. Vui lòng hoàn thành đợt bảo trì trước."
+                    detail=f"Không thể hoàn thành phiếu sự cố khi đợt bảo trì liên kết [{active_mnt.maintenance_code}] đang ở trạng thái '{vi(active_mnt.status)}'. Vui lòng hoàn thành đợt bảo trì trước."
                 )
 
     # Verify assigned_it_id if provided
@@ -307,7 +308,7 @@ def update_incident(
     # Audit AssetHistory
     history_details = f"Cập nhật phiếu [{incident.ticket_code}]"
     if status_changed:
-        history_details += f": Trạng thái từ '{old_status}' sang '{incident.status}'"
+        history_details += f": Trạng thái từ '{vi(old_status, 'IncidentStatus')}' sang '{vi(incident.status)}'"
     if incident_in.resolution_notes:
         history_details += f" - Ghi chú xử lý: {incident_in.resolution_notes}"
 

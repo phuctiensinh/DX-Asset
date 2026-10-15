@@ -23,13 +23,13 @@ class ProcessMiningFilters(BaseModel):
     @classmethod
     def require_timezone_for_dates(cls, value: Optional[datetime]) -> Optional[datetime]:
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
-            raise ValueError("Process mining date filters must include a timezone")
+            raise ValueError("Ngày lọc phải kèm múi giờ.")
         return value
 
     @model_validator(mode="after")
     def require_ordered_date_range(self):
         if self.date_from is not None and self.date_to is not None and self.date_from >= self.date_to:
-            raise ValueError("date_from must be earlier than exclusive date_to")
+            raise ValueError("Ngày bắt đầu phải trước ngày kết thúc.")
         return self
 
 
@@ -149,6 +149,9 @@ class ProcessEventDetail(BaseModel):
     to_status: Optional[str]
     performed_by_id: Optional[int]
     target_user_id: Optional[int]
+    # Display names so the UI never has to show raw user IDs
+    performed_by_name: Optional[str] = None
+    target_user_name: Optional[str] = None
     occurred_at: datetime
     source: ProcessEventSource
     timestamp_quality: ProcessEventTimestampQuality
@@ -160,6 +163,9 @@ class ProcessCaseDetail(BaseModel):
     case_type: ProcessCaseType
     incident_id: Optional[int]
     maintenance_id: Optional[int]
+    # Business code (INC-.../MNT-...) and title of the linked ticket, shown instead of internal IDs
+    reference_code: Optional[str] = None
+    title: Optional[str] = None
     source_coverage: list[ProcessEventSource]
     events: list[ProcessEventDetail]
     processing_time: Optional[float]
@@ -174,6 +180,8 @@ class ProcessMiningCaseListItem(BaseModel):
     case_type: ProcessCaseType
     incident_id: Optional[int]
     maintenance_id: Optional[int]
+    reference_code: Optional[str] = None
+    title: Optional[str] = None
     created_at: datetime
     event_count: int = Field(ge=0)
     source_coverage: list[ProcessEventSource]

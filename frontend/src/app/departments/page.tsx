@@ -152,7 +152,7 @@ export default function DepartmentsPage() {
                     Danh mục Phòng ban Doanh nghiệp
                   </h1>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    DX-OS Human Space
+                    Không gian Con người (DX-OS)
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
@@ -234,7 +234,7 @@ export default function DepartmentsPage() {
               <div>
                 <div className="text-xs font-medium text-slate-500">Quy chuẩn quản lý</div>
                 <div className="text-2xl font-extrabold text-emerald-600 mt-1">100%</div>
-                <div className="text-[11px] text-slate-400 mt-0.5">Định danh mã Code chuẩn</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Mỗi phòng ban có mã định danh riêng</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
                 <ShieldCheck className="w-5 h-5" />

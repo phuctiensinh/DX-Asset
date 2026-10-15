@@ -1,7 +1,11 @@
 {
   "id": "dx-asset",
   "realm": "dx-asset",
-  "displayName": "DX-Asset Digital Asset Lifecycle Management",
+  "displayName": "DX-Asset – Quản lý vòng đời tài sản",
+  "loginTheme": "dx-asset",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["vi"],
+  "defaultLocale": "vi",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": true,

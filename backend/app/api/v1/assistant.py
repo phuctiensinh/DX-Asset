@@ -29,6 +29,6 @@ def assistant_chat(
 
     global_query_terms = ("tổng số", "thống kê", "chi phí", "tài sản nào", "thay thế", "ưu tiên", "sla", "kỹ thuật viên", "workload", "khấu hao", "bao nhiêu laptop", "còn đủ", "phòng ban")
     if current_user.role == UserRole.EMPLOYEE and any(term in payload.message.lower() for term in global_query_terms):
-        raise HTTPException(status_code=403, detail="Employees cannot access global analytics or optimization queries")
+        raise HTTPException(status_code=403, detail="Nhân viên không được tra cứu số liệu toàn hệ thống hoặc chạy mô phỏng tối ưu.")
 
     return AIAssistantService.process_chat(db, current_user, payload.message)

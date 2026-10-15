@@ -15,6 +15,7 @@ from app.schemas.technician_skill import (
     TechnicianProfileResponse,
 )
 from app.services.smart_routing import SmartRoutingService
+from app.core.labels import vi
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +133,7 @@ def set_technician_skill(
     if user.role not in (UserRole.ADMIN, UserRole.IT_ASSET_MANAGER):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Người dùng '{user.full_name}' ({user.role}) không phải là Kỹ thuật viên / IT Manager."
+            detail=f"Người dùng '{user.full_name}' ({vi(user.role)}) không phải là kỹ thuật viên hoặc quản lý tài sản IT."
         )
 
     skill = db.query(TechnicianSkill).filter(

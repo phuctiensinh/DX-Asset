@@ -22,17 +22,16 @@ function AuthCallbackContent() {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
 
     if (error) {
       clearStoredTokens();
-      setErrorMessage(errorDescription || `Xác thực bị từ chối: ${error}`);
+      setErrorMessage('Đăng nhập bị từ chối hoặc đã bị hủy. Vui lòng thử lại.');
       return;
     }
 
     if (!code || !state) {
       clearStoredTokens();
-      setErrorMessage('Thiếu mã Authorization Code hoặc State từ Keycloak.');
+      setErrorMessage('Thiếu thông tin đăng nhập trả về. Vui lòng đăng nhập lại.');
       return;
     }
 
@@ -42,7 +41,7 @@ function AuthCallbackContent() {
 
         const tokenRes = await handleOidcCallback(code!, state!);
         if (!tokenRes || !tokenRes.access_token) {
-          throw new Error('Không nhận được Access Token hợp lệ từ Keycloak.');
+          throw new Error('Không nhận được phiên đăng nhập hợp lệ. Vui lòng đăng nhập lại.');
         }
 
         setStoredToken(tokenRes.access_token);
@@ -52,13 +51,13 @@ function AuthCallbackContent() {
 
         const user = await loadCurrentUser(tokenRes.access_token);
         if (!user) {
-          throw new Error('Xác thực thông tin người dùng thất bại từ backend FastAPI (401 Unauthorized).');
+          throw new Error('Không thể xác nhận tài khoản của bạn trên hệ thống. Vui lòng đăng nhập lại hoặc liên hệ quản trị viên.');
         }
 
         router.push('/dashboard');
       } catch (err: any) {
         clearStoredTokens();
-        setErrorMessage(err?.message || 'Xảy ra lỗi trong quá trình trao đổi Keycloak Token.');
+        setErrorMessage(err?.message || 'Đã xảy ra lỗi trong quá trình đăng nhập. Vui lòng thử lại.');
       }
     }
 
@@ -93,7 +92,7 @@ function AuthCallbackContent() {
         </div>
         <div className="flex items-center space-x-3 text-slate-700 font-medium text-sm">
           <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
-          <span>Đang hoàn tất xác thực từ Keycloak OIDC...</span>
+          <span>Đang hoàn tất đăng nhập...</span>
         </div>
       </div>
     </div>
@@ -111,7 +110,7 @@ export default function AuthCallbackPage() {
             </div>
             <div className="flex items-center space-x-3 text-slate-700 font-medium text-sm">
               <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
-              <span>Đang tải tham số xác thực...</span>
+              <span>Đang chuẩn bị đăng nhập...</span>
             </div>
           </div>
         </div>

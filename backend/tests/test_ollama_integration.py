@@ -58,7 +58,7 @@ def test_ollama_rbac_employee_restriction(client: TestClient, employee_token: st
     headers = {"Authorization": f"Bearer {employee_token}"}
     res = client.post("/api/v1/assistant/chat", json={"message": "thống kê tổng số chi phí tài sản"}, headers=headers)
     assert res.status_code == 403
-    assert "Employees cannot access global analytics" in res.json()["detail"]
+    assert "Nhân viên không được tra cứu số liệu toàn hệ thống" in res.json()["detail"]
 
 def test_ollama_mutation_guard(db: Session, admin_user: User):
     """Test explicit mutation query is rejected by Read-Only guard and never sent to Ollama."""

@@ -33,9 +33,9 @@ def process_mining_filters(
 ) -> ProcessMiningFilters:
     for name, value in (("date_from", date_from), ("date_to", date_to)):
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
-            raise HTTPException(status_code=422, detail=f"{name} must include a timezone")
+            raise HTTPException(status_code=422, detail="Ngày lọc phải kèm múi giờ.")
     if date_from is not None and date_to is not None and date_from >= date_to:
-        raise HTTPException(status_code=422, detail="date_from must be earlier than exclusive date_to")
+        raise HTTPException(status_code=422, detail="Ngày bắt đầu phải trước ngày kết thúc.")
     return ProcessMiningFilters(
         date_from=date_from,
         date_to=date_to,
@@ -92,5 +92,5 @@ def get_case_detail(
 ):
     case = ProcessMiningService.get_case_detail(db, case_id, filters)
     if case is None:
-        raise HTTPException(status_code=404, detail="Process case not found")
+        raise HTTPException(status_code=404, detail="Không tìm thấy phiếu.")
     return case

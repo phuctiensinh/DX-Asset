@@ -9,6 +9,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+from app.core.labels import vi
 from app.models.enums import IncidentCategory, IncidentPriority
 from app.models.incident import Incident
 from app.schemas.incident_ai import (
@@ -170,7 +171,7 @@ class IncidentAIService:
             f"Tài sản: {asset_text}\n"
             f"Phân loại: {CATEGORY_LABELS.get(incident.category, incident.category)}\n"
             f"Mức ưu tiên: {PRIORITY_LABELS.get(incident.priority, incident.priority)}\n"
-            f"Trạng thái: {incident.status.value}\n"
+            f"Trạng thái: {vi(incident.status)}\n"
             f"Tiêu đề: {_clip(incident.title)}\n"
             f"Mô tả: {_clip(incident.description)}\n"
             f"Ghi chú xử lý: {_clip(incident.resolution_notes) or 'Chưa có'}"
@@ -195,7 +196,7 @@ class IncidentAIService:
         summary = (
             f"Sự cố {CATEGORY_LABELS.get(incident.category, incident.category).lower()} trên tài sản {asset_text}, "
             f"mức ưu tiên {PRIORITY_LABELS.get(incident.priority, incident.priority).lower()}, "
-            f"trạng thái {incident.status.value}. Mô tả: {short_desc}"
+            f"trạng thái {vi(incident.status).lower()}. Mô tả: {short_desc}"
         )
         return IncidentSummaryResponse(
             incident_id=incident.id,
@@ -215,7 +216,7 @@ class IncidentAIService:
             f"- [{item.ticket_code}] {item.title}: {_clip(item.resolution_notes)[:400]}" for item in similar
         ) or "Không có sự cố tương tự đã giải quyết."
         user_content = (
-            f"Phân loại: {incident.category.value}\n"
+            f"Phân loại: {vi(incident.category)}\n"
             f"Tài sản: {incident.asset.name if incident.asset else 'Không rõ'}\n"
             f"Tiêu đề: {_clip(incident.title)}\n"
             f"Mô tả: {_clip(incident.description)}\n\n"

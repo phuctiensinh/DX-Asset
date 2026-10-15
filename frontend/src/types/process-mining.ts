@@ -97,6 +97,8 @@ export interface ProcessMiningCaseListItem {
   case_type: ProcessCaseType;
   incident_id: number | null;
   maintenance_id: number | null;
+  reference_code: string | null;
+  title: string | null;
   created_at: string;
   event_count: number;
   source_coverage: ProcessEventSource[];
@@ -121,6 +123,8 @@ export interface ProcessMiningEvent {
   to_status: string | null;
   performed_by_id: number | null;
   target_user_id: number | null;
+  performed_by_name: string | null;
+  target_user_name: string | null;
   occurred_at: string;
   source: ProcessEventSource;
   timestamp_quality: ProcessEventTimestampQuality;
@@ -141,6 +145,8 @@ export interface ProcessMiningCaseDetail {
   case_type: ProcessCaseType;
   incident_id: number | null;
   maintenance_id: number | null;
+  reference_code: string | null;
+  title: string | null;
   source_coverage: ProcessEventSource[];
   events: ProcessMiningEvent[];
   processing_time: number | null;

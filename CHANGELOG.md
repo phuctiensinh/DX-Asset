@@ -7,6 +7,27 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+
+- The whole user interface is now consistently Vietnamese: internal codes (`IN_STOCK`, `IN_PROGRESS`, `ADMIN`, `HARDWARE_SUPPORT`, risk levels, ...) are shown as Vietnamese labels from the shared `frontend/src/lib/labels.ts`; English headings, buttons, placeholders and HTTP codes in messages were translated.
+- Backend messages shown to users are Vietnamese: API error details, request validation errors (new global handler for HTTP 422), asset history details, smart-routing and similar-incident reasons, optimization assumptions/warnings, asset risk reasons and AI assistant answers. Status codes inside these texts use `backend/app/core/labels.py`.
+- The AI assistant answers process questions in Vietnamese and accepts real ticket codes (e.g. "Phiếu INC-2026-001 đã trải qua những bước nào?"); `CASE-<id>` is still accepted.
+- Keycloak login and registration pages are Vietnamese via the new `dx-asset` login theme (`docker/keycloak/themes/dx-asset`); the realm uses it by default.
+
+### Fixed
+
+- "Đăng ký tài khoản mới" now opens the Keycloak registration form directly (`/registrations` endpoint) instead of the login page.
+
+### Changed
+
+- Redesigned the Process Mining page as "Phân tích quy trình xử lý": all text is in Vietnamese, with a "how to read this page" guide, typical processing/response times, common paths ("Luồng 1, 2…"), slowest transitions ranked, and the data-quality details moved into a collapsible section.
+- Internal codes (`INCIDENT_CREATED`, `IN_PROGRESS`, `variant-<hash>`, `CASE-001`, user IDs) are no longer shown to users; the page shows Vietnamese labels, ticket codes, titles and people's names instead. The API keeps the codes unchanged.
+- The "Đến ngày" filter is now inclusive of the selected day.
+
+### Added
+
+- Process Mining case list and detail API responses include `reference_code` and `title`; case events include `performed_by_name` and `target_user_name`.
+
 ### Added
 
 - AI triage suggestion on the incident report form: the local Ollama model suggests category and priority, and the user chooses whether to apply it (`POST /api/v1/incidents/ai/triage-suggestion`).

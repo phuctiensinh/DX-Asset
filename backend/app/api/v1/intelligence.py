@@ -101,7 +101,7 @@ def get_asset_intelligence_detail(
     if not asset:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset with ID {asset_id} not found"
+            detail="Không tìm thấy tài sản."
         )
 
     # RBAC check: EMPLOYEE can only view intelligence of their currently assigned asset
@@ -109,14 +109,14 @@ def get_asset_intelligence_detail(
         if asset.current_user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Employees can only view intelligence for their assigned assets"
+                detail="Nhân viên chỉ được xem phân tích của tài sản đang được cấp phát cho mình."
             )
 
     detail = AssetIntelligenceService.get_asset_intelligence_detail(db, asset_id)
     if not detail:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Intelligence details for Asset ID {asset_id} not found"
+            detail="Chưa có dữ liệu phân tích cho tài sản này."
         )
 
     return detail

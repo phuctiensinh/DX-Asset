@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await loginWithKeycloak();
     } catch (err: any) {
       setIsLoading(false);
-      const msg = err?.message || 'Không thể mở trang Đăng nhập Keycloak SSO.';
+      const msg = err?.message || 'Không thể mở trang đăng nhập. Vui lòng thử lại.';
       setError(msg);
       throw err;
     }
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await loginWithKeycloak({ promptRegister: true });
     } catch (err: any) {
       setIsLoading(false);
-      setError('Không thể mở trang Đăng ký Keycloak.');
+      setError('Không thể mở trang đăng ký. Vui lòng thử lại.');
     }
   };
 

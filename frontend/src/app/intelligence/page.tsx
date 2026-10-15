@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { riskLevelLabel } from '@/lib/labels';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import {
@@ -88,7 +89,7 @@ function IntelligenceContent() {
       setTopFailures(failuresRes || []);
       setTopCostly(costlyRes || []);
     } catch (err: any) {
-      setError(err?.message || 'Không thể tải dữ liệu Trí tuệ Tài sản (Asset Intelligence).');
+      setError(err?.message || 'Không thể tải dữ liệu phân tích tài sản. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -153,7 +154,7 @@ function IntelligenceContent() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Quyền truy cập bị từ chối</h2>
           <p className="text-slate-600 text-sm max-w-md mb-6">
-            Bảng điều khiển Trí tuệ Tài sản toàn hệ thống (Asset Intelligence Dashboard) chỉ dành cho người quản trị (Admin), IT Manager hoặc Manager.
+            Trang phân tích tài sản toàn hệ thống chỉ dành cho Quản trị viên, Quản lý tài sản IT hoặc Quản lý.
           </p>
           <Link
             href="/dashboard"
@@ -177,17 +178,17 @@ function IntelligenceContent() {
             <div>
               <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-700 text-xs font-semibold mb-3">
                 <BrainCircuit className="w-3.5 h-3.5 text-purple-600" />
-                <span>Phase 13 — Asset Intelligence Analytics (PostgreSQL Real-Time Data)</span>
+                <span>Phân tích tài sản (dữ liệu thời gian thực)</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 Trí tuệ Tài sản & Phân tích Rủi ro
               </h1>
               <p className="text-slate-500 text-sm mt-1">
-                Đánh giá sức khỏe thiết bị, phát hiện lỗi lặp lại, tối ưu MTTR và chi phí sửa chữa từ dữ liệu vận hành thực tế.
+                Đánh giá sức khỏe thiết bị, phát hiện lỗi lặp lại, rút ngắn thời gian sửa chữa và giảm chi phí từ dữ liệu vận hành thực tế.
               </p>
               <div className="flex items-center space-x-2 mt-3">
-                <Link href="/intelligence/optimization" className="inline-flex rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">What-if & Optimization →</Link>
-                <Link href="/intelligence/process-mining" className="inline-flex rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition-colors">Process Mining →</Link>
+                <Link href="/intelligence/optimization" className="inline-flex rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors">Mô phỏng & tối ưu →</Link>
+                <Link href="/intelligence/process-mining" className="inline-flex rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition-colors">Phân tích quy trình →</Link>
               </div>
             </div>
 
@@ -265,7 +266,7 @@ function IntelligenceContent() {
               {/* Average MTTR */}
               <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">MTTR Trung bình</span>
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Thời gian sửa trung bình</span>
                   <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200">
                     <Clock className="w-5 h-5" />
                   </div>
@@ -316,20 +317,20 @@ function IntelligenceContent() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="flex items-center space-x-2 text-purple-700 font-semibold text-base">
                   <BrainCircuit className="w-5 h-5 text-purple-600" />
-                  <span>Phân bổ Mức độ Rủi ro Tài sản (Risk Level Distribution)</span>
+                  <span>Phân bổ mức độ rủi ro của tài sản</span>
                 </div>
                 <div className="text-xs text-slate-400 flex items-center space-x-1">
                   <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Analytical Rule-Based Score (0 - 100)</span>
+                  <span>Điểm rủi ro tính theo quy tắc (0 - 100)</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { key: 'LOW', label: 'LOW (0 - 15)', count: summary.risk_distribution.LOW || 0, color: 'bg-emerald-500', text: 'text-emerald-700', border: 'border-emerald-200 bg-emerald-50/40' },
-                  { key: 'MEDIUM', label: 'MEDIUM (16 - 40)', count: summary.risk_distribution.MEDIUM || 0, color: 'bg-amber-500', text: 'text-amber-800', border: 'border-amber-200 bg-amber-50/40' },
-                  { key: 'HIGH', label: 'HIGH (41 - 70)', count: summary.risk_distribution.HIGH || 0, color: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-200 bg-orange-50/40' },
-                  { key: 'CRITICAL', label: 'CRITICAL (> 70)', count: summary.risk_distribution.CRITICAL || 0, color: 'bg-rose-500', text: 'text-rose-700', border: 'border-rose-200 bg-rose-50/40' },
+                  { key: 'LOW', label: 'Thấp (0 - 15)', count: summary.risk_distribution.LOW || 0, color: 'bg-emerald-500', text: 'text-emerald-700', border: 'border-emerald-200 bg-emerald-50/40' },
+                  { key: 'MEDIUM', label: 'Trung bình (16 - 40)', count: summary.risk_distribution.MEDIUM || 0, color: 'bg-amber-500', text: 'text-amber-800', border: 'border-amber-200 bg-amber-50/40' },
+                  { key: 'HIGH', label: 'Cao (41 - 70)', count: summary.risk_distribution.HIGH || 0, color: 'bg-orange-500', text: 'text-orange-700', border: 'border-orange-200 bg-orange-50/40' },
+                  { key: 'CRITICAL', label: 'Nguy cấp (> 70)', count: summary.risk_distribution.CRITICAL || 0, color: 'bg-rose-500', text: 'text-rose-700', border: 'border-rose-200 bg-rose-50/40' },
                 ].map((item) => {
                   const pct = summary.total_assets_analyzed > 0 ? Math.round((item.count / summary.total_assets_analyzed) * 100) : 0;
                   return (
@@ -361,7 +362,7 @@ function IntelligenceContent() {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center space-x-2 text-rose-700 font-semibold text-base">
                     <Wrench className="w-5 h-5 text-rose-600" />
-                    <span>Top 5 Tài sản Tần suất Lỗi Cao nhất</span>
+                    <span>5 tài sản hỏng nhiều nhất</span>
                   </div>
                 </div>
 
@@ -404,7 +405,7 @@ function IntelligenceContent() {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center space-x-2 text-emerald-700 font-semibold text-base">
                     <DollarSign className="w-5 h-5 text-emerald-600" />
-                    <span>Top 5 Tài sản Chi phí Sửa chữa Cao nhất</span>
+                    <span>5 tài sản tốn chi phí sửa chữa nhất</span>
                   </div>
                 </div>
 
@@ -447,7 +448,7 @@ function IntelligenceContent() {
                 <div>
                   <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2">
                     <Shield className="w-5 h-5 text-purple-600" />
-                    <span>Ma trận Rủi ro & Danh sách Cảnh báo (Asset Risk Matrix)</span>
+                    <span>Danh sách tài sản theo mức rủi ro</span>
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Hiển thị tổng số {totalMatrix} tài sản phù hợp bộ lọc
@@ -473,9 +474,10 @@ function IntelligenceContent() {
                     className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:bg-white focus:border-purple-500 transition-all"
                   >
                     <option value="">Tất cả Mức rủi ro</option>
-                    <option value="CRITICAL">🔴 CRITICAL (&gt;70)</option>
-                    <option value="HIGH">🟠 HIGH (41-70)</option>
-                    <option value="LOW">🟢 LOW (0-15)</option>
+                    <option value="CRITICAL">🔴 Nguy cấp (&gt;70)</option>
+                    <option value="HIGH">🟠 Cao (41-70)</option>
+                    <option value="MEDIUM">🟡 Trung bình (16-40)</option>
+                    <option value="LOW">🟢 Thấp (0-15)</option>
                   </select>
 
                   {matrixLoading && (
@@ -493,8 +495,8 @@ function IntelligenceContent() {
                       <tr className="border-b border-slate-200 text-slate-500 uppercase font-semibold bg-slate-50">
                         <th className="py-3 px-3">Mã / Tên tài sản</th>
                         <th className="py-3 px-3">Danh mục</th>
-                        <th className="py-3 px-3 text-center">Risk Level</th>
-                        <th className="py-3 px-3 text-center">Score</th>
+                        <th className="py-3 px-3 text-center">Mức rủi ro</th>
+                        <th className="py-3 px-3 text-center">Điểm</th>
                         <th className="py-3 px-3">Lý do Cảnh báo</th>
                         <th className="py-3 px-3 text-center">Sự cố</th>
                         <th className="py-3 px-3 text-right">Chi phí Sửa</th>
@@ -513,7 +515,7 @@ function IntelligenceContent() {
 
                           <td className="py-3 px-3 text-center">
                             <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${getRiskBadgeStyle(item.risk_level)}`}>
-                              {item.risk_level}
+                              {riskLevelLabel(item.risk_level)}
                             </span>
                           </td>
 

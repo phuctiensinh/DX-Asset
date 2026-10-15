@@ -124,7 +124,7 @@ export async function fetchApi<T>(
       headers,
     });
   } catch (error) {
-    throw new Error('Không thể kết nối đến máy chủ backend (Network Error). Vui lòng kiểm tra lại dịch vụ backend.');
+    throw new Error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
   }
 
   // Reactive check: If backend returns 401 Unauthorized, attempt refresh once and retry
@@ -287,7 +287,7 @@ export async function uploadIncidentAttachment(incidentId: number, file: File): 
   });
 
   if (!response.ok) {
-    let errorMsg = `Upload tập tin thất bại (${response.status})`;
+    let errorMsg = `Tải tập tin lên thất bại (mã lỗi ${response.status})`;
     try {
       const data = await response.json();
       if (data.detail) errorMsg = data.detail;

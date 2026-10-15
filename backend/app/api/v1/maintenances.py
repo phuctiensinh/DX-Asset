@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
+from app.core.labels import vi
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_roles
 from app.models.user import User
@@ -51,7 +52,7 @@ def _get_maintenance_process_case(db: Session, maintenance: Maintenance):
     if maintenance.incident_id is not None:
         incident = db.query(Incident).filter(Incident.id == maintenance.incident_id).first()
         if incident is None:
-            raise ValueError("Linked Incident no longer exists")
+            raise ValueError("Phiếu sự cố liên kết không còn tồn tại.")
         return get_or_create_incident_case(db, incident)
     return get_or_create_maintenance_case(db, maintenance)
 
@@ -138,7 +139,7 @@ def create_maintenance(
     if asset.status in (AssetStatus.RETIRED, AssetStatus.LOST, AssetStatus.INACTIVE):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{asset.status}', không thể đưa vào bảo trì."
+            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{vi(asset.status)}', không thể đưa vào bảo trì."
         )
 
     # 2. Verify incident if provided
@@ -265,7 +266,7 @@ def start_maintenance(
     if asset.status in (AssetStatus.RETIRED, AssetStatus.LOST, AssetStatus.INACTIVE):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{asset.status}', không thể đưa vào bảo trì."
+            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{vi(asset.status)}', không thể đưa vào bảo trì."
         )
 
     # 1. Update maintenance status & start_date
@@ -306,7 +307,7 @@ def start_maintenance(
         asset_id=asset.id,
         action_type=AssetActionType.MAINTENANCE_STARTED,
         performed_by_id=current_user.id,
-        details=f"Bắt đầu bảo trì [{maintenance.maintenance_code}]. Trạng thái tài sản '{old_asset_status}' -> '{asset.status}'",
+        details=f"Bắt đầu bảo trì [{maintenance.maintenance_code}]. Trạng thái tài sản: {vi(old_asset_status, 'AssetStatus')} → {vi(asset.status)}",
     )
     db.add(history)
 
@@ -424,7 +425,7 @@ def complete_maintenance(
         asset_id=asset.id,
         action_type=AssetActionType.MAINTENANCE_COMPLETED,
         performed_by_id=current_user.id,
-        details=f"Hoàn thành bảo trì [{maintenance.maintenance_code}]. Trạng thái tài sản khôi phục về '{asset.status}'. Chi phí: {float(maintenance.repair_cost):,.0f} VNĐ",
+        details=f"Hoàn thành bảo trì [{maintenance.maintenance_code}]. Trạng thái tài sản khôi phục về '{vi(asset.status)}'. Chi phí: {float(maintenance.repair_cost):,.0f} VNĐ",
     )
     db.add(history)
 

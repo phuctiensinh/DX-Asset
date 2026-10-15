@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { roleLabel } from '@/lib/labels';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
@@ -43,9 +44,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
           <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-bold text-white">403 - Access Denied</h2>
+          <h2 className="text-xl font-bold text-white">Không có quyền truy cập</h2>
           <p className="text-xs text-slate-400">
-            Bạn không có quyền truy cập trang này. Tính năng yêu cầu vai trò [{allowedRoles.join(', ')}].
+            Bạn không có quyền truy cập trang này. Chức năng dành cho: {allowedRoles.map(roleLabel).join(', ')}.
           </p>
           <div className="pt-2">
             <Link

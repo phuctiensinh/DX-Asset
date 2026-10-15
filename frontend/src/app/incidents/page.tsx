@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi, uploadIncidentAttachment, deleteIncidentAttachment, getIncidentAttachmentFileUrl, fetchAttachmentBlob } from '@/lib/api';
+import { assetStatusLabel, incidentCategoryLabel, incidentStatusLabel, maintenanceStatusLabel, priorityLabel, queueLabel, roleLabel } from '@/lib/labels';
 
 import {
   AlertTriangle,
@@ -212,40 +213,40 @@ interface AssetListResponse {
 
 const VALID_STATUS_TRANSITIONS: Record<string, { value: string; label: string }[]> = {
   OPEN: [
-    { value: 'OPEN', label: 'Mới tạo (OPEN)' },
-    { value: 'IN_REVIEW', label: 'Đang xem xét (IN_REVIEW)' },
-    { value: 'IN_PROGRESS', label: 'Đang xử lý (IN_PROGRESS)' },
-    { value: 'CANCELLED', label: 'Đã hủy (CANCELLED)' },
+    { value: 'OPEN', label: 'Mới tạo' },
+    { value: 'IN_REVIEW', label: 'Đang xem xét' },
+    { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
   ],
   IN_REVIEW: [
-    { value: 'IN_REVIEW', label: 'Đang xem xét (IN_REVIEW)' },
-    { value: 'IN_PROGRESS', label: 'Đang xử lý (IN_PROGRESS)' },
-    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin (WAITING_FOR_INFO)' },
-    { value: 'RESOLVED', label: 'Đã khắc phục (RESOLVED)' },
-    { value: 'CANCELLED', label: 'Đã hủy (CANCELLED)' },
+    { value: 'IN_REVIEW', label: 'Đang xem xét' },
+    { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin' },
+    { value: 'RESOLVED', label: 'Đã khắc phục' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
   ],
   IN_PROGRESS: [
-    { value: 'IN_PROGRESS', label: 'Đang xử lý (IN_PROGRESS)' },
-    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin (WAITING_FOR_INFO)' },
-    { value: 'RESOLVED', label: 'Đã khắc phục (RESOLVED)' },
-    { value: 'CANCELLED', label: 'Đã hủy (CANCELLED)' },
+    { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin' },
+    { value: 'RESOLVED', label: 'Đã khắc phục' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
   ],
   WAITING_FOR_INFO: [
-    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin (WAITING_FOR_INFO)' },
-    { value: 'IN_PROGRESS', label: 'Đang xử lý (IN_PROGRESS)' },
-    { value: 'RESOLVED', label: 'Đã khắc phục (RESOLVED)' },
-    { value: 'CANCELLED', label: 'Đã hủy (CANCELLED)' },
+    { value: 'WAITING_FOR_INFO', label: 'Chờ thông tin' },
+    { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+    { value: 'RESOLVED', label: 'Đã khắc phục' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
   ],
   RESOLVED: [
-    { value: 'RESOLVED', label: 'Đã khắc phục (RESOLVED)' },
-    { value: 'CLOSED', label: 'Đã đóng (CLOSED)' },
-    { value: 'IN_PROGRESS', label: 'Mở lại xử lý (IN_PROGRESS)' },
+    { value: 'RESOLVED', label: 'Đã khắc phục' },
+    { value: 'CLOSED', label: 'Đã đóng' },
+    { value: 'IN_PROGRESS', label: 'Mở lại xử lý' },
   ],
   CLOSED: [
-    { value: 'CLOSED', label: 'Đã đóng (CLOSED - Không thể đổi)' },
+    { value: 'CLOSED', label: 'Đã đóng (không thể đổi)' },
   ],
   CANCELLED: [
-    { value: 'CANCELLED', label: 'Đã hủy (CANCELLED - Không thể đổi)' },
+    { value: 'CANCELLED', label: 'Đã hủy (không thể đổi)' },
   ],
 };
 
@@ -738,7 +739,7 @@ function IncidentsContent() {
       case 'LOW':
         return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">Thấp</span>;
       default:
-        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">{priority}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">{priorityLabel(priority)}</span>;
     }
   };
 
@@ -759,7 +760,7 @@ function IncidentsContent() {
       case 'CANCELLED':
         return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200">Đã hủy</span>;
       default:
-        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">{statusStr}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">{incidentStatusLabel(statusStr)}</span>;
     }
   };
 
@@ -850,7 +851,7 @@ function IncidentsContent() {
                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/90 focus:bg-white focus:border-rose-500 rounded-xl text-xs text-slate-700 outline-none transition-all"
               >
                 <option value="">Tất cả Trạng thái</option>
-                <option value="OPEN">Mới tạo (OPEN)</option>
+                <option value="OPEN">Mới tạo</option>
                 <option value="IN_REVIEW">Đang xem xét</option>
                 <option value="IN_PROGRESS">Đang xử lý</option>
                 <option value="WAITING_FOR_INFO">Chờ thông tin</option>
@@ -871,10 +872,10 @@ function IncidentsContent() {
                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/90 focus:bg-white focus:border-rose-500 rounded-xl text-xs text-slate-700 outline-none transition-all"
               >
                 <option value="">Tất cả Mức ưu tiên</option>
-                <option value="CRITICAL">Khẩn cấp (CRITICAL)</option>
-                <option value="HIGH">Cao (HIGH)</option>
-                <option value="MEDIUM">Trung bình (MEDIUM)</option>
-                <option value="LOW">Thấp (LOW)</option>
+                <option value="CRITICAL">Khẩn cấp</option>
+                <option value="HIGH">Cao</option>
+                <option value="MEDIUM">Trung bình</option>
+                <option value="LOW">Thấp</option>
               </select>
             </div>
           </div>
@@ -918,7 +919,7 @@ function IncidentsContent() {
                       </td>
                       <td className="py-2.5 px-3 font-semibold text-slate-900">
                         <div className="font-mono text-indigo-600 text-[11px] truncate max-w-[120px]" title={item.asset?.asset_code}>
-                          {item.asset?.asset_code || `TS #${item.asset_id}`}
+                          {item.asset?.asset_code || 'Tài sản không xác định'}
                         </div>
                         <div className="text-slate-600 font-normal text-[11px] truncate max-w-[120px]" title={item.asset?.name}>{item.asset?.name}</div>
                       </td>
@@ -929,10 +930,10 @@ function IncidentsContent() {
                       <td className="py-2.5 px-3 space-y-0.5 whitespace-nowrap">
                         <div>{getPriorityBadge(item.priority)}</div>
                         <div className="text-[10px] text-slate-500 font-mono flex items-center space-x-1">
-                          <span>{item.category}</span>
+                          <span>{incidentCategoryLabel(item.category)}</span>
                           {item.suggested_queue && (
                             <span className="px-1 py-0.2 rounded bg-purple-50 text-purple-700 font-mono text-[9px] border border-purple-200">
-                              {item.suggested_queue}
+                              {queueLabel(item.suggested_queue)}
                             </span>
                           )}
                         </div>
@@ -965,7 +966,7 @@ function IncidentsContent() {
                               <button
                                 onClick={() => openRecommendationModal(item)}
                                 className="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors"
-                                title="Đề xuất KTV (Smart Routing)"
+                                title="Đề xuất kỹ thuật viên phù hợp"
                               >
                                 <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                               </button>
@@ -1063,7 +1064,7 @@ function IncidentsContent() {
                   <option value="">-- Chọn tài sản --</option>
                   {assetsList.map((asset) => (
                     <option key={asset.id} value={asset.id}>
-                      [{asset.asset_code}] {asset.name} ({asset.status})
+                      [{asset.asset_code}] {asset.name} ({assetStatusLabel(asset.status)})
                     </option>
                   ))}
                 </select>
@@ -1091,12 +1092,12 @@ function IncidentsContent() {
                     onChange={(e) => setCreateFormData({ ...createFormData, category: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                   >
-                    <option value="HARDWARE">Phần cứng (HARDWARE)</option>
-                    <option value="SOFTWARE">Phần mềm (SOFTWARE)</option>
-                    <option value="NETWORK">Mạng internet (NETWORK)</option>
-                    <option value="POWER">Nguồn điện (POWER)</option>
-                    <option value="PHYSICAL_DAMAGE">Hỏng vật lý (PHYSICAL_DAMAGE)</option>
-                    <option value="OTHER">Khác (OTHER)</option>
+                    <option value="HARDWARE">Phần cứng</option>
+                    <option value="SOFTWARE">Phần mềm</option>
+                    <option value="NETWORK">Mạng internet</option>
+                    <option value="POWER">Nguồn điện</option>
+                    <option value="PHYSICAL_DAMAGE">Hỏng vật lý</option>
+                    <option value="OTHER">Khác</option>
                   </select>
                 </div>
 
@@ -1107,10 +1108,10 @@ function IncidentsContent() {
                     onChange={(e) => setCreateFormData({ ...createFormData, priority: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-rose-500 outline-none text-slate-900"
                   >
-                    <option value="LOW">Thấp (LOW)</option>
-                    <option value="MEDIUM">Trung bình (MEDIUM)</option>
-                    <option value="HIGH">Cao (HIGH)</option>
-                    <option value="CRITICAL">Khẩn cấp (CRITICAL)</option>
+                    <option value="LOW">Thấp</option>
+                    <option value="MEDIUM">Trung bình</option>
+                    <option value="HIGH">Cao</option>
+                    <option value="CRITICAL">Khẩn cấp</option>
                   </select>
                 </div>
               </div>
@@ -1392,7 +1393,7 @@ function IncidentsContent() {
                 </select>
                 {(selectedIncident.status === 'CLOSED' || selectedIncident.status === 'CANCELLED') && (
                   <p className="text-[11px] text-slate-500 mt-1 italic">
-                    Phiếu đã ở trạng thái kết thúc ({selectedIncident.status}), không thể chuyển trạng thái.
+                    Phiếu đã ở trạng thái kết thúc ({incidentStatusLabel(selectedIncident.status)}), không thể chuyển trạng thái.
                   </p>
                 )}
               </div>
@@ -1407,7 +1408,7 @@ function IncidentsContent() {
                   <option value="">-- Chưa gán cán bộ --</option>
                   {itUsersList.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.full_name} ({u.email}) - {u.role}
+                      {u.full_name} ({u.email}) - {roleLabel(u.role)}
                     </option>
                   ))}
                 </select>
@@ -1724,7 +1725,7 @@ function IncidentsContent() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
                   <BookOpen className="w-4 h-4 text-indigo-600" />
-                  <span>🔎 Sự cố tương tự trong Knowledge Base</span>
+                  <span>🔎 Sự cố tương tự đã xử lý trước đây</span>
                 </div>
                 {similarIncidents && (
                   <span className="text-[11px] text-slate-500">
@@ -1736,11 +1737,11 @@ function IncidentsContent() {
               {loadingSimilar ? (
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center space-x-2 text-xs text-slate-500">
                   <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                  <span>Đang truy vấn Knowledge Base...</span>
+                  <span>Đang tìm sự cố tương tự...</span>
                 </div>
               ) : !similarIncidents || similarIncidents.items.length === 0 ? (
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 text-center">
-                  Chưa tìm thấy sự cố tương tự phù hợp trong Knowledge Base (Ngưỡng khớp score ≥ 30).
+                  Chưa tìm thấy sự cố tương tự đã được xử lý (độ giống tối thiểu 30%).
                 </div>
               ) : (
                 <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
@@ -1756,7 +1757,7 @@ function IncidentsContent() {
                             <span className="font-semibold text-slate-900">{item.title}</span>
                           </div>
                           <div className="text-[10px] text-slate-500 mt-0.5">
-                            Tài sản: {item.asset_name} ({item.asset_code}) • {item.category}
+                            Tài sản: {item.asset_name} ({item.asset_code}) • {incidentCategoryLabel(item.category)}
                           </div>
                         </div>
                         <div className="flex flex-col items-end shrink-0">
@@ -1797,7 +1798,7 @@ function IncidentsContent() {
                       {item.linked_maintenance && (
                         <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
                           <div>
-                            Bảo trì: <span className="text-slate-800 font-mono font-medium">{item.linked_maintenance.maintenance_code}</span> ({item.linked_maintenance.status})
+                            Bảo trì: <span className="text-slate-800 font-mono font-medium">{item.linked_maintenance.maintenance_code}</span> ({maintenanceStatusLabel(item.linked_maintenance.status)})
                           </div>
                           {item.linked_maintenance.duration_hours !== null && (
                             <div>
@@ -1836,7 +1837,7 @@ function IncidentsContent() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-                    Smart Routing & Đề xuất Kỹ thuật viên
+                    Đề xuất kỹ thuật viên phù hợp
                   </h3>
                   <p className="text-xs text-slate-500">
                     Phiếu sự cố: <span className="font-mono text-purple-700 font-semibold">{selectedIncident.ticket_code}</span> - {selectedIncident.title}
@@ -1857,14 +1858,14 @@ function IncidentsContent() {
                 <div className="text-[10px] uppercase font-semibold text-slate-500">Danh mục Sự cố</div>
                 <div className="font-bold text-slate-900 mt-1 flex items-center space-x-1.5">
                   <Cpu className="w-4 h-4 text-indigo-600" />
-                  <span>{selectedIncident.category}</span>
+                  <span>{incidentCategoryLabel(selectedIncident.category)}</span>
                 </div>
               </div>
               <div>
-                <div className="text-[10px] uppercase font-semibold text-slate-500">Queue Xử lý Gợi ý</div>
-                <div className="font-mono font-bold text-purple-700 mt-1 flex items-center space-x-1.5">
+                <div className="text-[10px] uppercase font-semibold text-slate-500">Nhóm xử lý gợi ý</div>
+                <div className="font-bold text-purple-700 mt-1 flex items-center space-x-1.5">
                   <Layers className="w-4 h-4 text-purple-600" />
-                  <span>{recommendationsData?.suggested_queue || selectedIncident.suggested_queue || 'GENERAL_SUPPORT'}</span>
+                  <span>{queueLabel(recommendationsData?.suggested_queue || selectedIncident.suggested_queue || 'GENERAL_SUPPORT')}</span>
                 </div>
               </div>
               <div>
@@ -1879,14 +1880,14 @@ function IncidentsContent() {
             {/* Candidates List */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                <span>Bảng xếp hạng Kỹ thuật viên phù hợp (100-pt Scoring)</span>
-                <span className="text-[11px] text-slate-400 font-normal">Skill (40) + Workload (40) + SLA (20)</span>
+                <span>Xếp hạng kỹ thuật viên phù hợp (thang 100 điểm)</span>
+                <span className="text-[11px] text-slate-400 font-normal">Kỹ năng (40) + Khối lượng việc (40) + Thời hạn xử lý (20)</span>
               </h4>
 
               {loadingRecommendations ? (
                 <div className="p-8 flex flex-col items-center justify-center space-y-2">
                   <Loader2 className="w-7 h-7 text-purple-600 animate-spin" />
-                  <span className="text-xs text-slate-500">Đang phân tích dữ liệu kỹ năng & workload...</span>
+                  <span className="text-xs text-slate-500">Đang phân tích kỹ năng & khối lượng công việc...</span>
                 </div>
               ) : !recommendationsData || recommendationsData.recommendations.length === 0 ? (
                 <div className="p-6 text-center text-xs text-slate-500 border border-slate-200 rounded-xl">
@@ -1925,7 +1926,7 @@ function IncidentsContent() {
 
                         <div className="flex items-center space-x-3 flex-shrink-0">
                           <div className="text-right">
-                            <div className="text-xs text-slate-500">Đồ thị Phù hợp</div>
+                            <div className="text-xs text-slate-500">Điểm phù hợp</div>
                             <div className="text-lg font-extrabold font-mono text-purple-700">
                               {tech.total_score}<span className="text-xs text-slate-400">/100</span>
                             </div>

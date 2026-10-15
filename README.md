@@ -165,9 +165,25 @@ Backend và frontend chạy trực tiếp trên máy (có hot-reload); các dị
 
 Hệ thống dùng **Keycloak SSO**. Mỗi máy có một Keycloak riêng, được tạo mới từ `docker/keycloak/realm-export.json`, nên **tài khoản không được chia sẻ giữa các máy**.
 
-- **Người dùng mới**: tại trang đăng nhập, bấm **"Đăng ký Tài khoản Mới"**. Nếu Keycloak hiện trang đăng nhập, bấm link **Register** ở cuối khung, điền thông tin rồi bấm **Register**. Sau khi đăng ký, hệ thống tự đăng nhập và tạo tài khoản với vai trò `EMPLOYEE`.
+- **Người dùng mới**: tại trang đăng nhập, bấm **"Đăng ký tài khoản mới"**, điền thông tin rồi bấm **Đăng ký**. Sau khi đăng ký, hệ thống tự đăng nhập và tạo tài khoản với vai trò Nhân viên.
 - **Quản trị viên (ADMIN)**: hệ thống chỉ cho phép **một** tài khoản ADMIN duy nhất (System Owner), gắn với email `2424801030008@student.tdmu.edu.vn`. Đăng ký Keycloak bằng đúng email này sẽ được liên kết với tài khoản ADMIN có sẵn trong dữ liệu mẫu.
 - ADMIN có thể đổi vai trò người dùng khác (`IT_ASSET_MANAGER`, `MANAGER`, `EMPLOYEE`) tại trang **Người dùng**.
+
+---
+
+### Giao diện tiếng Việt cho trang đăng nhập (Keycloak)
+
+Keycloak 24 không có sẵn tiếng Việt, nên dự án kèm theme `docker/keycloak/themes/dx-asset` với bản dịch tiếng Việt. Cài mới bằng `docker compose up -d --build` thì theme được bật tự động.
+
+Nếu Keycloak trên máy bạn đã được tạo **trước** khi có theme này, chạy 2 lệnh sau một lần để bật tiếng Việt (không ảnh hưởng tài khoản đã có):
+
+```bash
+docker compose up -d keycloak
+```
+
+```bash
+docker exec dx_asset_keycloak sh -c '/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD" && /opt/keycloak/bin/kcadm.sh update realms/dx-asset -s loginTheme=dx-asset -s internationalizationEnabled=true -s "supportedLocales=[\"vi\"]" -s defaultLocale=vi'
+```
 
 ---
 

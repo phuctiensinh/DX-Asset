@@ -81,7 +81,9 @@ export async function loginWithKeycloak(options?: { promptRegister?: boolean; lo
 
   const codeChallenge = await generateCodeChallenge(verifier);
 
-  const authEndpoint = `${config.keycloakUrl}/realms/${config.realm}/protocol/openid-connect/auth`;
+  // Keycloak serves the sign-up form at /registrations (it does not support prompt=create)
+  const endpoint = options?.promptRegister ? 'registrations' : 'auth';
+  const authEndpoint = `${config.keycloakUrl}/realms/${config.realm}/protocol/openid-connect/${endpoint}`;
   const params = new URLSearchParams({
     client_id: config.clientId,
     redirect_uri: config.redirectUri,
@@ -90,11 +92,9 @@ export async function loginWithKeycloak(options?: { promptRegister?: boolean; lo
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
+    // Show the Keycloak pages in Vietnamese
+    ui_locales: 'vi',
   });
-
-  if (options?.promptRegister) {
-    params.set('prompt', 'create');
-  }
 
   if (options?.loginHint) {
     params.set('login_hint', options.loginHint);
@@ -114,11 +114,11 @@ export async function handleOidcCallback(code: string, returnedState: string): P
   if (!savedState || savedState !== returnedState) {
     sessionStorage.removeItem('oidc_state');
     sessionStorage.removeItem('oidc_code_verifier');
-    throw new Error('Xác thực thất bại: Trạng thái CSRF state không trùng khớp.');
+    throw new Error('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
   }
 
   if (!verifier) {
-    throw new Error('Xác thực thất bại: Không tìm thấy PKCE code_verifier.');
+    throw new Error('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.');
   }
 
   sessionStorage.removeItem('oidc_state');
@@ -144,12 +144,7 @@ export async function handleOidcCallback(code: string, returnedState: string): P
   });
 
   if (!response.ok) {
-    let msg = 'Không thể đổi Authorization Code lấy Access Token từ Keycloak.';
-    try {
-      const errJson = await response.json();
-      if (errJson.error_description) msg = errJson.error_description;
-    } catch {}
-    throw new Error(msg);
+    throw new Error('Không thể hoàn tất đăng nhập. Vui lòng đăng nhập lại.');
   }
 
   const tokenData: OidcTokenResponse = await response.json();

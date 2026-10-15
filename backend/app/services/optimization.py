@@ -5,6 +5,7 @@ from typing import Optional
 from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
+from app.core.labels import vi
 from app.models.asset import Asset
 from app.models.enums import AssetStatus, IncidentStatus, MaintenanceStatus
 from app.models.incident import Incident
@@ -43,11 +44,11 @@ class OptimizationService:
                 asset_id=a.id, asset_code=a.asset_code, name=a.name, category=a.category,
                 brand=a.brand, model=a.model, location=a.location,
             ) for a in assets[:request.requested_quantity]],
-            assumptions=["Only assets with status IN_STOCK are counted; ASSIGNED assets are unavailable.",
-                         "Category and optional filters must match the current asset record.",
-                         "The requested department is a simulation target; no assignment is created."],
-            warnings=["Candidates are recommendations only and have NOT been assigned."] +
-                     (["Candidate list is capped at 500 assets."] if count > 500 else []),
+            assumptions=["Chỉ tính tài sản đang ở trạng thái Trong kho; tài sản đang cấp phát không được tính.",
+                         "Danh mục và các bộ lọc tùy chọn phải khớp với thông tin hiện tại của tài sản.",
+                         "Phòng ban được chọn chỉ dùng để mô phỏng; không có lượt cấp phát nào được tạo."],
+            warnings=["Danh sách ứng viên chỉ là đề xuất và CHƯA được cấp phát."] +
+                     (["Danh sách ứng viên giới hạn tối đa 500 tài sản."] if count > 500 else []),
         )
 
     @staticmethod
@@ -60,10 +61,10 @@ class OptimizationService:
             incidents_per_technician_per_day=request.incidents_per_technician_per_day,
             estimated_required_technicians=required, current_technician_count=request.current_technician_count,
             estimated_gap=gap,
-            assumptions=["Scenario estimate based on the supplied incident volume, target SLA, and per-technician daily capacity.",
-                         "Assumes incidents are distributed evenly across the target SLA window; this is not a guaranteed staffing requirement."],
-            warnings=["This is a scenario estimate based on the supplied capacity assumptions.",
-                      "Current SLA is shown for comparison and does not change system configuration."],
+            assumptions=["Ước tính theo tình huống, dựa trên số sự cố dự kiến, thời hạn xử lý mục tiêu và năng lực mỗi kỹ thuật viên mỗi ngày.",
+                         "Giả định sự cố phân bổ đều trong thời hạn xử lý mục tiêu; đây không phải nhu cầu nhân sự chắc chắn."],
+            warnings=["Đây là ước tính theo tình huống, dựa trên các giả định năng lực đã nhập.",
+                      "Thời hạn xử lý hiện tại chỉ để so sánh và không làm thay đổi cấu hình hệ thống."],
         )
 
     @staticmethod
@@ -89,8 +90,8 @@ class OptimizationService:
             useful_life_years=request.useful_life_years, simulation_horizon_years=request.simulation_horizon_years,
             residual_value=residual, annual_depreciation=round(annual, 2), estimated_book_value_by_year=rows,
             estimated_replacement_cost=round(total_cost, 2),
-            assumptions=["Simulation based on user-provided assumptions.", "Straight-line depreciation is used; no tax, inflation, financing, or disposal costs are included."],
-            warnings=["This is not actual financial accounting and is not derived from asset acquisition records."],
+            assumptions=["Mô phỏng dựa trên các giả định do người dùng nhập.", "Áp dụng khấu hao đường thẳng; chưa tính thuế, lạm phát, chi phí vốn hay chi phí thanh lý."],
+            warnings=["Đây không phải số liệu kế toán thực tế và không lấy từ hồ sơ mua sắm tài sản."],
         )
 
     @staticmethod
@@ -134,13 +135,13 @@ class OptimizationService:
             age_component = min(20.0, age * 2) if age is not None else 0
             score = round(min(100.0, risk * 0.7 + min(20, mc * 4) + age_component), 1)
             reasons = []
-            if risk >= 40: reasons.append(f"Elevated asset risk score ({risk:.1f}/100).")
-            if repeated: reasons.append("Repeated incidents recorded within the last 60 days.")
-            if cost >= 2_000_000: reasons.append(f"Recorded repair cost is high ({cost:,.0f} VND).")
-            if mc >= 3: reasons.append(f"Frequent maintenance recorded ({mc} events).")
-            if age is not None and age >= 5: reasons.append(f"Long usage period ({age:.1f} years since purchase).")
-            if a.status in (AssetStatus.DAMAGED, AssetStatus.IN_MAINTENANCE): reasons.append(f"Current status is {a.status.value}.")
-            if not reasons: reasons.append("Included for comparison; available history indicates no strong replacement signal.")
+            if risk >= 40: reasons.append(f"Điểm rủi ro của tài sản cao ({risk:.1f}/100).")
+            if repeated: reasons.append("Có sự cố lặp lại trong 60 ngày gần đây.")
+            if cost >= 2_000_000: reasons.append(f"Chi phí sửa chữa đã ghi nhận cao ({cost:,.0f} VNĐ).")
+            if mc >= 3: reasons.append(f"Bảo trì thường xuyên ({mc} lần).")
+            if age is not None and age >= 5: reasons.append(f"Đã sử dụng lâu ({age:.1f} năm kể từ khi mua).")
+            if a.status in (AssetStatus.DAMAGED, AssetStatus.IN_MAINTENANCE): reasons.append(f"Trạng thái hiện tại: {vi(a.status)}.")
+            if not reasons: reasons.append("Đưa vào để so sánh; lịch sử hiện có chưa cho thấy dấu hiệu cần thay thế rõ ràng.")
             priority = "HIGH" if score >= 60 else "MEDIUM" if score >= 30 else "LOW"
             scored.append(ReplacementRecommendation(
                 asset_id=a.id, asset_code=a.asset_code, name=a.name, category=a.category, status=a.status.value,

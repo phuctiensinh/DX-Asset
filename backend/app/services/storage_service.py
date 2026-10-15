@@ -43,7 +43,7 @@ class StorageService:
                     logger.error(f"SeaweedFS upload failed HTTP {response.status_code}: {response.text}")
                     raise HTTPException(
                         status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail=f"Không thể lưu trữ tập tin trên hệ thống SeaweedFS (HTTP {response.status_code})."
+                        detail="Không thể lưu tập tin lên máy chủ lưu trữ. Vui lòng thử lại sau."
                     )
             logger.info(f"Successfully uploaded file to SeaweedFS: {relative_path}")
             return relative_path
@@ -74,7 +74,7 @@ class StorageService:
                 if response.status_code != 200:
                     raise HTTPException(
                         status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail=f"Lỗi đọc tập tin từ SeaweedFS (HTTP {response.status_code})."
+                        detail="Không thể đọc tập tin từ máy chủ lưu trữ. Vui lòng thử lại sau."
                     )
                 mime = response.headers.get("Content-Type", "application/octet-stream")
                 return response.content, mime

@@ -27,7 +27,7 @@ def test_login_invalid_password(client: TestClient):
     }
     response = client.post("/api/v1/auth/login", json=payload)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
+    assert response.json()["detail"] == "Email hoặc mật khẩu không đúng."
 
 def test_login_non_existent_email(client: TestClient):
     payload = {
@@ -36,7 +36,7 @@ def test_login_non_existent_email(client: TestClient):
     }
     response = client.post("/api/v1/auth/login", json=payload)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
+    assert response.json()["detail"] == "Email hoặc mật khẩu không đúng."
 
 def test_get_me_success(client: TestClient, employee_user: User, employee_token: str):
     headers = {"Authorization": f"Bearer {employee_token}"}
@@ -54,7 +54,7 @@ def test_get_me_invalid_token(client: TestClient):
     headers = {"Authorization": "Bearer invalid.jwt.token"}
     response = client.get("/api/v1/auth/me", headers=headers)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate credentials"
+    assert response.json()["detail"] == "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
 
 def test_get_me_expired_token(client: TestClient, employee_user: User):
     expired_token = create_access_token(
@@ -64,7 +64,7 @@ def test_get_me_expired_token(client: TestClient, employee_user: User):
     headers = {"Authorization": f"Bearer {expired_token}"}
     response = client.get("/api/v1/auth/me", headers=headers)
     assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate credentials"
+    assert response.json()["detail"] == "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
 
 def test_get_me_inactive_user_rejected(client: TestClient, db: Session):
     inactive_user = User(
@@ -86,7 +86,7 @@ def test_get_me_inactive_user_rejected(client: TestClient, db: Session):
         headers = {"Authorization": f"Bearer {token}"}
         response = client.get("/api/v1/auth/me", headers=headers)
         assert response.status_code == 401
-        assert response.json()["detail"] == "User account is inactive"
+        assert response.json()["detail"] == "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."
     finally:
         db.delete(inactive_user)
         db.commit()

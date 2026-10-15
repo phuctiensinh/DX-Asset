@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, or_, and_
 
+from app.core.labels import vi
 from app.models.incident import Incident
 from app.models.maintenance import Maintenance
 from app.models.asset import Asset
@@ -70,7 +71,7 @@ class KnowledgeBaseService:
             reasons = []
             if cand.category == target.category:
                 category_score = 40.0
-                reasons.append(f"✓ Cùng danh mục sự cố: {cand.category.value} (+40 điểm)")
+                reasons.append(f"✓ Cùng danh mục sự cố: {vi(cand.category)} (+40 điểm)")
 
             # 2. Text Overlap Score (Max 40 pts) using Jaccard Similarity
             cand_tokens = tokenize_text(f"{cand.title} {cand.description}")

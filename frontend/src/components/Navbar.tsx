@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { roleLabel } from '@/lib/labels';
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -115,7 +116,7 @@ export function Navbar() {
           </div>
           <div>
             <div className="font-extrabold text-lg text-slate-900 tracking-tight leading-tight">DX-Asset</div>
-            <div className="text-[11px] font-medium text-indigo-600">Digital Asset Lifecycle</div>
+            <div className="text-[11px] font-medium text-indigo-600">Quản lý vòng đời tài sản</div>
           </div>
         </Link>
 
@@ -174,7 +175,7 @@ export function Navbar() {
               user?.role
             )}`}
           >
-            {user?.role}
+            {roleLabel(user?.role)}
           </span>
         </div>
 

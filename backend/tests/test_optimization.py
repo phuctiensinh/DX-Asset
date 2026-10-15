@@ -14,7 +14,7 @@ def test_capacity_is_deterministic_and_exposes_assumptions():
     ))
     assert result.estimated_required_technicians == 5
     assert result.estimated_gap == 1
-    assert any("scenario estimate" in warning.lower() for warning in result.warnings)
+    assert any("ước tính theo tình huống" in warning.lower() for warning in result.warnings)
 
 
 def test_capacity_rejects_zero_capacity():
@@ -32,7 +32,7 @@ def test_replacement_simulation_straight_line_and_rounding():
     assert result.residual_value == 200
     assert result.annual_depreciation == 450
     assert [x.estimated_book_value for x in result.estimated_book_value_by_year] == [1550, 1100, 650, 200, 200]
-    assert "not derived from asset acquisition records" in result.warnings[0]
+    assert "không lấy từ hồ sơ mua sắm tài sản" in result.warnings[0]
 
 
 def test_fixed_residual_yearly_depreciation_and_ending_book_value():

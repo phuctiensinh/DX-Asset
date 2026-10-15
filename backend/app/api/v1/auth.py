@@ -25,7 +25,7 @@ def login(
     # Generic authentication error to avoid user enumeration
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect email or password",
+        detail="Email hoặc mật khẩu không đúng.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -35,7 +35,7 @@ def login(
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is inactive",
+            detail="Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
         )
 
     if not verify_password(request.password, user.password_hash):

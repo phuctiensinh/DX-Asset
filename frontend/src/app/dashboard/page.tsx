@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { assetActionLabel, roleLabel } from '@/lib/labels';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi } from '@/lib/api';
@@ -136,7 +137,7 @@ function DashboardContent() {
       case 'STATUS_CHANGED':
         return { label: 'Đổi trạng thái', style: 'bg-purple-50 text-purple-700 border-purple-200' };
       default:
-        return { label: actionType, style: 'bg-slate-100 text-slate-700 border-slate-200' };
+        return { label: assetActionLabel(actionType), style: 'bg-slate-100 text-slate-700 border-slate-200' };
     }
   };
 
@@ -151,7 +152,7 @@ function DashboardContent() {
             <div>
               <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-2">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Bảng điều khiển Tổng quan DX-Asset Real-Time</span>
+                <span>Bảng điều khiển tổng quan DX-Asset (cập nhật theo thời gian thực)</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                 Xin chào, {user?.full_name}!
@@ -164,7 +165,7 @@ function DashboardContent() {
             <div className="flex flex-wrap items-center gap-3">
               <span className={`px-3 py-1.5 rounded-xl border text-xs font-bold ${getRoleBadgeStyle(user?.role)}`}>
                 <Shield className="w-3.5 h-3.5 inline mr-1" />
-                {user?.role}
+                {roleLabel(user?.role)}
               </span>
 
               <button
@@ -317,13 +318,13 @@ function DashboardContent() {
 
                 <div className="space-y-3.5">
                   {[
-                    { key: 'IN_STOCK', label: 'Có sẵn (IN_STOCK)', count: data.assets.in_stock, color: 'bg-emerald-500', text: 'text-emerald-700' },
-                    { key: 'ASSIGNED', label: 'Đang cấp phát (ASSIGNED)', count: data.assets.assigned, color: 'bg-sky-500', text: 'text-sky-700' },
-                    { key: 'IN_MAINTENANCE', label: 'Đang bảo trì (IN_MAINTENANCE)', count: data.assets.in_maintenance, color: 'bg-amber-500', text: 'text-amber-800' },
-                    { key: 'DAMAGED', label: 'Hư hỏng (DAMAGED)', count: data.assets.damaged, color: 'bg-rose-500', text: 'text-rose-700' },
-                    { key: 'RETIRED', label: 'Đã thanh lý (RETIRED)', count: data.assets.retired, color: 'bg-slate-400', text: 'text-slate-700' },
-                    { key: 'LOST', label: 'Thất lạc (LOST)', count: data.assets.lost, color: 'bg-purple-500', text: 'text-purple-700' },
-                    { key: 'INACTIVE', label: 'Ngừng sử dụng (INACTIVE)', count: data.assets.inactive, color: 'bg-indigo-500', text: 'text-indigo-700' },
+                    { key: 'IN_STOCK', label: 'Có sẵn', count: data.assets.in_stock, color: 'bg-emerald-500', text: 'text-emerald-700' },
+                    { key: 'ASSIGNED', label: 'Đang cấp phát', count: data.assets.assigned, color: 'bg-sky-500', text: 'text-sky-700' },
+                    { key: 'IN_MAINTENANCE', label: 'Đang bảo trì', count: data.assets.in_maintenance, color: 'bg-amber-500', text: 'text-amber-800' },
+                    { key: 'DAMAGED', label: 'Hư hỏng', count: data.assets.damaged, color: 'bg-rose-500', text: 'text-rose-700' },
+                    { key: 'RETIRED', label: 'Đã thanh lý', count: data.assets.retired, color: 'bg-slate-400', text: 'text-slate-700' },
+                    { key: 'LOST', label: 'Thất lạc', count: data.assets.lost, color: 'bg-purple-500', text: 'text-purple-700' },
+                    { key: 'INACTIVE', label: 'Ngừng sử dụng', count: data.assets.inactive, color: 'bg-indigo-500', text: 'text-indigo-700' },
                   ].map((item) => {
                     const percentage = data.assets.total > 0 ? Math.round((item.count / data.assets.total) * 100) : 0;
                     return (
@@ -364,7 +365,7 @@ function DashboardContent() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl space-y-1">
-                    <span className="text-[11px] font-bold uppercase text-rose-700">Mới tạo (OPEN)</span>
+                    <span className="text-[11px] font-bold uppercase text-rose-700">Mới tạo</span>
                     <div className="text-2xl font-extrabold text-slate-900">{data.incidents.open}</div>
                   </div>
                   <div className="p-3 bg-purple-50/50 border border-purple-100 rounded-xl space-y-1">
@@ -393,7 +394,7 @@ function DashboardContent() {
 
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
                   <div className="text-slate-600">
-                    <span className="font-bold text-slate-900">{data.assignments.active}</span> tài sản đang thuộc các lệnh cấp phát ACTIVE trong tổng số <span className="font-bold text-slate-900">{data.assignments.total}</span> lượt cấp phát.
+                    <span className="font-bold text-slate-900">{data.assignments.active}</span> tài sản đang được cấp phát, trên tổng số <span className="font-bold text-slate-900">{data.assignments.total}</span> lượt cấp phát.
                   </div>
                   <Link href="/assignments" className="text-indigo-600 hover:text-indigo-700 font-semibold shrink-0 ml-2">
                     Lịch sử cấp phát &rarr;
@@ -463,7 +464,7 @@ function DashboardContent() {
                     <Activity className="w-5 h-5" />
                     <span>Hoạt động Gần đây</span>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">Top 10 Nhật ký</span>
+                  <span className="text-xs text-slate-400 font-medium">10 hoạt động mới nhất</span>
                 </div>
 
                 {data.recent_activities.length === 0 ? (

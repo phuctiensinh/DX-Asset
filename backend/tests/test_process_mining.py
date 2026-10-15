@@ -360,7 +360,7 @@ def test_rework_counts_each_live_reopen_and_uses_explicit_denominator(db: Sessio
     assert metrics.source == ProcessEventSource.LIVE
     assert (metrics.total_rework_cases, metrics.total_rework_events, metrics.eligible_cases) == (1, 2, 1)
     assert metrics.rework_rate == 1.0
-    assert "LIVE Incident cases" in metrics.denominator_description
+    assert "Phiếu sự cố (LIVE)" in metrics.denominator_description
     backfill_metrics = ProcessMiningService.get_rework(
         db, _filters(2046, source=ProcessEventSource.BACKFILL)
     )
@@ -451,9 +451,9 @@ def test_same_timestamp_uses_case_sequence_and_zero_duration_is_valid(db: Sessio
 
 
 def test_filter_schema_requires_timezone_and_exclusive_ordered_boundaries():
-    with pytest.raises(ValidationError, match="timezone"):
+    with pytest.raises(ValidationError, match="múi giờ"):
         ProcessMiningFilters(date_from=datetime(2024, 1, 1))
-    with pytest.raises(ValidationError, match="exclusive date_to"):
+    with pytest.raises(ValidationError, match="phải trước ngày kết thúc"):
         ProcessMiningFilters(date_from=_stamp(2024), date_to=_stamp(2024))
 
 

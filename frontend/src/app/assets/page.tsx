@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi } from '@/lib/api';
+import { assetStatusLabel, riskLevelLabel } from '@/lib/labels';
 import Link from 'next/link';
 import {
   Boxes,
@@ -271,7 +272,7 @@ function AssetsContent() {
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case 'IN_STOCK':
-        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">Trong kho (In Stock)</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">Trong kho</span>;
       case 'ASSIGNED':
         return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">Đã cấp phát</span>;
       case 'IN_MAINTENANCE':
@@ -283,7 +284,7 @@ function AssetsContent() {
       case 'LOST':
         return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">Mất mát</span>;
       default:
-        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">{statusStr}</span>;
+        return <span className="whitespace-nowrap inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">{assetStatusLabel(statusStr)}</span>;
     }
   };
 
@@ -364,7 +365,7 @@ function AssetsContent() {
                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Trạng thái</option>
-                <option value="IN_STOCK">Trong kho (In Stock)</option>
+                <option value="IN_STOCK">Trong kho</option>
                 <option value="ASSIGNED">Đã cấp phát</option>
                 <option value="IN_MAINTENANCE">Đang bảo trì</option>
                 <option value="DAMAGED">Hỏng hóc</option>
@@ -384,12 +385,12 @@ function AssetsContent() {
                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-800 font-medium outline-none"
               >
                 <option value="">Tất cả Loại tài sản</option>
-                <option value="Laptop">Laptop</option>
-                <option value="Desktop PC">Desktop PC</option>
-                <option value="Monitor">Màn hình (Monitor)</option>
-                <option value="Printer">Máy in (Printer)</option>
-                <option value="Network Switch">Thiết bị mạng (Switch)</option>
-                <option value="Keyboard">Bàn phím (Keyboard)</option>
+                <option value="Laptop">Máy tính xách tay</option>
+                <option value="Desktop PC">Máy tính để bàn</option>
+                <option value="Monitor">Màn hình</option>
+                <option value="Printer">Máy in</option>
+                <option value="Network Switch">Thiết bị mạng</option>
+                <option value="Keyboard">Bàn phím</option>
               </select>
             </div>
           </form>
@@ -439,7 +440,7 @@ function AssetsContent() {
                     <th className="py-3.5 px-4">Mã TS</th>
                     <th className="py-3.5 px-4">Tên Tài Sản</th>
                     <th className="py-3.5 px-4">Loại</th>
-                    <th className="py-3.5 px-4">Serial Number</th>
+                    <th className="py-3.5 px-4">Số sê-ri</th>
                     <th className="py-3.5 px-4">Trạng Thái</th>
                     <th className="py-3.5 px-4">Vị Trí / Phòng Ban</th>
                     <th className="py-3.5 px-4">Người Sử Dụng</th>
@@ -619,7 +620,7 @@ function AssetsContent() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Thương hiệu (Brand)</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Thương hiệu</label>
                   <input
                     type="text"
                     value={formData.brand}
@@ -629,7 +630,7 @@ function AssetsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Model</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Dòng máy (model)</label>
                   <input
                     type="text"
                     value={formData.model}
@@ -658,7 +659,7 @@ function AssetsContent() {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   >
-                    <option value="IN_STOCK">Trong kho (In Stock)</option>
+                    <option value="IN_STOCK">Trong kho</option>
                     <option value="ASSIGNED">Đã cấp phát</option>
                     <option value="IN_MAINTENANCE">Đang bảo trì</option>
                     <option value="DAMAGED">Hỏng hóc</option>
@@ -785,7 +786,7 @@ function AssetsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Model</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Dòng máy (model)</label>
                   <input
                     type="text"
                     value={formData.model}
@@ -812,7 +813,7 @@ function AssetsContent() {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-slate-900"
                   >
-                    <option value="IN_STOCK">Trong kho (In Stock)</option>
+                    <option value="IN_STOCK">Trong kho</option>
                     <option value="ASSIGNED">Đã cấp phát</option>
                     <option value="IN_MAINTENANCE">Đang bảo trì</option>
                     <option value="DAMAGED">Hỏng hóc</option>
@@ -947,14 +948,14 @@ function AssetsContent() {
             {/* Asset Intelligence & Risk Health Card */}
             {intelLoading ? (
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 animate-pulse font-medium">
-                Đang phân tích trí tuệ tài sản (Asset Intelligence)...
+                Đang phân tích tình trạng tài sản...
               </div>
             ) : intelDetail ? (
               <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 text-indigo-700 text-xs font-bold">
                     <BrainCircuit className="w-4 h-4 text-indigo-600" />
-                    <span>Asset Intelligence & Risk Health</span>
+                    <span>Sức khỏe & mức rủi ro của tài sản</span>
                   </div>
                   <span
                     className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold border ${
@@ -967,7 +968,7 @@ function AssetsContent() {
                         : 'bg-rose-50 text-rose-700 border-rose-200'
                     }`}
                   >
-                    Risk: {intelDetail.health_risk.risk_level} ({intelDetail.health_risk.risk_score}/100)
+                    Rủi ro: {riskLevelLabel(intelDetail.health_risk.risk_level)} ({intelDetail.health_risk.risk_score}/100)
                   </span>
                 </div>
 
@@ -985,7 +986,7 @@ function AssetsContent() {
                     </div>
                   </div>
                   <div className="p-2 bg-white rounded-lg border border-slate-200">
-                    <div className="text-[10px] text-slate-500 font-medium">MTTR</div>
+                    <div className="text-[10px] text-slate-500 font-medium">TG sửa TB</div>
                     <div className="font-extrabold text-indigo-600 text-sm mt-0.5">
                       {intelDetail.metrics.mttr_hours !== null ? `${intelDetail.metrics.mttr_hours}h` : 'N/A'}
                     </div>

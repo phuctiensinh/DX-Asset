@@ -127,3 +127,24 @@ def test_openapi_registers_process_mining_contract(client):
         assert "get" in paths[path]
         assert "security" in paths[path]["get"]
     assert "ProcessMiningCasesResponse" in str(paths[f"{BASE}/cases"]["get"]["responses"])
+
+
+def test_cases_expose_business_codes_and_user_names(client, admin_token, db):
+    """The UI shows ticket codes, titles and people's names instead of internal IDs."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    case = db.query(ProcessCase).filter(ProcessCase.incident_id.isnot(None)).first()
+    if case is None:
+        pytest.skip("No incident process case in the database")
+    incident = db.query(Incident).filter(Incident.id == case.incident_id).first()
+
+    detail = client.get(f"{BASE}/cases/{case.id}", headers=headers).json()
+    assert detail["reference_code"] == incident.ticket_code
+    assert detail["title"] == incident.title
+    for event in detail["events"]:
+        if event["performed_by_id"] is not None:
+            user = db.query(User).filter(User.id == event["performed_by_id"]).first()
+            assert event["performed_by_name"] == user.full_name
+
+    listing = client.get(f"{BASE}/cases", params={"page_size": 100}, headers=headers).json()
+    for item in listing["items"]:
+        assert item["reference_code"], f"case {item['case_id']} has no reference code"

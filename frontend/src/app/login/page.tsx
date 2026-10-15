@@ -36,7 +36,7 @@ export default function LoginPage() {
       await login(); // Triggers Keycloak OIDC PKCE Authorization Code Flow
     } catch (err: any) {
       setIsKeycloakRedirecting(false);
-      setLocalError(err?.message || 'Không thể kết nối đến Keycloak SSO IdP.');
+      setLocalError(err?.message || 'Không thể kết nối đến máy chủ đăng nhập. Vui lòng thử lại.');
     }
   };
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
       await register(); // Triggers Keycloak Self-Registration Flow
     } catch (err: any) {
       setIsKeycloakRedirecting(false);
-      setLocalError(err?.message || 'Không thể mở trang Đăng ký Keycloak.');
+      setLocalError(err?.message || 'Không thể mở trang đăng ký. Vui lòng thử lại.');
     }
   };
 
@@ -93,12 +93,12 @@ export default function LoginPage() {
             {isKeycloakRedirecting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang chuyển hướng sang Keycloak...</span>
+                <span>Đang chuyển đến trang đăng nhập...</span>
               </>
             ) : (
               <>
                 <KeyRound className="w-4 h-4 text-indigo-200 group-hover:scale-110 transition-transform" />
-                <span>Đăng nhập bằng Keycloak SSO (OIDC)</span>
+                <span>Đăng nhập</span>
                 <ArrowRight className="w-4 h-4 opacity-70 group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -111,7 +111,7 @@ export default function LoginPage() {
             className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 font-semibold rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-60 text-xs shadow-sm"
           >
             <UserPlus className="w-4 h-4 text-emerald-600" />
-            <span>Đăng ký Tài khoản Mới (Self-Registration)</span>
+            <span>Đăng ký tài khoản mới</span>
           </button>
         </div>
 
@@ -120,19 +120,19 @@ export default function LoginPage() {
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs text-slate-600 font-medium">
             <div className="flex items-center space-x-2 font-bold text-indigo-600">
               <Server className="w-4 h-4 text-indigo-600" />
-              <span>Hạ tầng Xác thực Chính thức Keycloak OIDC</span>
+              <span>Đăng nhập an toàn, tập trung</span>
             </div>
             <p className="text-slate-500 text-[11px] leading-relaxed">
-              DX-Asset áp dụng chuẩn bảo mật OIDC Authorization Code Flow với PKCE. Mật khẩu và thông tin đăng nhập được xác thực tuyệt đối tại Server Keycloak IdP.
+              Mật khẩu của bạn chỉ được nhập và kiểm tra tại máy chủ đăng nhập riêng của doanh nghiệp, DX-Asset không lưu mật khẩu.
             </p>
             <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
               <span className="flex items-center space-x-1 text-slate-700 font-medium">
                 <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Source of Truth Role: PostgreSQL</span>
+                <span>Quyền hạn do quản trị viên cấp</span>
               </span>
-              <span className="flex items-center space-x-1 text-amber-700 font-mono font-bold">
+              <span className="flex items-center space-x-1 text-amber-700 font-bold">
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
-                <span>Single Owner</span>
+                <span>Một quản trị viên duy nhất</span>
               </span>
             </div>
           </div>

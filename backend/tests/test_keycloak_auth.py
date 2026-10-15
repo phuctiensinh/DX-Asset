@@ -155,7 +155,7 @@ def test_keycloak_identity_conflict_rejected(client: TestClient, db: Session):
 
         response = client.get("/api/v1/auth/me", headers=headers)
         assert response.status_code == 401
-        assert response.json()["detail"] == "Could not validate credentials"
+        assert response.json()["detail"] == "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
     finally:
         db.delete(conflict_user)
         db.commit()
@@ -170,7 +170,7 @@ def test_keycloak_role_source_of_truth_prevents_privilege_escalation(client: Tes
 
     response = client.get("/api/v1/users/technicians/skills", headers=headers)
     assert response.status_code == 403
-    assert response.json()["detail"] == "Operation not permitted for this user role"
+    assert response.json()["detail"] == "Vai trò của bạn không có quyền thực hiện thao tác này."
 
 def test_system_owner_admin_invariant(client: TestClient, db: Session):
     """

@@ -29,7 +29,7 @@ def test_rbac_admin_only_with_employee_token(client: TestClient, employee_token:
     headers = {"Authorization": f"Bearer {employee_token}"}
     response = client.get("/api/v1/test-rbac/admin-only", headers=headers)
     assert response.status_code == 403
-    assert response.json()["detail"] == "Operation not permitted for this user role"
+    assert response.json()["detail"] == "Vai trò của bạn không có quyền thực hiện thao tác này."
 
 def test_rbac_admin_or_it_with_employee_token(client: TestClient, employee_token: str):
     headers = {"Authorization": f"Bearer {employee_token}"}

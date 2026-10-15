@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
+from app.core.labels import vi
 from app.core.database import get_db
 from app.api.deps import get_current_user, require_roles
 from app.models.user import User
@@ -125,7 +126,7 @@ def create_assignment(
     if asset.status in (AssetStatus.RETIRED, AssetStatus.INACTIVE):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{asset.status}', không thể cấp phát."
+            detail=f"Tài sản '{asset.asset_code}' đang ở trạng thái '{vi(asset.status)}', không thể cấp phát."
         )
 
     # 5. Verify asset has no existing ACTIVE assignment
@@ -202,7 +203,7 @@ def return_assignment(
     if assignment.status != AssignmentStatus.ACTIVE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Lượt cấp phát #{assignment_id} đã ở trạng thái '{assignment.status}', không thể thu hồi."
+            detail=f"Lượt cấp phát #{assignment_id} đã ở trạng thái '{vi(assignment.status)}', không thể thu hồi."
         )
 
     now_utc = datetime.now(timezone.utc)

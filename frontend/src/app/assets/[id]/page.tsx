@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi, getAssetIntelligenceDetail } from '@/lib/api';
+import { assetStatusLabel, riskLevelLabel } from '@/lib/labels';
 import { AssetIntelligenceDetailResponse } from '@/types/intelligence';
 import Link from 'next/link';
 import {
@@ -93,9 +94,9 @@ function AssetDetailPageContent() {
       const status = err?.status || (err?.message?.includes('403') ? 403 : err?.message?.includes('404') ? 404 : 500);
       setErrorCode(status);
       if (status === 403) {
-        setError('Bạn không có quyền xem thông tin chi tiết tài sản này (403 Forbidden).');
+        setError('Bạn không có quyền xem thông tin chi tiết tài sản này.');
       } else if (status === 404) {
-        setError(`Không tìm thấy tài sản với ID #${assetId} trong hệ thống (404 Not Found).`);
+        setError('Không tìm thấy tài sản này trong hệ thống. Có thể mã QR đã cũ hoặc tài sản đã bị xóa.');
       } else {
         setError(err?.message || 'Không thể tải dữ liệu chi tiết tài sản.');
       }
@@ -115,19 +116,19 @@ function AssetDetailPageContent() {
   const getStatusBadge = (statusStr: string) => {
     switch (statusStr) {
       case 'IN_STOCK':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">Trong kho (In Stock)</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">Trong kho</span>;
       case 'ASSIGNED':
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">Đã cấp phát</span>;
       case 'IN_MAINTENANCE':
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm">Đang bảo trì</span>;
       case 'DAMAGED':
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">Hỏng hóc (Damaged)</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 shadow-sm">Hỏng hóc</span>;
       case 'RETIRED':
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">Đã thanh lý</span>;
       case 'LOST':
         return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">Mất mát</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">{statusStr}</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">{assetStatusLabel(statusStr)}</span>;
     }
   };
 
@@ -228,11 +229,11 @@ function AssetDetailPageContent() {
                 {intelligence && (
                   <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-3 rounded-xl shrink-0">
                     <div className="text-right">
-                      <div className="text-[10px] text-slate-500 uppercase font-semibold">Risk Level</div>
+                      <div className="text-[10px] text-slate-500 uppercase font-semibold">Mức rủi ro</div>
                       <div className="text-xs font-bold text-slate-900 mt-0.5">Score: {intelligence.health_risk.risk_score}/100</div>
                     </div>
                     <span className={`px-3 py-1.5 rounded-lg text-xs font-extrabold border ${getRiskBadgeStyle(intelligence.health_risk.risk_level)}`}>
-                      {intelligence.health_risk.risk_level}
+                      {riskLevelLabel(intelligence.health_risk.risk_level)}
                     </span>
                   </div>
                 )}
@@ -275,9 +276,9 @@ function AssetDetailPageContent() {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center space-x-2 text-purple-700 font-semibold text-base">
                     <BrainCircuit className="w-5 h-5 text-purple-600" />
-                    <span>Báo cáo Trí tuệ & Chỉ số Sức khỏe Tài sản (Asset Intelligence)</span>
+                    <span>Báo cáo sức khỏe & rủi ro của tài sản</span>
                   </div>
-                  <span className="text-xs text-slate-400">Rule-Based Analytical Metrics</span>
+                  <span className="text-xs text-slate-400">Tính theo quy tắc từ lịch sử sự cố và bảo trì</span>
                 </div>
 
                 {/* 5 KPI Cards for Intelligence */}
@@ -287,7 +288,7 @@ function AssetDetailPageContent() {
                     <div className="text-2xl font-extrabold text-emerald-700">
                       {intelligence.health_risk.health_score}%
                     </div>
-                    <div className="text-[10px] text-slate-500">100 - Risk Score</div>
+                    <div className="text-[10px] text-slate-500">= 100 − điểm rủi ro</div>
                   </div>
 
                   <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
@@ -307,7 +308,7 @@ function AssetDetailPageContent() {
                   </div>
 
                   <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span className="text-[10px] font-semibold uppercase text-indigo-700">MTTR Sửa chữa</span>
+                    <span className="text-[10px] font-semibold uppercase text-indigo-700">Thời gian sửa trung bình</span>
                     <div className="text-2xl font-extrabold text-indigo-700">
                       {intelligence.metrics.mttr_hours !== null ? `${intelligence.metrics.mttr_hours}h` : 'N/A'}
                     </div>
@@ -362,7 +363,7 @@ function AssetDetailPageContent() {
                     <div><span className="text-slate-500">Tên thiết bị:</span> <span className="text-slate-900 font-medium">{asset.name}</span></div>
                     <div><span className="text-slate-500">Danh mục:</span> {asset.category}</div>
                     <div><span className="text-slate-500">Thương hiệu:</span> {asset.brand || '—'}</div>
-                    <div><span className="text-slate-500">Model:</span> {asset.model || '—'}</div>
+                    <div><span className="text-slate-500">Dòng máy:</span> {asset.model || '—'}</div>
                     <div><span className="text-slate-500">Số Serial:</span> <span className="font-mono text-slate-900">{asset.serial_number || '—'}</span></div>
                   </div>
                 </div>

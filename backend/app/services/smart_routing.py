@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.core.labels import vi
 from app.core.config import settings
 from app.models.user import User
 from app.models.incident import Incident
@@ -72,16 +73,16 @@ class SmartRoutingService:
 
         if best_count > 0:
             confidence = min(0.95, 0.75 + (best_count * 0.05))
-            reasoning = f"Phân loại dựa trên từ khóa kỹ thuật nhận diện được ({best_category.value})"
+            reasoning = f"Phân loại {vi(best_category).lower()} dựa trên từ khóa kỹ thuật nhận diện được"
             category = best_category
         elif current_category:
             category = current_category
             confidence = 0.80
-            reasoning = f"Sử dụng phân loại hiện có của phiếu ({category.value})"
+            reasoning = f"Giữ phân loại hiện có của phiếu ({vi(category).lower()})"
         else:
             category = IncidentCategory.OTHER
             confidence = 0.65
-            reasoning = "Không tìm thấy từ khóa đặc trưng, tự động xếp vào nhóm Khác (OTHER)"
+            reasoning = "Không tìm thấy từ khóa đặc trưng, tự động xếp vào nhóm Khác"
 
         queue = QUEUE_MAPPING.get(category, "GENERAL_SUPPORT")
         return ClassificationResult(
@@ -153,10 +154,10 @@ class SmartRoutingService:
             if is_high_priority:
                 if skill_level >= 4 and total_workload <= 2:
                     sla_score = 20.0
-                    sla_reason = f"Đạt tiêu chuẩn đáp ứng SLA ưu tiên cao ({priority.value})"
+                    sla_reason = f"Đủ năng lực đáp ứng thời hạn cho phiếu ưu tiên {vi(priority).lower()}"
                 else:
                     sla_score = 10.0
-                    sla_reason = f"Đáp ứng SLA tiêu chuẩn ưu tiên cao ({priority.value})"
+                    sla_reason = f"Đáp ứng thời hạn tiêu chuẩn cho phiếu ưu tiên {vi(priority).lower()}"
             else:
                 if total_workload <= 3:
                     sla_score = 15.0
@@ -168,9 +169,9 @@ class SmartRoutingService:
             total_score = skill_score + workload_score + sla_score
 
             reasons = [
-                f"✓ Skill {category.value}: {skill_level}/5 (+{int(skill_score)} điểm)",
-                f"✓ Workload hiện tại: {total_workload} công việc active (+{int(workload_score)} điểm)",
-                f"✓ SLA suitability: {sla_reason} (+{int(sla_score)} điểm)",
+                f"✓ Kỹ năng {vi(category).lower()}: {skill_level}/5 (+{int(skill_score)} điểm)",
+                f"✓ Đang xử lý {total_workload} công việc (+{int(workload_score)} điểm)",
+                f"✓ Thời hạn xử lý: {sla_reason} (+{int(sla_score)} điểm)",
             ]
 
             recommendations.append(TechnicianRecommendation(

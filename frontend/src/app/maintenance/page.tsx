@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
 import { fetchApi } from '@/lib/api';
+import { assetStatusLabel, maintenanceStatusLabel } from '@/lib/labels';
 import {
   Wrench,
   Plus,
@@ -275,7 +276,7 @@ export default function MaintenancePage() {
       case 'CANCELLED':
         return 'Đã hủy';
       default:
-        return st;
+        return maintenanceStatusLabel(st);
     }
   };
 
@@ -425,7 +426,7 @@ export default function MaintenancePage() {
                           <div className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-1.5">
                             <Boxes className="w-3.5 h-3.5 text-slate-400" />
                             <span>
-                              {mnt.asset ? `${mnt.asset.name} (${mnt.asset.asset_code})` : `Asset #${mnt.asset_id}`}
+                              {mnt.asset ? `${mnt.asset.name} (${mnt.asset.asset_code})` : 'Tài sản không xác định'}
                             </span>
                           </div>
                           {mnt.incident && (
@@ -531,7 +532,7 @@ export default function MaintenancePage() {
                     <option value="">-- Chọn tài sản --</option>
                     {availableAssets.map((a) => (
                       <option key={a.id} value={a.id}>
-                        {a.name} ({a.asset_code}) - Trạng thái: {a.status}
+                        {a.name} ({a.asset_code}) - Trạng thái: {assetStatusLabel(a.status)}
                       </option>
                     ))}
                   </select>
