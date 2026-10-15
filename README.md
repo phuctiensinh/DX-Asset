@@ -147,7 +147,7 @@ Backend và frontend chạy trực tiếp trên máy (có hot-reload); các dị
 
 Hệ thống dùng **Keycloak SSO**. Mỗi máy có một Keycloak riêng, được tạo mới từ `docker/keycloak/realm-export.json`, nên **tài khoản không được chia sẻ giữa các máy**.
 
-- **Người dùng mới**: tại trang đăng nhập, bấm **"Đăng ký Tài khoản Mới"**, điền thông tin. Sau khi đăng ký, tài khoản được tạo tự động với vai trò `EMPLOYEE`.
+- **Người dùng mới**: tại trang đăng nhập, bấm **"Đăng ký Tài khoản Mới"**. Nếu Keycloak hiện trang đăng nhập, bấm link **Register** ở cuối khung, điền thông tin rồi bấm **Register**. Sau khi đăng ký, hệ thống tự đăng nhập và tạo tài khoản với vai trò `EMPLOYEE`.
 - **Quản trị viên (ADMIN)**: hệ thống chỉ cho phép **một** tài khoản ADMIN duy nhất (System Owner), gắn với email `2424801030008@student.tdmu.edu.vn`. Đăng ký Keycloak bằng đúng email này sẽ được liên kết với tài khoản ADMIN có sẵn trong dữ liệu mẫu.
 - ADMIN có thể đổi vai trò người dùng khác (`IT_ASSET_MANAGER`, `MANAGER`, `EMPLOYEE`) tại trang **Người dùng**.
 
