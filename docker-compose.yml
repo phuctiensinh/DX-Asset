@@ -113,7 +113,7 @@ services:
       # Service addresses inside the Docker network (not read from .env, which targets local dev)
       - OLLAMA_BASE_URL=http://ollama:11434
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
-      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-10}
+      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-30}
       - SEAWEEDFS_FILER_URL=http://seaweedfs:8888
       - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-10}
       # Issuer must match what the browser sees (localhost); JWKS is fetched inside the Docker network

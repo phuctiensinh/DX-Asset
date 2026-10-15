@@ -63,6 +63,8 @@ if errorlevel 1 (
 
 echo.
 echo [3/5] Starting Backend...
+rem The backend runs on the host here, so reach Ollama through its published port
+set "OLLAMA_BASE_URL=http://localhost:11434"
 powershell -Command "Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
 start "DX-Asset Backend" cmd /k "cd /d "%~dp0backend" && if exist .venv\Scripts\uvicorn.exe (.venv\Scripts\uvicorn.exe app.main:app --reload --port 8000) else (uvicorn app.main:app --reload --port 8000)"
 

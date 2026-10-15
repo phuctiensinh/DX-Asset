@@ -37,6 +37,24 @@
 
 ---
 
+## 🤖 Tính năng AI (Ollama, chạy cục bộ)
+
+AI chạy bằng model `qwen2.5:3b` trên chính máy chủ (Ollama), không gửi dữ liệu ra ngoài. AI **chỉ gợi ý**, không tự lưu hay thay đổi dữ liệu.
+
+| Tính năng | Ở đâu | Ai dùng được |
+|---|---|---|
+| Gợi ý phân loại & mức ưu tiên khi báo hỏng | Form "Báo cáo sự cố" → nút **Gợi ý bằng AI** → **Áp dụng gợi ý** | Mọi người dùng |
+| Tóm tắt sự cố | Chi tiết sự cố → **Trợ lý AI** → **Tóm tắt sự cố** | Người xem được phiếu (nhân viên chỉ với phiếu của mình) |
+| Gợi ý các bước xử lý (dựa trên sự cố tương tự đã giải quyết) | Chi tiết sự cố → **Gợi ý các bước xử lý** | ADMIN, IT_ASSET_MANAGER |
+| Phân loại queue xử lý | API `POST /incidents/{id}/classify` | ADMIN, IT_ASSET_MANAGER |
+| Trợ lý hỏi đáp dữ liệu | Trang **Trợ lý AI** | Theo vai trò |
+
+- Khi Ollama tắt, quá chậm hoặc trả kết quả sai định dạng, hệ thống tự dùng **phương án dự phòng theo quy tắc**. Giao diện ghi rõ kết quả đến từ **AI (Ollama)** hay **Dự phòng theo quy tắc**.
+- Lần gọi đầu tiên sau khi khởi động cần nạp model (khoảng 10–15 giây với GPU, lâu hơn với CPU). Các lần sau với GPU chỉ khoảng 1–3 giây.
+- Cấu hình trong `.env`: `OLLAMA_ENABLED`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_SECONDS`.
+
+---
+
 ## 🛠️ Công nghệ Sử dụng
 
 - **Frontend**: Next.js 14 (App Router), TypeScript 5, Tailwind CSS, shadcn/ui.

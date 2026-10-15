@@ -7,6 +7,22 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- AI triage suggestion on the incident report form: the local Ollama model suggests category and priority, and the user chooses whether to apply it (`POST /api/v1/incidents/ai/triage-suggestion`).
+- AI incident summary in the incident detail view (`POST /api/v1/incidents/{id}/ai/summary`; employees only for incidents they reported).
+- AI troubleshooting steps for IT staff, based on the incident and similar resolved incidents (`POST /api/v1/incidents/{id}/ai/troubleshooting`; ADMIN and IT_ASSET_MANAGER).
+- Every AI feature falls back to rule-based results when Ollama is off, slow or returns invalid output, and the UI labels whether a result came from AI or from the fallback.
+
+### Changed
+
+- `POST /api/v1/incidents/{id}/classify` now uses Ollama for queue classification, with keyword rules as fallback.
+- Default `OLLAMA_TIMEOUT_SECONDS` raised from 10 to 30 so the first request after loading the model does not time out.
+
+### Fixed
+
+- `start-dev.bat` now points the local backend to `http://localhost:11434`; before this, local dev could never reach Ollama and always used the fallback.
+
 ### Fixed
 
 - Fixed newly registered Keycloak users getting `401`/`500` on `/auth/me`: `SYSTEM_OWNER_EMAIL` was not defined in `app/api/deps.py`.

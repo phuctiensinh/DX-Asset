@@ -30,8 +30,15 @@ from app.schemas.smart_routing import (
     AssignIncidentRequest,
 )
 from app.schemas.knowledge_base import SimilarIncidentListResponse
+from app.schemas.incident_ai import (
+    TriageSuggestionRequest,
+    TriageSuggestionResponse,
+    IncidentSummaryResponse,
+    TroubleshootingResponse,
+)
 from app.services.smart_routing import SmartRoutingService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.incident_ai import IncidentAIService
 from app.services.storage_service import StorageService
 from app.utils.file_validation import validate_file_security
 from app.services.process_event_writer import create_process_event, get_or_create_incident_case
@@ -348,7 +355,7 @@ def classify_incident(
             detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
         )
 
-    res = SmartRoutingService.classify_incident_text(
+    res = IncidentAIService.classify_for_routing(
         title=incident.title,
         description=incident.description,
         current_category=incident.category,
@@ -517,6 +524,47 @@ def _check_incident_access(incident: Incident, user: User) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Nhân viên chỉ có quyền truy cập phiếu sự cố do chính mình báo cáo."
         )
+
+# --- AI Assistance Endpoints (suggestions only, nothing is saved) ---
+
+@router.post("/ai/triage-suggestion", response_model=TriageSuggestionResponse)
+def suggest_incident_triage(
+    request: TriageSuggestionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """AI gợi ý phân loại & mức ưu tiên khi báo hỏng (Tất cả người dùng đã đăng nhập). Người dùng tự quyết định áp dụng."""
+    return IncidentAIService.suggest_triage(request.title.strip(), request.description.strip())
+
+@router.post("/{incident_id}/ai/summary", response_model=IncidentSummaryResponse)
+def summarize_incident(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """AI tóm tắt phiếu sự cố. EMPLOYEE chỉ dùng được với phiếu do mình báo cáo."""
+    incident = _get_incident_query(db).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+    _check_incident_access(incident, current_user)
+    return IncidentAIService.summarize(incident)
+
+@router.post("/{incident_id}/ai/troubleshooting", response_model=TroubleshootingResponse)
+def suggest_incident_troubleshooting(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.IT_ASSET_MANAGER)),
+):
+    """AI gợi ý các bước kiểm tra/xử lý cho kỹ thuật viên (ADMIN & IT_ASSET_MANAGER)."""
+    incident = _get_incident_query(db).filter(Incident.id == incident_id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy phiếu sự cố với ID {incident_id}"
+        )
+    return IncidentAIService.suggest_troubleshooting(db, incident)
 
 @router.post("/{incident_id}/attachments", response_model=IncidentAttachmentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_incident_attachment(

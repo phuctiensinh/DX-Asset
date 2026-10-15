@@ -146,6 +146,58 @@ interface SimilarIncidentListResponse {
   items: SimilarIncidentItem[];
 }
 
+type AISource = 'AI' | 'RULE_BASED';
+
+interface TriageSuggestion {
+  category: string;
+  priority: string;
+  reasoning: string;
+  source: AISource;
+}
+
+interface IncidentSummaryAI {
+  incident_id: number;
+  ticket_code: string;
+  summary: string;
+  source: AISource;
+}
+
+interface TroubleshootingAI {
+  incident_id: number;
+  ticket_code: string;
+  steps: string[];
+  reference_tickets: string[];
+  source: AISource;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  HARDWARE: 'Phần cứng',
+  SOFTWARE: 'Phần mềm',
+  NETWORK: 'Mạng internet',
+  POWER: 'Nguồn điện',
+  PHYSICAL_DAMAGE: 'Hỏng vật lý',
+  OTHER: 'Khác',
+};
+
+const PRIORITY_LABELS: Record<string, string> = {
+  LOW: 'Thấp',
+  MEDIUM: 'Trung bình',
+  HIGH: 'Cao',
+  CRITICAL: 'Khẩn cấp',
+};
+
+function AISourceBadge({ source }: { source: AISource }) {
+  return source === 'AI' ? (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-50 text-violet-700 border border-violet-200">
+      AI (Ollama)
+    </span>
+  ) : (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+      Dự phòng theo quy tắc
+    </span>
+  );
+}
+
 interface IncidentListResponse {
   items: Incident[];
   total: number;
@@ -378,8 +430,49 @@ function IncidentsContent() {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // AI triage suggestion (create form) — suggestion only, applied by the user
+  const [triageSuggestion, setTriageSuggestion] = useState<TriageSuggestion | null>(null);
+  const [loadingTriage, setLoadingTriage] = useState<boolean>(false);
+  const [triageError, setTriageError] = useState<string | null>(null);
+
+  const handleSuggestTriage = async () => {
+    setTriageError(null);
+    if (!createFormData.title.trim() || !createFormData.description.trim()) {
+      setTriageError('Nhập tiêu đề và mô tả sự cố trước khi nhờ AI gợi ý.');
+      return;
+    }
+    setLoadingTriage(true);
+    setTriageSuggestion(null);
+    try {
+      const data = await fetchApi<TriageSuggestion>('/incidents/ai/triage-suggestion', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: createFormData.title.trim(),
+          description: createFormData.description.trim(),
+        }),
+      });
+      setTriageSuggestion(data);
+    } catch (err: any) {
+      setTriageError(err?.message || 'Không thể lấy gợi ý từ AI');
+    } finally {
+      setLoadingTriage(false);
+    }
+  };
+
+  const applyTriageSuggestion = () => {
+    if (!triageSuggestion) return;
+    setCreateFormData({
+      ...createFormData,
+      category: triageSuggestion.category,
+      priority: triageSuggestion.priority,
+    });
+    setTriageSuggestion(null);
+  };
+
   const openCreateModal = () => {
     loadReferenceData();
+    setTriageSuggestion(null);
+    setTriageError(null);
     setCreateFormData({
       asset_id: '',
       title: '',
@@ -452,7 +545,45 @@ function IncidentsContent() {
     }
   };
 
+  // AI summary & troubleshooting (detail modal)
+  const [aiSummary, setAiSummary] = useState<IncidentSummaryAI | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState<boolean>(false);
+  const [aiSteps, setAiSteps] = useState<TroubleshootingAI | null>(null);
+  const [loadingSteps, setLoadingSteps] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleSummarize = async () => {
+    if (!selectedIncident) return;
+    setAiError(null);
+    setLoadingSummary(true);
+    try {
+      const data = await fetchApi<IncidentSummaryAI>(`/incidents/${selectedIncident.id}/ai/summary`, { method: 'POST' });
+      setAiSummary(data);
+    } catch (err: any) {
+      setAiError(err?.message || 'Không thể tóm tắt sự cố');
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
+  const handleSuggestSteps = async () => {
+    if (!selectedIncident) return;
+    setAiError(null);
+    setLoadingSteps(true);
+    try {
+      const data = await fetchApi<TroubleshootingAI>(`/incidents/${selectedIncident.id}/ai/troubleshooting`, { method: 'POST' });
+      setAiSteps(data);
+    } catch (err: any) {
+      setAiError(err?.message || 'Không thể lấy gợi ý xử lý');
+    } finally {
+      setLoadingSteps(false);
+    }
+  };
+
   const openDetailModal = async (inc: Incident) => {
+    setAiSummary(null);
+    setAiSteps(null);
+    setAiError(null);
     setSelectedIncident(inc);
     setShowDetailModal(true);
     setLoadingSimilar(true);
@@ -998,6 +1129,72 @@ function IncidentsContent() {
                 />
               </div>
 
+              {/* AI TRIAGE SUGGESTION (suggestion only — user decides) */}
+              <div className="p-3 rounded-xl border border-violet-100 bg-violet-50/40 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="text-slate-600">
+                    Chưa chắc chọn phân loại nào? Để AI đọc mô tả và gợi ý.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSuggestTriage}
+                    disabled={loadingTriage}
+                    className="inline-flex items-center justify-center space-x-1.5 px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold disabled:opacity-60"
+                  >
+                    {loadingTriage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    <span>{loadingTriage ? 'AI đang phân tích...' : 'Gợi ý bằng AI'}</span>
+                  </button>
+                </div>
+
+                {triageError && (
+                  <div className="text-rose-700 flex items-center space-x-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>{triageError}</span>
+                  </div>
+                )}
+
+                {triageSuggestion && (
+                  <div className="p-3 bg-white border border-violet-200 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-800">Gợi ý</span>
+                      <AISourceBadge source={triageSuggestion.source} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-[10px] uppercase font-semibold text-slate-500">Phân loại</div>
+                        <div className="font-semibold text-slate-900">
+                          {CATEGORY_LABELS[triageSuggestion.category] || triageSuggestion.category}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase font-semibold text-slate-500">Mức ưu tiên</div>
+                        <div className="mt-0.5">{getPriorityBadge(triageSuggestion.priority)}</div>
+                      </div>
+                    </div>
+                    <p className="text-slate-600 leading-relaxed">{triageSuggestion.reasoning}</p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={applyTriageSuggestion}
+                        className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-semibold"
+                      >
+                        Áp dụng gợi ý
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTriageSuggestion(null)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      >
+                        Bỏ qua
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      Đây chỉ là gợi ý, bạn có thể sửa lại phân loại và mức ưu tiên trước khi gửi.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* ATTACHMENT SELECTION SECTION IN CREATE MODAL */}
               <div className="pt-3 border-t border-slate-100 space-y-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1438,6 +1635,86 @@ function IncidentsContent() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            {/* AI ASSISTANT SECTION (summary for everyone who can see the ticket, steps for IT) */}
+            <div className="pt-3 border-t border-slate-100 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center space-x-2 text-violet-700 font-bold text-xs uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-violet-600" />
+                  <span>Trợ lý AI</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSummarize}
+                    disabled={loadingSummary}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 text-xs font-semibold disabled:opacity-60"
+                  >
+                    {loadingSummary ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    <span>{loadingSummary ? 'Đang tóm tắt...' : 'Tóm tắt sự cố'}</span>
+                  </button>
+                  {canManageIT && (
+                    <button
+                      type="button"
+                      onClick={handleSuggestSteps}
+                      disabled={loadingSteps}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold disabled:opacity-60"
+                    >
+                      {loadingSteps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wrench className="w-3.5 h-3.5" />}
+                      <span>{loadingSteps ? 'Đang phân tích...' : 'Gợi ý các bước xử lý'}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {aiError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{aiError}</span>
+                </div>
+              )}
+
+              {!aiSummary && !aiSteps && !aiError && (
+                <p className="text-xs text-slate-500">
+                  {canManageIT
+                    ? 'AI có thể tóm tắt phiếu và gợi ý các bước kiểm tra dựa trên các sự cố tương tự đã xử lý.'
+                    : 'AI có thể tóm tắt nhanh nội dung phiếu này.'}{' '}
+                  Nội dung AI chỉ mang tính tham khảo.
+                </p>
+              )}
+
+              {aiSummary && (
+                <div className="p-3 bg-violet-50/40 border border-violet-100 rounded-xl text-xs space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-slate-800">Tóm tắt</span>
+                    <AISourceBadge source={aiSummary.source} />
+                  </div>
+                  <p className="text-slate-700 leading-relaxed whitespace-pre-line">{aiSummary.summary}</p>
+                </div>
+              )}
+
+              {aiSteps && (
+                <div className="p-3 bg-violet-50/40 border border-violet-100 rounded-xl text-xs space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-slate-800">Các bước kiểm tra/xử lý đề xuất</span>
+                    <AISourceBadge source={aiSteps.source} />
+                  </div>
+                  <ol className="list-decimal pl-5 space-y-1 text-slate-700 leading-relaxed">
+                    {aiSteps.steps.map((step, idx) => (
+                      <li key={idx}>{step}</li>
+                    ))}
+                  </ol>
+                  {aiSteps.reference_tickets.length > 0 && (
+                    <div className="text-[11px] text-slate-500">
+                      Tham khảo từ: <span className="font-mono">{aiSteps.reference_tickets.join(', ')}</span>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-slate-400">
+                    Gợi ý của AI có thể chưa chính xác. Kỹ thuật viên tự đánh giá trước khi thực hiện, đặc biệt với thao tác có chi phí hoặc liên quan đến điện.
+                  </p>
                 </div>
               )}
             </div>
