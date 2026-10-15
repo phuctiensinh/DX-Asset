@@ -68,54 +68,149 @@ AI chạy bằng model `qwen2.5:3b` trên chính máy chủ (Ollama), không g�
 
 Có 2 cách chạy. **Cách A (Docker)** là cách khuyến nghị cho người mới clone về: chỉ cần cài Docker, không cần cài Python hay Node.js.
 
-### Yêu cầu
+### Yêu cầu máy
 
-| Thành phần | Cách A (Docker) | Cách B (Dev local) |
-|---|---|---|
-| Git | ✅ | ✅ |
-| Docker Desktop (Compose v2) | ✅ | ✅ (chạy PostgreSQL, Keycloak, SeaweedFS, Ollama) |
-| Python 3.12 | – | ✅ |
-| Node.js 20 | – | ✅ |
+- Hệ điều hành: **Windows 10 (bản 21H2 trở lên) / Windows 11**, **macOS 12 trở lên**, hoặc **Ubuntu 22.04 / Debian 12 trở lên**.
+- RAM trống tối thiểu ~6 GB, ổ đĩa trống ~10 GB (gồm Docker, các image và model AI `qwen2.5:3b` ~1.9 GB).
+- Có kết nối Internet ở lần cài đầu tiên.
+- Windows: cần bật **ảo hóa (Virtualization)** trong BIOS. Hầu hết máy đời mới đã bật sẵn; kiểm tra ở *Task Manager → Performance → CPU → Virtualization: Enabled*.
 
-Tài nguyên máy: RAM trống tối thiểu ~6 GB, ổ đĩa trống ~8 GB (model AI `qwen2.5:3b` nặng ~1.9 GB).
+Không cần cài Python, Node.js hay PostgreSQL: mọi thứ chạy trong Docker. Bước 0 dưới đây cài sẵn **Git** và **Docker** nếu máy chưa có.
 
 ---
 
 ### Cách A — Chạy toàn bộ bằng Docker (khuyến nghị)
 
-1. **Clone mã nguồn**
-   ```bash
-   git clone https://github.com/phuctiensinh/DX-Asset.git
-   cd DX-Asset
+#### Bước 0: Cài Git và Docker (chỉ làm một lần trên mỗi máy)
+
+Máy đã có Git và Docker thì bỏ qua bước này. Kiểm tra bằng:
+```bash
+git --version
+```
+```bash
+docker compose version
+```
+
+<details open>
+<summary><b>Windows 10/11</b></summary>
+
+1. Mở **PowerShell bằng quyền Administrator**: bấm nút Start, gõ `PowerShell`, chuột phải → *Run as administrator*.
+2. Chạy lần lượt 3 lệnh (đồng ý khi được hỏi):
+   ```powershell
+   wsl --install
+   ```
+   ```powershell
+   winget install -e --id Git.Git --accept-package-agreements --accept-source-agreements
+   ```
+   ```powershell
+   winget install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements
+   ```
+   - `wsl --install` cài nền Linux (WSL 2) mà Docker Desktop cần. Nếu máy báo WSL đã có sẵn thì tiếp tục bình thường.
+   - Nếu báo không có lệnh `winget`: mở Microsoft Store, cài/cập nhật ứng dụng **App Installer**, rồi chạy lại.
+3. **Khởi động lại máy** (bắt buộc, để WSL và Docker hoạt động).
+4. Mở **Docker Desktop** từ menu Start. Lần đầu bấm **Accept** điều khoản, có thể chọn *Skip* phần đăng nhập/khảo sát. Đợi đến khi góc dưới bên trái hiện **Engine running**.
+5. Mở **PowerShell mới** (không cần quyền Administrator) và kiểm tra:
+   ```powershell
+   git --version
+   ```
+   ```powershell
+   docker compose version
    ```
 
-2. **Tạo file biến môi trường** (Windows PowerShell dùng `copy` thay cho `cp`)
+</details>
+
+<details>
+<summary><b>macOS</b></summary>
+
+1. Mở ứng dụng **Terminal**, cài Homebrew (nếu chưa có) theo lệnh chính thức tại https://brew.sh:
    ```bash
-   cp .env.example .env
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
-   Có thể giữ nguyên giá trị mặc định khi chạy thử trên máy cá nhân. Khi triển khai thật, **bắt buộc** đổi `SECRET_KEY`, `POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`.
-
-3. **Build và khởi động**
+   Làm theo các dòng *Next steps* mà trình cài in ra ở cuối (thêm `brew` vào PATH).
+2. Cài Git và Docker Desktop:
    ```bash
-   docker compose up -d --build
+   brew install git
    ```
-   Lần đầu mất khoảng 5–10 phút (tải image, build frontend/backend, tải model AI). Backend tự động chạy migration và nạp dữ liệu mẫu khi khởi động.
-
-4. **Kiểm tra trạng thái**
    ```bash
-   docker compose ps -a
+   brew install --cask docker
    ```
-   Các service phải ở trạng thái `Up` / `healthy`. Riêng `dx_asset_ollama_pull` là job tải model AI một lần, chạy xong sẽ `Exited (0)`, đó là bình thường.
+3. Mở Docker Desktop, bấm **Accept** điều khoản và đợi đến khi hiện **Engine running**:
+   ```bash
+   open -a Docker
+   ```
 
-5. **Truy cập**
+</details>
 
-   | Dịch vụ | Địa chỉ |
-   |---|---|
-   | Ứng dụng web | http://localhost:3000 |
-   | API docs (Swagger) | http://localhost:8000/docs |
-   | Keycloak Admin Console | http://localhost:8080 (tài khoản lấy từ `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` trong `.env`) |
+<details>
+<summary><b>Ubuntu / Debian</b></summary>
 
-> ⚠️ Luôn truy cập bằng `localhost`, **không** dùng `127.0.0.1` hay IP máy. Token đăng nhập gắn với địa chỉ `localhost`; dùng địa chỉ khác sẽ bị lỗi 401.
+1. Cài Git và Docker Engine (kèm Docker Compose) bằng script chính thức của Docker:
+   ```bash
+   sudo apt-get update && sudo apt-get install -y git curl
+   ```
+   ```bash
+   curl -fsSL https://get.docker.com | sudo sh
+   ```
+2. Cho phép tài khoản hiện tại dùng Docker không cần `sudo`, rồi **đăng xuất và đăng nhập lại**:
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
+
+</details>
+
+#### Bước 1: Tải mã nguồn
+
+```bash
+git clone https://github.com/phuctiensinh/DX-Asset.git
+```
+```bash
+cd DX-Asset
+```
+
+#### Bước 2: Tạo file cấu hình `.env`
+
+Windows (PowerShell):
+```powershell
+Copy-Item .env.example .env
+```
+macOS / Linux:
+```bash
+cp .env.example .env
+```
+Giữ nguyên các giá trị mặc định là chạy được trên máy cá nhân. Khi triển khai thật, **bắt buộc** đổi `SECRET_KEY`, `POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`.
+
+#### Bước 3: Build và khởi động
+
+Docker Desktop phải đang chạy (**Engine running**). Sau đó:
+```bash
+docker compose up -d --build
+```
+Lần đầu mất khoảng **5–15 phút** tùy tốc độ mạng (tải image, build frontend/backend). Backend tự chạy migration và nạp dữ liệu mẫu. Model AI (~1.9 GB) được tải ngầm sau đó; trong lúc chờ, hệ thống vẫn dùng được và các tính năng AI tạm dùng chế độ dự phòng theo quy tắc.
+
+#### Bước 4: Kiểm tra hệ thống đã sẵn sàng
+
+```bash
+docker compose ps -a
+```
+Các dịch vụ `dx_asset_postgres`, `dx_asset_keycloak`, `dx_asset_seaweedfs`, `dx_asset_ollama` phải ở trạng thái `healthy`; `dx_asset_backend` và `dx_asset_frontend` ở trạng thái `Up`. Riêng `dx_asset_ollama_pull` (job tải model AI) chạy xong sẽ là `Exited (0)` — đó là bình thường.
+
+Nếu vừa chạy xong mà backend chưa lên, đợi thêm 1–2 phút (Keycloak khởi động chậm ở lần đầu) rồi chạy lại lệnh kiểm tra.
+
+#### Bước 5: Mở ứng dụng và tạo tài khoản
+
+1. Mở trình duyệt vào **http://localhost:3000**.
+2. Bấm **Đăng ký tài khoản mới**, điền thông tin và bấm **Đăng ký**. Hệ thống tự đăng nhập và đưa bạn vào trang Tổng quan với vai trò Nhân viên.
+3. Muốn dùng quyền Quản trị viên: xem mục [Tài khoản đăng nhập](#tài-khoản-đăng-nhập).
+
+| Dịch vụ | Địa chỉ |
+|---|---|
+| Ứng dụng web | http://localhost:3000 |
+| Tài liệu API (Swagger) | http://localhost:8000/docs |
+| Trang quản trị Keycloak | http://localhost:8080 (tài khoản lấy từ `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` trong `.env`) |
+
+> ⚠️ Luôn truy cập bằng `localhost`, **không** dùng `127.0.0.1` hay IP máy. Phiên đăng nhập gắn với địa chỉ `localhost`; dùng địa chỉ khác sẽ bị lỗi 401.
+
+Những lần sau chỉ cần mở Docker Desktop rồi chạy `docker compose up -d` trong thư mục `DX-Asset`.
 
 #### Dùng GPU NVIDIA cho AI (tùy chọn)
 
@@ -128,12 +223,22 @@ docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
 
 ### Cách B — Chạy dev local (dành cho người phát triển)
 
-Backend và frontend chạy trực tiếp trên máy (có hot-reload); các dịch vụ hạ tầng chạy bằng Docker.
+Backend và frontend chạy trực tiếp trên máy (có hot-reload); các dịch vụ hạ tầng chạy bằng Docker. Script `start-dev.bat` dành cho **Windows**.
 
-1. Tạo file môi trường:
-   ```bash
-   cp .env.example .env
-   cp frontend/.env.local.example frontend/.env.local
+0. Làm **Bước 0 và Bước 1 của Cách A** (cài Git, Docker, tải mã nguồn), rồi cài thêm Python 3.12 và Node.js trong PowerShell:
+   ```powershell
+   winget install -e --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements
+   ```
+   ```powershell
+   winget install -e --id OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
+   ```
+   Sau khi cài, **mở PowerShell mới** để nhận lệnh `python` và `npm`.
+1. Tạo file môi trường (PowerShell):
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   ```powershell
+   Copy-Item frontend/.env.local.example frontend/.env.local
    ```
 2. Cài thư viện backend (tạo virtualenv trong `backend/.venv`):
    ```bash
@@ -204,6 +309,10 @@ docker exec dx_asset_keycloak sh -c '/opt/keycloak/bin/kcadm.sh config credentia
 
 | Hiện tượng | Nguyên nhân & cách xử lý |
 |---|---|
+| `git` hoặc `docker` báo *not recognized / command not found* ngay sau khi cài | Cửa sổ terminal cũ chưa nhận đường dẫn mới. Đóng và mở lại PowerShell/Terminal. |
+| `error during connect` hoặc `dockerDesktopLinuxEngine: The system cannot find the file specified` | Docker Desktop chưa chạy. Mở Docker Desktop, đợi hiện **Engine running** rồi chạy lại lệnh. |
+| Docker Desktop báo *WSL 2 is not installed* hoặc *Virtualization support not detected* | Chạy `wsl --install` trong PowerShell (Administrator), khởi động lại máy. Nếu vẫn lỗi, bật **Virtualization (Intel VT-x / AMD-V)** trong BIOS. |
+| Linux báo *permission denied … docker.sock* | Chưa đăng xuất/đăng nhập lại sau lệnh `usermod -aG docker`. Đăng xuất rồi đăng nhập lại (hoặc khởi động lại máy). |
 | Đăng nhập/đăng ký xong bị quay về trang Login, console báo `401` ở `/auth/me` | Truy cập bằng `localhost:3000` (không dùng `127.0.0.1`). Xóa Local Storage của trang (F12 → Application → Local Storage) rồi thử lại. Xem lý do cụ thể bằng `docker compose logs backend`. Nếu Keycloak vừa khởi động, đợi ~1 phút. |
 | `port is already allocated` (5432, 8080, 3000, 8000…) | Có chương trình khác đang dùng cổng đó. Với PostgreSQL, đổi `POSTGRES_PORT` trong `.env` (ví dụ `5433`). Nếu đang chạy Cách B thì tắt cửa sổ backend/frontend local trước khi chạy Cách A. |
 | `could not select device driver "nvidia"` | Máy không có GPU NVIDIA: chạy lệnh mặc định, không thêm `docker-compose.gpu.yml`. |
