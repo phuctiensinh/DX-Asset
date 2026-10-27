@@ -155,3 +155,10 @@ export interface ProcessMiningCaseDetail {
   conformance: ProcessMiningConformance;
   unit: 'seconds';
 }
+
+export interface ProcessMiningAIReport {
+  report: string;
+  recommendations: string[];
+  total_cases: number;
+  source: 'AI' | 'RULE_BASED';
+}

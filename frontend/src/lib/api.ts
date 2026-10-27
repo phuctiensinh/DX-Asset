@@ -6,6 +6,7 @@ import type {
   ProcessMiningBottleneck,
   ProcessMiningCaseDetail,
   ProcessMiningCases,
+  ProcessMiningAIReport,
   ProcessMiningFilters,
   ProcessMiningSummary,
   ProcessMiningVariants,
@@ -242,6 +243,15 @@ function processMiningQuery(filters: ProcessMiningFilters): string {
 
 export function getProcessMiningSummary(filters: ProcessMiningFilters = {}): Promise<ProcessMiningSummary> {
   return fetchApi(`/process-mining/summary${processMiningQuery(filters)}`);
+}
+
+export function generateProcessMiningReport(
+  filters: ProcessMiningFilters = {},
+  minSample = 5,
+): Promise<ProcessMiningAIReport> {
+  const query = processMiningQuery(filters);
+  const separator = query ? '&' : '?';
+  return fetchApi(`/process-mining/ai/report${query}${separator}min_sample=${minSample}`, { method: 'POST' });
 }
 
 export function getProcessMiningVariants(filters: ProcessMiningFilters = {}): Promise<ProcessMiningVariants> {

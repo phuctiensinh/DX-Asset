@@ -197,3 +197,11 @@ class ProcessMiningCasesResponse(BaseModel):
     total: int = Field(ge=0)
     page: int = Field(ge=1)
     page_size: int = Field(ge=1)
+
+
+class ProcessMiningAIReportResponse(BaseModel):
+    """AI (or rule-based fallback) report over already-computed Process Mining metrics. Never stored."""
+    report: str
+    recommendations: list[str] = Field(default_factory=list, max_length=3)
+    total_cases: int = Field(ge=0)
+    source: Literal["AI", "RULE_BASED"]

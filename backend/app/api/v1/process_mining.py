@@ -10,12 +10,14 @@ from app.models.user import User
 from app.schemas.process_mining import (
     ProcessBottleneck,
     ProcessCaseDetail,
+    ProcessMiningAIReportResponse,
     ProcessMiningCasesResponse,
     ProcessMiningFilters,
     ProcessMiningSummary,
     ProcessVariantReport,
 )
 from app.services.process_mining import ProcessMiningService
+from app.services.process_mining_ai import ProcessMiningAIService
 
 router = APIRouter()
 _ANALYTICS_ROLES = (
@@ -94,3 +96,14 @@ def get_case_detail(
     if case is None:
         raise HTTPException(status_code=404, detail="Không tìm thấy phiếu.")
     return case
+
+
+@router.post("/ai/report", response_model=ProcessMiningAIReportResponse)
+def generate_ai_report(
+    filters: ProcessMiningFilters = Depends(process_mining_filters),
+    min_sample: Annotated[int, Query(ge=1)] = 5,
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_roles(*_ANALYTICS_ROLES)),
+):
+    """AI viết báo cáo tiếng Việt từ kết quả Process Mining đã tính sẵn (cùng bộ lọc với trang). Chỉ đọc, không lưu gì."""
+    return ProcessMiningAIService.generate_report(db, filters, min_sample=min_sample)

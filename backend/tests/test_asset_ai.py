@@ -125,13 +125,13 @@ def test_explain_rejects_invented_numbers(db: Session, admin_user: User):
     asset = _risky_asset(db, admin_user)
     detail = AssetIntelligenceService.get_asset_intelligence_detail(db, asset.id)
     reply = _ollama_reply(json.dumps({
-        "explanation": "Pin đã chai 80% nên tài sản rủi ro cao.",
+        "explanation": "Pin đã chai 97531% nên tài sản rủi ro cao.",
         "recommendations": ["Thay pin."],
     }))
     with mock_ollama(reply=reply):
         res = AssetAIService.explain_risk(db, asset, detail, today=TODAY)
     assert res.source == "RULE_BASED"
-    assert "80%" not in res.explanation
+    assert "97531" not in res.explanation  # long number: random asset codes may contain short digit runs
 
 
 def test_explain_falls_back_on_bad_json(db: Session, admin_user: User):

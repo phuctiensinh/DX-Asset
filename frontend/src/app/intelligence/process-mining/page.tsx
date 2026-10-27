@@ -14,8 +14,10 @@ import {
   GitBranch,
   HelpCircle,
   ListChecks,
+  Loader2,
   RefreshCw,
   Shield,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
@@ -28,6 +30,7 @@ import {
   getProcessMiningCases,
   getProcessMiningSummary,
   getProcessMiningVariants,
+  generateProcessMiningReport,
 } from '@/lib/api';
 import type {
   ProcessCaseType,
@@ -37,6 +40,7 @@ import type {
   ProcessMiningCases,
   ProcessMiningEvent,
   ProcessMiningFilters,
+  ProcessMiningAIReport,
   ProcessMiningSummary,
   ProcessMiningVariants,
 } from '@/types/process-mining';
@@ -172,6 +176,9 @@ function ProcessMiningContent() {
   const [source, setSource] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [aiReport, setAiReport] = useState<ProcessMiningAIReport | null>(null);
+  const [aiReportLoading, setAiReportLoading] = useState(false);
+  const [aiReportError, setAiReportError] = useState<string | null>(null);
 
   const dateRangeInvalid = Boolean(dateFrom && dateTo && dateFrom > dateTo);
 
@@ -181,6 +188,29 @@ function ProcessMiningContent() {
     ...(dateFrom && !dateRangeInvalid ? { date_from: dayStart(dateFrom) } : {}),
     ...(dateTo && !dateRangeInvalid ? { date_to: nextDayStart(dateTo) } : {}),
   }), [caseType, source, dateFrom, dateTo, dateRangeInvalid]);
+
+  // A report describes one filter selection, so drop it when the filters change
+  useEffect(() => {
+    setAiReport(null);
+    setAiReportError(null);
+  }, [filters, minSample]);
+
+  // Called only when the user clicks the button; the AI never runs on page load
+  async function handleGenerateReport() {
+    if (aiReportLoading) return;
+    setAiReportLoading(true);
+    setAiReportError(null);
+    try {
+      setAiReport(await generateProcessMiningReport(filters, minSample));
+    } catch (err) {
+      setAiReport(null);
+      setAiReportError(apiStatus(err) === 403
+        ? 'Bạn không có quyền tạo báo cáo phân tích quy trình.'
+        : 'Không thể tạo báo cáo AI lúc này. Vui lòng thử lại sau.');
+    } finally {
+      setAiReportLoading(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -371,6 +401,41 @@ function ProcessMiningContent() {
               </section>
 
               {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 shadow-sm"><span className="inline-flex items-center gap-2"><AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />{error}</span><button onClick={() => setRetryKey(value => value + 1)} className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 font-semibold text-rose-700 hover:bg-rose-100">Thử lại</button></div>}
+
+              {/* AI REPORT (generated on demand from the metrics below, never stored) */}
+              {accessGranted && (
+                <section aria-labelledby="ai-report-title" className="space-y-3 rounded-2xl border border-indigo-200 bg-white p-5 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h2 id="ai-report-title" className="flex items-center gap-2 text-base font-semibold text-slate-900"><Sparkles className="h-4 w-4 text-indigo-600" />Báo cáo AI</h2>
+                      <p className="mt-1 text-xs text-slate-500">AI chạy cục bộ đọc các số liệu phân tích bên dưới (theo bộ lọc hiện tại) và viết thành báo cáo ngắn kèm đề xuất.</p>
+                    </div>
+                    <button type="button" onClick={handleGenerateReport} disabled={aiReportLoading || loading} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-50">
+                      {aiReportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      {aiReportLoading ? 'Đang tạo báo cáo...' : 'Tạo báo cáo AI'}
+                    </button>
+                  </div>
+                  {aiReportError && <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"><AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />{aiReportError}</div>}
+                  {aiReport && (
+                    <div className="space-y-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-slate-800">
+                      <p className="whitespace-pre-line leading-relaxed">{aiReport.report}</p>
+                      {aiReport.recommendations.length > 0 && (
+                        <div>
+                          <div className="mb-1 font-semibold text-slate-900">Đề xuất cải thiện:</div>
+                          <ol className="list-inside list-decimal space-y-1 pl-1">
+                            {aiReport.recommendations.map((item, index) => <li key={index}>{item}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <span>Nguồn:</span>
+                        <span className={`rounded-full border px-2 py-0.5 font-semibold ${aiReport.source === 'AI' ? 'border-indigo-300 bg-indigo-100 text-indigo-800' : 'border-slate-300 bg-slate-100 text-slate-700'}`}>{aiReport.source === 'AI' ? 'Ollama AI' : 'Phân tích dự phòng'}</span>
+                        <span>{aiReport.source === 'AI' ? 'Nội dung do AI diễn giải từ số liệu đã tính, vui lòng kiểm tra lại trước khi ra quyết định.' : 'AI hiện không khả dụng, báo cáo được tạo tự động theo mẫu từ số liệu đã tính.'}</span>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
 
               {/* 1. OVERVIEW */}
               <section aria-labelledby="overview-title" className="space-y-3">
