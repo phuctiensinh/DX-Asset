@@ -20,6 +20,8 @@ FastAPI Backend
   ├── 1. Xác thực JWT & Kiểm tra Phân quyền RBAC (Role-Based Access Control)
   ├── 2. Chặn các thao tác Mutation (xóa/sửa/tạo mới) -> Trả về MUTATION_REJECTED
   ├── 3. Xử lý các Intent cố định (Process Mining, Optimization Simulation)
+  ├── 3b. Nếu luật từ khóa không nhận ra câu hỏi: Ollama chỉ chọn 1 intent trong allowlist + trích tham số (JSON);
+  │       Backend kiểm tra intent/tham số, kiểm tra RBAC rồi chạy lại đúng handler ở bước 3–4
   ├── 4. Truy vấn dữ liệu thực tế từ CSDL PostgreSQL (lọc theo phạm vi người dùng)
   └── 5. Đóng gói dữ liệu thật thành Structured Context (KHÔNG chứa DB credentials/secrets)
         │

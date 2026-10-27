@@ -346,7 +346,7 @@ erDiagram
   - `POST /intelligence/assets/{id}/ai/explain`: Giải thích điểm rủi ro tài sản (cùng quyền với `GET /intelligence/assets/{id}`).
   - `POST /assets/{id}/ai/summary`: Tóm tắt vòng đời tài sản (nhân viên chỉ với tài sản đang giữ).
   - `POST /process-mining/ai/report`: Báo cáo Process Mining theo bộ lọc (`ADMIN`, `IT_ASSET_MANAGER`, `MANAGER`).
-  - `POST /assistant/chat`: Trợ lý hỏi đáp dữ liệu, chỉ đọc.
+  - `POST /assistant/chat`: Trợ lý hỏi đáp dữ liệu, chỉ đọc. Nhận diện intent bằng luật từ khóa; nếu không nhận ra thì Ollama chọn intent trong allowlist (xem mục 14).
 
 ---
 
@@ -368,6 +368,20 @@ User → JWT → RBAC (Backend) → Service nghiệp vụ tính/truy vấn dữ 
   - Ollama **không thay đổi database**: các endpoint AI chỉ đọc, kết quả AI không được lưu.
   - Với giải thích rủi ro, tóm tắt vòng đời và báo cáo Process Mining, Backend loại bỏ câu trả lời có con số không xuất hiện trong context. Báo cáo Process Mining còn đưa cho AI các nhận định đã viết sẵn kèm số liệu, kèm cảnh báo "chưa đủ để kết luận" khi mẫu nhỏ.
 - **Rule-based Fallback**: Khi Ollama tắt, timeout, lỗi HTTP hoặc trả kết quả không hợp lệ, Backend trả kết quả xác định từ cùng dữ liệu: luật từ khóa cho phân loại/ưu tiên sự cố (`SmartRoutingService`, `incident_ai.py`), mẫu câu từ số liệu cho tóm tắt, giải thích rủi ro và báo cáo Process Mining. API không trả lỗi 500 chỉ vì Ollama không sẵn sàng.
+- **Trợ lý hỏi đáp: nhận diện intent 2 tầng** (`ai_assistant.py`, `assistant_intent_ai.py`):
+
+```text
+Câu hỏi → JWT → chặn thao tác thay đổi dữ liệu → luật từ khóa (Process Mining + rule-based)
+  ├─ nhận ra intent → handler hiện có → kết quả
+  └─ UNKNOWN_HELP / EMPLOYEE_SCOPE_ONLY → Ollama chỉ chọn 1 intent trong allowlist + trích tham số (JSON)
+        → Backend kiểm tra: intent thuộc allowlist, schema tham số chặt (sai khóa/kiểu/định dạng → loại), đủ tham số bắt buộc
+        → RBAC ở Backend: nhân viên chọn intent cấp quản lý → HTTP 403
+        → Dựng câu hỏi chuẩn từ intent + tham số → chạy lại đúng handler hiện có (cùng truy vấn, cùng giới hạn phạm vi)
+        → Handler xác nhận đúng intent mới dùng kết quả, ngược lại giữ UNKNOWN_HELP
+  → (tùy chọn) Ollama diễn đạt lại câu trả lời từ dữ liệu đã truy vấn
+```
+
+  Ollama chỉ nhận câu hỏi của người dùng cùng danh sách intent/tham số; không tự trả lời dữ liệu nghiệp vụ. Phản hồi có trường `intent_source` (`RULE_BASED` / `AI`).
 - **Human-in-the-loop**: Kết quả AI chỉ hiển thị dưới dạng **gợi ý** có ghi rõ nguồn (Ollama AI / dự phòng). Người dùng tự quyết định áp dụng; AI không tự duyệt chi, đổi trạng thái hay thanh lý tài sản. Các tính năng AI trên giao diện chỉ chạy khi người dùng bấm nút.
 
 ---

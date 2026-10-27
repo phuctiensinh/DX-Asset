@@ -50,7 +50,7 @@ AI chạy bằng model `qwen2.5:3b` trên chính máy chủ (Ollama), không g�
 | Giải thích rủi ro tài sản (vì sao điểm rủi ro cao, 1–2 khuyến nghị) | Chi tiết tài sản → **AI giải thích rủi ro** (`POST /intelligence/assets/{id}/ai/explain`) | ADMIN, IT_ASSET_MANAGER, MANAGER; nhân viên chỉ với tài sản đang giữ |
 | Tóm tắt vòng đời tài sản (cấp phát, sự cố, bảo trì, chi phí, bảo hành) | Chi tiết tài sản → **Tóm tắt vòng đời bằng AI** (`POST /assets/{id}/ai/summary`) | ADMIN, IT_ASSET_MANAGER, MANAGER; nhân viên chỉ với tài sản đang giữ |
 | Báo cáo phân tích quy trình (tổng quan, điểm nghẽn, làm lại, tuân thủ, tối đa 3 đề xuất) | Trang **Phân tích quy trình** → **Tạo báo cáo AI** (`POST /process-mining/ai/report`, theo bộ lọc đang chọn) | ADMIN, IT_ASSET_MANAGER, MANAGER |
-| Trợ lý hỏi đáp dữ liệu | Trang **Trợ lý AI** | Theo vai trò |
+| Trợ lý hỏi đáp dữ liệu (hiểu cả câu hỏi diễn đạt tự nhiên: khi bộ luật từ khóa không nhận ra, Ollama chọn intent trong danh sách cho phép, dữ liệu vẫn do backend truy vấn) | Trang **Trợ lý AI** | Theo vai trò |
 
 - Khi Ollama tắt, quá chậm hoặc trả kết quả sai định dạng, hệ thống tự dùng **phương án dự phòng theo quy tắc**. Giao diện ghi rõ kết quả đến từ **AI (Ollama)** hay **Dự phòng theo quy tắc** / **Phân tích dự phòng**.
 - Với giải thích rủi ro, tóm tắt vòng đời và báo cáo quy trình, AI chỉ **diễn giải số liệu backend đã tính** (điểm rủi ro, lịch sử, kết quả Process Mining) trong phạm vi người dùng được phép xem; câu trả lời chứa con số không có trong dữ liệu đầu vào bị loại và thay bằng kết quả dự phòng.

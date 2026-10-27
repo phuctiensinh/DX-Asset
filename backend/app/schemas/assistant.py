@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Literal, Optional, Dict, Any
 from pydantic import BaseModel
 
 class ChatMessage(BaseModel):
@@ -21,3 +21,5 @@ class AssistantChatResponse(BaseModel):
     intent: str
     sources: List[AssistantSource] = []
     is_fallback: bool = False
+    # How the intent was recognised: keyword rules, or the local model choosing from the allowlist
+    intent_source: Literal["RULE_BASED", "AI"] = "RULE_BASED"

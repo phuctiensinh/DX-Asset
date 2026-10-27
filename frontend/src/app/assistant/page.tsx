@@ -34,6 +34,8 @@ interface AssistantChatResponse {
   intent: string;
   sources: AssistantSource[];
   is_fallback: boolean;
+  // 'AI' when the keyword rules missed and the local model picked the intent from the allowlist
+  intent_source?: 'RULE_BASED' | 'AI';
 }
 
 interface ChatItem {

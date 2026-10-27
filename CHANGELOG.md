@@ -14,6 +14,13 @@ and this project adheres to Semantic Versioning.
 - AI Process Mining report on the Process Mining page (`POST /api/v1/process-mining/ai/report`, same filters as the page): a 5–8 sentence Vietnamese report on overview, bottlenecks, rework and conformance with at most 3 recommendations, built from `ProcessMiningService` results. Same roles as the existing Process Mining endpoints.
 - The three features above only interpret metrics already computed by the backend, reuse the existing `ollama_client`, reject AI answers that contain numbers not present in the context, fall back to a deterministic rule-based result when Ollama is unavailable, slow or invalid, run only when the user clicks, and store nothing.
 
+- AI Assistant fallback intent recognition: when the keyword rules return `UNKNOWN_HELP` (or `EMPLOYEE_SCOPE_ONLY` for employees), the local Ollama model picks exactly one intent from a fixed allowlist of the existing assistant intents and extracts typed parameters. The backend validates the JSON (allowlisted intent, strict parameter schema, required parameters), enforces RBAC itself (employees get HTTP 403 for management intents), and answers through the existing rule-based / Process Mining handlers; the answer is kept only if the handler confirms the intent. `AssistantChatResponse` gains `intent_source` (`RULE_BASED` or `AI`). Only the user's message is sent to the model.
+
+### Changed
+
+- The assistant's answer-rewriting step now uses the shared `ollama_client` instead of its own HTTP call (same URL, model, timeout and fallback behaviour).
+- The asset category aliases used by the allocation simulation intent moved to a shared constant (`ASSET_CATEGORY_ALIASES`); behaviour is unchanged.
+
 ### Fixed
 
 - `test_explain_rejects_invented_numbers` no longer fails at random when a generated asset code happens to contain the digits used by the test.

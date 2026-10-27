@@ -1,6 +1,7 @@
 import re
 import logging
 from typing import List, Optional
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 
@@ -21,8 +22,13 @@ from app.services.asset_intelligence import AssetIntelligenceService
 from app.schemas.optimization import AllocationRequest, CapacityRequest, ReplacementSimulationRequest
 from app.services.optimization import OptimizationService
 from app.services.process_mining_assistant import ProcessMiningAssistantService
+from app.services.assistant_intent_ai import ASSET_CATEGORY_ALIASES, recognize_intent
+from app.services.ollama_client import ollama_chat
 
 logger = logging.getLogger(__name__)
+
+# Rule-based outcomes meaning "the keyword rules could not place this question"
+LLM_INTENT_TRIGGERS = ("UNKNOWN_HELP", "EMPLOYEE_SCOPE_ONLY")
 
 class AIAssistantService:
     @staticmethod
@@ -72,6 +78,13 @@ class AIAssistantService:
         # 2. Rule-Based Intent Processing Engine (100% PostgreSQL real data query)
         rule_based_response = AIAssistantService._process_rule_based_query(db, current_user, clean_msg, lower_msg)
 
+        # 2b. Keyword rules could not place the question: let Ollama pick an allowlisted intent,
+        # then answer through the same deterministic handlers (and their permission checks)
+        if rule_based_response.intent in LLM_INTENT_TRIGGERS:
+            llm_intent_response = AIAssistantService._answer_with_llm_intent(db, current_user, clean_msg)
+            if llm_intent_response is not None:
+                rule_based_response = llm_intent_response
+
         # 3. Enhance with Ollama Local AI if enabled & reachable
         if getattr(settings, "OLLAMA_ENABLED", True):
             ollama_response = AIAssistantService._call_ollama_llm(clean_msg, rule_based_response)
@@ -81,6 +94,37 @@ class AIAssistantService:
         return rule_based_response
 
     @staticmethod
+    def _answer_with_llm_intent(db: Session, current_user: User, clean_msg: str) -> Optional[AssistantChatResponse]:
+        """
+        Ollama only classifies. The validated intent is turned into a canonical question and answered by the
+        existing handlers, so queries, scoping and RBAC stay exactly the same as for keyword matches.
+        Returns None (keep the rule-based fallback) when Ollama is unavailable or its output is unusable.
+        """
+        is_employee = current_user.role == UserRole.EMPLOYEE
+        recognized = recognize_intent(clean_msg, is_employee)
+        if recognized is None:
+            return None
+
+        # Backend RBAC, independent of what the model chose: same rule as the chat endpoint guard
+        if is_employee and not recognized.spec.employee_allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Nhân viên không được tra cứu số liệu toàn hệ thống hoặc chạy mô phỏng tối ưu.",
+            )
+
+        canonical = recognized.canonical_message
+        if recognized.spec.process_mining:
+            response = ProcessMiningAssistantService.process_chat(db, current_user, canonical)
+        else:
+            response = AIAssistantService._process_rule_based_query(db, current_user, canonical, canonical.lower())
+
+        # Only keep the answer if the existing handler confirms the intent (e.g. the asset code really exists)
+        if response is None or response.intent not in recognized.spec.accepted_results:
+            logger.info(f"LLM intent {recognized.intent} not confirmed by handler (got {response.intent if response else None})")
+            return None
+        return response.model_copy(update={"intent_source": "AI"})
+
+    @staticmethod
     def _call_ollama_llm(clean_msg: str, rule_based_res: AssistantChatResponse) -> Optional[AssistantChatResponse]:
         if not getattr(settings, "OLLAMA_ENABLED", True) or not getattr(settings, "OLLAMA_BASE_URL", None):
             return None
@@ -88,8 +132,6 @@ class AIAssistantService:
         # Do not send forbidden queries, rejected mutations, or help prompts without data to LLM
         if rule_based_res.intent in ("MUTATION_REJECTED", "FORBIDDEN_GLOBAL_QUERY", "EMPLOYEE_SCOPE_ONLY", "UNKNOWN_HELP", "CAPACITY_SIMULATION_NEEDS_INPUT", "REPLACEMENT_SIMULATION_NEEDS_INPUT", "ALLOCATION_SIMULATION_NEEDS_INPUT"):
             return None
-
-        import httpx
 
         system_prompt = (
             "Bạn là Trợ lý AI chính thức của hệ thống DX-Asset (Digital Asset Lifecycle Management Platform).\n"
@@ -107,39 +149,10 @@ class AIAssistantService:
             f"CÂU HỎI CỦA NGƯỜI DÙNG: {clean_msg}"
         )
 
-        url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat"
-        payload = {
-            "model": getattr(settings, "OLLAMA_MODEL", "qwen2.5:3b"),
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
-            ],
-            "stream": False,
-            "options": {
-                "temperature": 0.2
-            }
-        }
-
-        try:
-            timeout_seconds = float(getattr(settings, "OLLAMA_TIMEOUT_SECONDS", 10.0))
-            timeout_config = httpx.Timeout(timeout_seconds, connect=3.0)
-            with httpx.Client(timeout=timeout_config) as client:
-                res = client.post(url, json=payload)
-                if res.status_code == 200:
-                    data = res.json()
-                    answer_text = data.get("message", {}).get("content", "").strip()
-                    if answer_text:
-                        return AssistantChatResponse(
-                            answer=answer_text,
-                            intent=rule_based_res.intent,
-                            sources=rule_based_res.sources,
-                            is_fallback=False
-                        )
-                else:
-                    logger.warning(f"Ollama API returned HTTP status {res.status_code}: {res.text}")
-        except Exception as e:
-            logger.warning(f"Ollama integration call failed, falling back to Rule-Based engine: {e}")
-
+        # Shared client: same URL, model and timeout config; returns None on any failure
+        answer_text = ollama_chat(system_prompt, user_content)
+        if answer_text:
+            return rule_based_res.model_copy(update={"answer": answer_text, "is_fallback": False})
         return None
 
 
@@ -196,13 +209,7 @@ class AIAssistantService:
             result = OptimizationService.simulate_replacement(ReplacementSimulationRequest(quantity=int(nums[0]), unit_cost=unit_cost, useful_life_years=nums[2], simulation_horizon_years=max(1, horizon)))
             return AssistantChatResponse(answer=f"Mô phỏng theo tham số người dùng: tổng chi phí {result.total_initial_cost:,.0f} VNĐ; khấu hao đường thẳng ước tính {result.annual_depreciation:,.0f} VNĐ/năm. Đây không phải số liệu kế toán thực tế.", intent="REPLACEMENT_SIMULATION", sources=[AssistantSource(type="simulation", name="Thông số mô phỏng do người dùng nhập")], is_fallback=True)
 
-        category_aliases = {
-            "laptop": "Laptop", "máy tính xách tay": "Laptop", "desktop": "Desktop PC",
-            "máy tính bàn": "Desktop PC", "monitor": "Monitor", "màn hình": "Monitor",
-            "máy in": "Printer", "printer": "Printer", "router": "Router", "switch": "Network Switch",
-            "bàn phím": "Keyboard",
-        }
-        requested_category = next((category for alias, category in category_aliases.items() if alias in lower_msg), None)
+        requested_category = next((category for alias, category in ASSET_CATEGORY_ALIASES.items() if alias in lower_msg), None)
         number_match = re.search(r"(?:cần|thêm|cho)\s+(\d+)\s+(?:người|nhân viên|(?:chiếc\s+)?)", lower_msg)
         if not number_match and requested_category:
             number_match = re.search(r"\b(\d+)\s+(?:chiếc\s+)?(?:laptop|desktop|monitor|máy in|máy tính bàn|máy tính xách tay|màn hình|router|switch|bàn phím)\b", lower_msg)
