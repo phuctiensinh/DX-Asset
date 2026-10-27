@@ -7,6 +7,10 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-27
+
+Local AI (Ollama) features P0-1 to P0-4: explanations and reports built only from metrics the backend already computed, and LLM fallback intent recognition for the AI Assistant.
+
 ### Added
 
 - AI asset risk explanation on the asset detail page (`POST /api/v1/intelligence/assets/{asset_id}/ai/explain`): the local Ollama model explains the existing risk score, its largest contributing factors and warning reasons, with at most 2 recommendations. Same access rule as `GET /api/v1/intelligence/assets/{asset_id}` (employees only for the asset currently assigned to them).

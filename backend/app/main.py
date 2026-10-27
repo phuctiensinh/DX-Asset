@@ -9,7 +9,7 @@ from app.api.v1.router import api_router
 app = FastAPI(
     title=settings.APP_NAME,
     description="API của nền tảng mã nguồn mở quản lý vòng đời tài sản DX-Asset",
-    version="1.0.0",
+    version="1.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
