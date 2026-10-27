@@ -36,6 +36,21 @@ FastAPI Backend ──► Next.js Frontend ──► Trả về kết quả tự
 > - Ollama **KHÔNG** nhận mật khẩu, bí mật kết nối hay API secrets.
 > - Nếu Ollama bị dừng, timeout hoặc lỗi, Backend sẽ **tự động Fallback mượt mà sang Rule-Based Engine** (`is_fallback: true`) để đảm bảo hệ thống không bao giờ bị đơ hay sập.
 
+### Các tính năng AI khác dùng chung Ollama
+
+Ngoài Trợ lý hỏi đáp, các tính năng sau gọi Ollama qua cùng client `backend/app/services/ollama_client.py` (cùng cấu hình model, timeout và fallback). Luồng giống sơ đồ trên: JWT → RBAC → Backend tính/truy vấn dữ liệu → structured context → Ollama → Backend kiểm tra kết quả.
+
+| Tính năng | Endpoint | Service | Fallback |
+|---|---|---|---|
+| Gợi ý phân loại & ưu tiên sự cố | `POST /api/v1/incidents/ai/triage-suggestion` | `incident_ai.py` | Luật từ khóa |
+| Tóm tắt sự cố | `POST /api/v1/incidents/{id}/ai/summary` | `incident_ai.py` | Câu mẫu từ dữ liệu phiếu |
+| Gợi ý bước xử lý | `POST /api/v1/incidents/{id}/ai/troubleshooting` | `incident_ai.py` | Bước chuẩn theo loại sự cố + sự cố tương tự |
+| Giải thích rủi ro tài sản | `POST /api/v1/intelligence/assets/{id}/ai/explain` | `asset_ai.py` | Câu mẫu từ điểm rủi ro & lý do cảnh báo |
+| Tóm tắt vòng đời tài sản | `POST /api/v1/assets/{id}/ai/summary` | `asset_lifecycle_ai.py` | Câu mẫu từ tổng số cấp phát/sự cố/bảo trì |
+| Báo cáo Process Mining | `POST /api/v1/process-mining/ai/report` | `process_mining_ai.py` | Các nhận định đã tính từ `ProcessMiningService` |
+
+Các endpoint này trả trường `source` = `AI` hoặc `RULE_BASED` thay cho `is_fallback`. Ba tính năng cuối chỉ diễn giải số liệu đã tính và bị chuyển sang fallback nếu câu trả lời chứa con số không có trong context.
+
 ---
 
 ## 🛠️ Cấu hình Docker Compose & Biến Môi trường

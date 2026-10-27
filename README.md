@@ -24,7 +24,7 @@
 - **Hồ sơ số tài sản (QR Asset Passport)**: Mỗi thiết bị có 01 mã QR định danh duy nhất chứa `asset_code`.
 - **Luồng nghiệp vụ khép kín**: Bàn giao $\rightarrow$ Báo hỏng $\rightarrow$ Sửa chữa $\rightarrow$ Thu hồi.
 - **Bảo toàn 100% Lịch sử**: Toàn bộ biến động được ghi nhật ký Timeline không ghi đè.
-- **Trợ lý AI Tùy chọn (Human-in-the-loop)**: Gợi ý phân loại sự cố và độ ưu tiên từ mô tả lỗi (hỗ trợ Rule-based Fallback khi không có mạng/API Key).
+- **Trợ lý AI chạy cục bộ (Human-in-the-loop)**: Ollama gợi ý phân loại & độ ưu tiên sự cố, tóm tắt sự cố và vòng đời tài sản, giải thích rủi ro tài sản, viết báo cáo phân tích quy trình. AI chỉ gợi ý; khi Ollama không sẵn sàng hệ thống tự dùng kết quả dự phòng theo quy tắc.
 
 ---
 
@@ -33,7 +33,7 @@
 - **[H] Human (Nhân sự)**: Quản trị định danh tập trung (4 vai trò: `ADMIN`, `IT_ASSET_MANAGER`, `EMPLOYEE`, `MANAGER`), quản lý người dùng và phòng ban.
 - **[P] Process (Quy trình)**: Luồng Cấp phát $\rightarrow$ Thu hồi $\rightarrow$ Báo hỏng $\rightarrow$ Bảo trì khép kín, thiết lập ràng buộc trạng thái thiết bị hợp lệ (Poka-yoke).
 - **[D] Data (Dữ liệu)**: Lưu trữ tập trung PostgreSQL (Single Source of Truth), bảo lưu lịch sử Timeline, hiển thị Dashboard thời gian thực.
-- **[I] Intelligence (AI)**: Trợ lý AI phân tích mô tả lỗi gợi ý tag `Category` và `Priority` hỗ trợ con người ra quyết định.
+- **[I] Intelligence (AI)**: Backend tính điểm rủi ro tài sản, khai phá quy trình (Process Mining) và mô phỏng What-if bằng thuật toán minh bạch; Ollama chạy cục bộ diễn giải các kết quả đó và gợi ý phân loại sự cố, hỗ trợ con người ra quyết định.
 
 ---
 
@@ -47,9 +47,14 @@ AI chạy bằng model `qwen2.5:3b` trên chính máy chủ (Ollama), không g�
 | Tóm tắt sự cố | Chi tiết sự cố → **Trợ lý AI** → **Tóm tắt sự cố** | Người xem được phiếu (nhân viên chỉ với phiếu của mình) |
 | Gợi ý các bước xử lý (dựa trên sự cố tương tự đã giải quyết) | Chi tiết sự cố → **Gợi ý các bước xử lý** | ADMIN, IT_ASSET_MANAGER |
 | Phân loại queue xử lý | API `POST /incidents/{id}/classify` | ADMIN, IT_ASSET_MANAGER |
+| Giải thích rủi ro tài sản (vì sao điểm rủi ro cao, 1–2 khuyến nghị) | Chi tiết tài sản → **AI giải thích rủi ro** (`POST /intelligence/assets/{id}/ai/explain`) | ADMIN, IT_ASSET_MANAGER, MANAGER; nhân viên chỉ với tài sản đang giữ |
+| Tóm tắt vòng đời tài sản (cấp phát, sự cố, bảo trì, chi phí, bảo hành) | Chi tiết tài sản → **Tóm tắt vòng đời bằng AI** (`POST /assets/{id}/ai/summary`) | ADMIN, IT_ASSET_MANAGER, MANAGER; nhân viên chỉ với tài sản đang giữ |
+| Báo cáo phân tích quy trình (tổng quan, điểm nghẽn, làm lại, tuân thủ, tối đa 3 đề xuất) | Trang **Phân tích quy trình** → **Tạo báo cáo AI** (`POST /process-mining/ai/report`, theo bộ lọc đang chọn) | ADMIN, IT_ASSET_MANAGER, MANAGER |
 | Trợ lý hỏi đáp dữ liệu | Trang **Trợ lý AI** | Theo vai trò |
 
-- Khi Ollama tắt, quá chậm hoặc trả kết quả sai định dạng, hệ thống tự dùng **phương án dự phòng theo quy tắc**. Giao diện ghi rõ kết quả đến từ **AI (Ollama)** hay **Dự phòng theo quy tắc**.
+- Khi Ollama tắt, quá chậm hoặc trả kết quả sai định dạng, hệ thống tự dùng **phương án dự phòng theo quy tắc**. Giao diện ghi rõ kết quả đến từ **AI (Ollama)** hay **Dự phòng theo quy tắc** / **Phân tích dự phòng**.
+- Với giải thích rủi ro, tóm tắt vòng đời và báo cáo quy trình, AI chỉ **diễn giải số liệu backend đã tính** (điểm rủi ro, lịch sử, kết quả Process Mining) trong phạm vi người dùng được phép xem; câu trả lời chứa con số không có trong dữ liệu đầu vào bị loại và thay bằng kết quả dự phòng.
+- Các tính năng AI trên giao diện chỉ chạy khi người dùng bấm nút; kết quả không được lưu vào cơ sở dữ liệu.
 - Lần gọi đầu tiên sau khi khởi động cần nạp model (khoảng 10–15 giây với GPU, lâu hơn với CPU). Các lần sau với GPU chỉ khoảng 1–3 giây.
 - Cấu hình trong `.env`: `OLLAMA_ENABLED`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_SECONDS`.
 
@@ -60,6 +65,8 @@ AI chạy bằng model `qwen2.5:3b` trên chính máy chủ (Ollama), không g�
 - **Frontend**: Next.js 14 (App Router), TypeScript 5, Tailwind CSS, shadcn/ui.
 - **Backend**: Python 3.12, FastAPI 0.111, Pydantic v2, SQLAlchemy 2.0, Alembic (Migration).
 - **Database**: PostgreSQL 16.
+- **AI**: Ollama chạy cục bộ trong Docker, model `qwen2.5:3b` (đổi được qua `OLLAMA_MODEL`).
+- **Dịch vụ đi kèm**: Keycloak (đăng nhập/định danh), SeaweedFS (lưu ảnh đính kèm sự cố).
 - **Containerization**: Docker & Docker Compose v2.
 
 ---

@@ -7,6 +7,17 @@ and this project adheres to Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- AI asset risk explanation on the asset detail page (`POST /api/v1/intelligence/assets/{asset_id}/ai/explain`): the local Ollama model explains the existing risk score, its largest contributing factors and warning reasons, with at most 2 recommendations. Same access rule as `GET /api/v1/intelligence/assets/{asset_id}` (employees only for the asset currently assigned to them).
+- AI asset lifecycle summary on the asset detail page (`POST /api/v1/assets/{asset_id}/ai/summary`): a 3–6 sentence summary of assignments, incidents, maintenance, repair cost and warranty. The context sends true totals plus a limited number of recent records; employees can only summarize the asset they currently hold and do not see previous holders' names.
+- AI Process Mining report on the Process Mining page (`POST /api/v1/process-mining/ai/report`, same filters as the page): a 5–8 sentence Vietnamese report on overview, bottlenecks, rework and conformance with at most 3 recommendations, built from `ProcessMiningService` results. Same roles as the existing Process Mining endpoints.
+- The three features above only interpret metrics already computed by the backend, reuse the existing `ollama_client`, reject AI answers that contain numbers not present in the context, fall back to a deterministic rule-based result when Ollama is unavailable, slow or invalid, run only when the user clicks, and store nothing.
+
+### Fixed
+
+- `test_explain_rejects_invented_numbers` no longer fails at random when a generated asset code happens to contain the digits used by the test.
+
 ## [1.0.0] - 2026-10-15
 
 First public MVP release for the OLP 2026 open-source software competition.

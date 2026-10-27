@@ -76,7 +76,7 @@ sequenceDiagram
 5. **QR Asset Passport**: Quét mã QR chứa `asset_code` để mở nhanh trang chi tiết thiết bị công khai/yêu cầu đăng nhập khi thực hiện thao tác nghiệp vụ.
 6. **Lịch sử Tài sản (Asset Timeline Log)**: Lưu vết toàn bộ biến động của tài sản vào bảng `asset_histories` (không xóa dữ liệu lịch sử).
 7. **Dashboard Thống kê**: Hiển thị tổng số tài sản, thống kê theo trạng thái, phòng ban và các phiếu sự cố gần đây.
-8. **Trợ lý AI Tùy chọn (Optional AI Assistant)**: Phân tích mô tả lỗi gợi ý Category & Priority, hỗ trợ **Rule-based Fallback** khi không có API key/lỗi mạng, tuân thủ nguyên tắc **Human-in-the-loop**.
+8. **Trợ lý AI chạy cục bộ (Ollama)**: Gợi ý Category & Priority khi báo hỏng, tóm tắt sự cố, gợi ý bước xử lý, giải thích rủi ro tài sản, tóm tắt vòng đời tài sản, báo cáo Process Mining và trợ lý hỏi đáp dữ liệu. Mọi tính năng có **Rule-based Fallback** khi Ollama không sẵn sàng và tuân thủ nguyên tắc **Human-in-the-loop** (xem mục 14).
 
 ---
 
@@ -87,7 +87,7 @@ sequenceDiagram
 - ❌ Hệ thống ERP toàn diện (Kế toán, Mua hàng, Lương thưởng).
 - ❌ Tính toán khấu hao kế toán tài sản phức tạp.
 - ❌ Quản lý nhà cung cấp (Vendor) và quy trình mua sắm (Procurement).
-- ❌ Tích hợp phần cứng IoT / GPS Tracking / Tải AI Model nặng / Yêu cầu GPU.
+- ❌ Tích hợp phần cứng IoT / GPS Tracking / Bắt buộc có GPU (model AI `qwen2.5:3b` ~1.9 GB chạy được bằng CPU, GPU chỉ là tùy chọn).
 - ❌ Nhận diện khuôn mặt hoặc sinh trắc học.
 - ❌ Xây dựng ứng dụng Mobile Native (chỉ làm Web Responsive).
 - ❌ AI tự động thực thi hành động không có con người kiểm duyệt (tự duyệt chi, tự thanh lý).
@@ -305,13 +305,15 @@ erDiagram
 - `/login`: Đăng nhập bằng Email/Username & Mật khẩu.
 - `/dashboard`: Bảng điều khiển thời gian thực (Tổng tài sản, chỉ số trạng thái, phiếu sự cố mở).
 - `/assets`: Danh sách tài sản (Tìm kiếm, lọc theo trạng thái/phòng ban, nút Thêm tài sản).
-- `/assets/[id]`: Chi tiết Hồ sơ số tài sản (QR Passport), thông số kỹ thuật, lịch sử bàn giao & bảo trì.
+- `/assets/[id]`: Chi tiết Hồ sơ số tài sản (QR Passport), thông số kỹ thuật, lịch sử bàn giao & bảo trì, nút **AI giải thích rủi ro** và **Tóm tắt vòng đời bằng AI**.
 - `/assets/new` & `/assets/[id]/edit`: Màn hình tạo mới và cập nhật tài sản.
 - `/assignments`: Danh sách bàn giao và giao diện thực hiện Bàn giao / Thu hồi tài sản.
 - `/incidents`: Danh sách phiếu báo hỏng (Phân loại theo `OPEN`, `IN_PROGRESS`, `RESOLVED`).
 - `/incidents/new`: Màn hình gửi báo hỏng cho Nhân viên (tích hợp nút "AI Gợi ý Phân loại").
 - `/incidents/[id]`: Chi tiết sự cố & Giao diện IT tiếp nhận, cập nhật trạng thái/chi phí.
 - `/users` & `/departments`: Quản lý người dùng và phòng ban (Dành riêng cho `ADMIN`).
+- `/intelligence/process-mining`: Phân tích quy trình xử lý phiếu (tổng quan, luồng, điểm nghẽn, từng phiếu) kèm nút **Tạo báo cáo AI** (`ADMIN`, `IT_ASSET_MANAGER`, `MANAGER`).
+- `/assistant`: Trợ lý AI hỏi đáp dữ liệu (chỉ đọc, theo phạm vi vai trò).
 
 ---
 
@@ -337,23 +339,36 @@ erDiagram
   - `PUT /{id}/resolve`: IT hoàn thành sửa chữa (cập nhật nguyên nhân & chi phí).
 - **Dashboard Group (`/api/v1/dashboard`)**:
   - `GET /stats`: Chỉ số thống kê định lượng thời gian thực.
-- **AI Service Group (`/api/v1/ai`)**:
-  - `POST /suggest-incident-meta`: Gửi tiêu đề/mô tả sự cố $\rightarrow$ Trả về đề xuất Category & Priority (Hỗ trợ AI API nhẹ hoặc Rule-based Fallback).
+- **AI Endpoints (nằm trong nhóm nghiệp vụ tương ứng, không có nhóm `/api/v1/ai` riêng)**:
+  - `POST /incidents/ai/triage-suggestion`: Gợi ý Category & Priority từ tiêu đề/mô tả sự cố (mọi người dùng đã đăng nhập).
+  - `POST /incidents/{id}/ai/summary`: Tóm tắt phiếu sự cố (nhân viên chỉ với phiếu mình báo cáo).
+  - `POST /incidents/{id}/ai/troubleshooting`: Gợi ý bước xử lý dựa trên sự cố tương tự đã giải quyết (`ADMIN`, `IT_ASSET_MANAGER`).
+  - `POST /intelligence/assets/{id}/ai/explain`: Giải thích điểm rủi ro tài sản (cùng quyền với `GET /intelligence/assets/{id}`).
+  - `POST /assets/{id}/ai/summary`: Tóm tắt vòng đời tài sản (nhân viên chỉ với tài sản đang giữ).
+  - `POST /process-mining/ai/report`: Báo cáo Process Mining theo bộ lọc (`ADMIN`, `IT_ASSET_MANAGER`, `MANAGER`).
+  - `POST /assistant/chat`: Trợ lý hỏi đáp dữ liệu, chỉ đọc.
 
 ---
 
 ## 14. Thiết kế Kiến trúc AI & Cơ chế Fallback (AI Architecture)
 
-- **Định vị**: AI là một tính năng **TÙY CHỌN (Optional Enhancement)** bổ trợ trải nghiệm, **KHÔNG BẮT BUỘC** hệ thống phải có GPU hay tải AI Model nặng về máy.
-- **Không tự tải Model / Ollama**: Không tự động download model hay chạy Ollama local tốn tài nguyên. Hệ thống sử dụng REST API nhẹ chuẩn OpenAI-compatible / Gemini API thông qua cấu hình môi trường `AI_API_KEY` (nếu có).
-- **Rule-based Fallback Engine**:
-  - Nếu `AI_API_KEY` không được cấu hình, bị lỗi kết nối mạng hoặc timeout (> 3 giây), Backend sẽ tự động kích hoạt bộ luật phân tích từ khóa (Rule-based Keyword Engine):
-    - Chứa từ *"nguồn", "cháy", "khói", "mùi khét"* $\rightarrow$ Category: `POWER`, Priority: `CRITICAL`.
-    - Chứa từ *"màn hình", "bàn phím", "chuột", "ổ cứng", "ram"* $\rightarrow$ Category: `HARDWARE`, Priority: `HIGH`.
-    - Chứa từ *"wifi", "mạng", "lan", "ping", "disconnect"* $\rightarrow$ Category: `NETWORK`, Priority: `MEDIUM`.
-    - Chứa từ *"win", "chậm", "phần mềm", "office", "virus"* $\rightarrow$ Category: `SOFTWARE`, Priority: `LOW`.
-- **Gắn trực tiếp với Asset & Incident**: AI nhận ngữ cảnh gồm Loại thiết bị (`asset.category`), Tên thiết bị (`asset.name`) và Mô tả lỗi từ nhân viên để đưa ra kết quả phân tích phù hợp hơn.
-- **Human-in-the-loop**: Kết quả phân tích chỉ được hiển thị dưới dạng **Đề xuất gợi ý (Suggestion UI)** trên biểu mẫu. Nhân viên hoàn toàn có quyền thay đổi các giá trị này trước khi bấm gửi phiếu chính thức.
+- **Định vị**: AI là tính năng **hỗ trợ (Optional Enhancement)**. Model nguồn mở `qwen2.5:3b` chạy cục bộ bằng **Ollama** trong Docker Compose (service `ollama`, job `ollama-pull` tải model), dữ liệu doanh nghiệp không gửi ra ngoài. Chạy được bằng CPU, GPU NVIDIA là tùy chọn (`docker-compose.gpu.yml`). Cấu hình qua `OLLAMA_ENABLED`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT_SECONDS`.
+- **Backend là nguồn sự thật (source of truth)**: Điểm rủi ro, chi phí sửa chữa, MTTR, lịch sử vòng đời và các chỉ số Process Mining đều do Backend tính bằng thuật toán xác định (`AssetIntelligenceService`, `ProcessMiningService`...). AI chỉ diễn giải kết quả đã tính, không tính lại.
+- **Luồng xử lý bắt buộc**:
+
+```text
+User → JWT → RBAC (Backend) → Service nghiệp vụ tính/truy vấn dữ liệu trong phạm vi quyền
+     → Structured context (văn bản tiếng Việt, chỉ dữ liệu cần thiết) → Ollama (app/services/ollama_client.py)
+     → Backend kiểm tra & chuẩn hóa kết quả → Frontend hiển thị gợi ý (source = AI hoặc RULE_BASED)
+```
+
+- **Nguyên tắc an toàn**:
+  - Ollama **chỉ nhận structured context do Backend chuẩn bị**, không truy cập PostgreSQL trực tiếp và không tự chạy SQL.
+  - Ollama **không bypass RBAC**: quyền được kiểm tra ở Backend trước khi dựng context; context chỉ chứa dữ liệu người dùng được phép xem (ví dụ nhân viên tóm tắt tài sản của mình sẽ không thấy tên người giữ trước).
+  - Ollama **không thay đổi database**: các endpoint AI chỉ đọc, kết quả AI không được lưu.
+  - Với giải thích rủi ro, tóm tắt vòng đời và báo cáo Process Mining, Backend loại bỏ câu trả lời có con số không xuất hiện trong context. Báo cáo Process Mining còn đưa cho AI các nhận định đã viết sẵn kèm số liệu, kèm cảnh báo "chưa đủ để kết luận" khi mẫu nhỏ.
+- **Rule-based Fallback**: Khi Ollama tắt, timeout, lỗi HTTP hoặc trả kết quả không hợp lệ, Backend trả kết quả xác định từ cùng dữ liệu: luật từ khóa cho phân loại/ưu tiên sự cố (`SmartRoutingService`, `incident_ai.py`), mẫu câu từ số liệu cho tóm tắt, giải thích rủi ro và báo cáo Process Mining. API không trả lỗi 500 chỉ vì Ollama không sẵn sàng.
+- **Human-in-the-loop**: Kết quả AI chỉ hiển thị dưới dạng **gợi ý** có ghi rõ nguồn (Ollama AI / dự phòng). Người dùng tự quyết định áp dụng; AI không tự duyệt chi, đổi trạng thái hay thanh lý tài sản. Các tính năng AI trên giao diện chỉ chạy khi người dùng bấm nút.
 
 ---
 
@@ -432,8 +447,8 @@ dx-asset/
 
 1. **Rủi ro Phức tạp hóa Auth/SSO**:
    - *Giải pháp*: Sử dụng JWT + Role-based Middleware nội bộ gọn nhẹ, đọc Secret từ biến môi trường.
-2. **Rủi ro phụ thuộc vào API AI bên ngoài khi Demo**:
-   - *Giải pháp*: Xây dựng cơ chế **Rule-based Keyword Fallback** ngay trong Backend, phản hồi tức thì mà không cần mạng internet hay API Key.
+2. **Rủi ro AI không sẵn sàng hoặc trả lời sai khi Demo**:
+   - *Giải pháp*: AI chạy cục bộ bằng Ollama nên không cần internet hay API Key; mọi tính năng AI có **Rule-based Fallback** trong Backend và kiểm tra con số trong câu trả lời so với dữ liệu đầu vào.
 3. **Rủi ro Lỗi môi trường khi Giám khảo / Người khác chạy thử**:
    - *Giải pháp*: Đóng gói trọn gói bằng `docker-compose.yml` (chạy 1 lệnh `docker compose up` là lên toàn bộ ứng dụng).
 4. **Rủi ro Mất dữ liệu lịch sử hoặc Trùng lặp Bàn giao**:
