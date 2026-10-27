@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from typing import Literal, Optional, List
 from datetime import date, datetime
 from app.models.enums import AssetStatus
 from app.schemas.user import UserResponse, DepartmentResponse
@@ -52,3 +52,14 @@ class AssetListResponse(BaseModel):
     total: int
     skip: int
     limit: int
+
+class AssetLifecycleSummaryResponse(BaseModel):
+    """AI (or rule-based fallback) summary of an asset's lifecycle. Never stored."""
+    asset_id: int
+    asset_code: str
+    asset_name: str
+    summary: str
+    total_assignments: int
+    total_incidents: int
+    total_maintenances: int
+    source: Literal["AI", "RULE_BASED"]

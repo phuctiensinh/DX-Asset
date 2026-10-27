@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
-import { fetchApi, getAssetIntelligenceDetail, explainAssetRisk } from '@/lib/api';
+import { fetchApi, getAssetIntelligenceDetail, explainAssetRisk, summarizeAssetLifecycle } from '@/lib/api';
 import { assetStatusLabel, riskLevelLabel } from '@/lib/labels';
-import { AssetIntelligenceDetailResponse, AssetRiskExplanation } from '@/types/intelligence';
+import { AssetIntelligenceDetailResponse, AssetRiskExplanation, AssetLifecycleSummary } from '@/types/intelligence';
 import Link from 'next/link';
 import {
   Boxes,
@@ -68,6 +68,10 @@ function AssetDetailPageContent() {
   const [explaining, setExplaining] = useState<boolean>(false);
   const [explainError, setExplainError] = useState<string | null>(null);
 
+  const [lifecycleSummary, setLifecycleSummary] = useState<AssetLifecycleSummary | null>(null);
+  const [summarizing, setSummarizing] = useState<boolean>(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
   const assetIdStr = params?.id as string;
   const assetId = parseInt(assetIdStr, 10);
 
@@ -114,6 +118,8 @@ function AssetDetailPageContent() {
     loadData();
     setRiskExplanation(null);
     setExplainError(null);
+    setLifecycleSummary(null);
+    setSummaryError(null);
   }, [assetIdStr]);
 
   // Called only when the user clicks the button; the AI never runs on page load
@@ -129,6 +135,23 @@ function AssetDetailPageContent() {
       setExplaining(false);
     }
   };
+
+  const handleSummarizeLifecycle = async () => {
+    if (summarizing) return;
+    setSummarizing(true);
+    setSummaryError(null);
+    try {
+      setLifecycleSummary(await summarizeAssetLifecycle(assetId));
+    } catch (err: any) {
+      setLifecycleSummary(null);
+      setSummaryError(err?.message || 'Không thể tóm tắt vòng đời tài sản lúc này. Vui lòng thử lại sau.');
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
+  // Mirrors the backend rule: employees may only summarize the asset they currently hold
+  const canSummarizeLifecycle = !!asset && (user?.role !== 'EMPLOYEE' || asset.current_user_id === user?.id);
 
   const formatVND = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -418,6 +441,64 @@ function AssetDetailPageContent() {
                         : 'AI hiện không khả dụng, đây là phần giải thích tạo tự động theo quy tắc từ số liệu ở trên.'}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* AI Lifecycle Summary (generated on demand, never stored) */}
+            {canSummarizeLifecycle && (
+              <div className="bg-white border border-indigo-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex items-center space-x-2 text-indigo-700 font-semibold text-base">
+                    <Clock className="w-5 h-5 text-indigo-600" />
+                    <span>AI tóm tắt vòng đời</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSummarizeLifecycle}
+                    disabled={summarizing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {summarizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {summarizing ? 'Đang tổng hợp lịch sử...' : 'Tóm tắt vòng đời bằng AI'}
+                  </button>
+                </div>
+
+                {summaryError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{summaryError}</span>
+                  </div>
+                )}
+
+                {lifecycleSummary ? (
+                  <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl space-y-3 text-xs text-slate-800">
+                    <p className="text-sm leading-relaxed whitespace-pre-line">{lifecycleSummary.summary}</p>
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
+                      <span>{lifecycleSummary.total_assignments} lượt cấp phát</span>
+                      <span>·</span>
+                      <span>{lifecycleSummary.total_incidents} sự cố</span>
+                      <span>·</span>
+                      <span>{lifecycleSummary.total_maintenances} lần bảo trì</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                      <span>Nguồn:</span>
+                      <span className={`px-2 py-0.5 rounded-full font-semibold border ${lifecycleSummary.source === 'AI' ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-slate-100 text-slate-700 border-slate-300'}`}>
+                        {lifecycleSummary.source === 'AI' ? 'Ollama AI' : 'Phân tích dự phòng'}
+                      </span>
+                      <span>
+                        {lifecycleSummary.source === 'AI'
+                          ? 'Tạo bởi mô hình AI chạy cục bộ từ dữ liệu trong hệ thống, vui lòng kiểm tra lại.'
+                          : 'AI hiện không khả dụng, nội dung được tạo tự động theo mẫu từ dữ liệu.'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  !summaryError && (
+                    <p className="text-xs text-slate-500">
+                      Bấm nút để AI tổng hợp lịch sử cấp phát, sự cố, bảo trì và bảo hành của tài sản thành một đoạn ngắn.
+                    </p>
+                  )
                 )}
               </div>
             )}

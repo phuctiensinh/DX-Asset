@@ -103,3 +103,14 @@ export interface AssetRiskExplanation {
   recommendations: string[];
   source: 'AI' | 'RULE_BASED';
 }
+
+export interface AssetLifecycleSummary {
+  asset_id: number;
+  asset_code: string;
+  asset_name: string;
+  summary: string;
+  total_assignments: number;
+  total_incidents: number;
+  total_maintenances: number;
+  source: 'AI' | 'RULE_BASED';
+}

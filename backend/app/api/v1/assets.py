@@ -10,7 +10,8 @@ from app.models.enums import UserRole, AssetStatus, AssetActionType
 from app.models.asset import Asset
 from app.models.department import Department
 from app.models.history import AssetHistory
-from app.schemas.asset import AssetCreate, AssetUpdate, AssetResponse, AssetListResponse
+from app.schemas.asset import AssetCreate, AssetUpdate, AssetResponse, AssetListResponse, AssetLifecycleSummaryResponse
+from app.services.asset_lifecycle_ai import AssetLifecycleAIService
 from app.core.labels import vi
 
 router = APIRouter()
@@ -232,3 +233,29 @@ def soft_delete_asset(
         joinedload(Asset.department),
         joinedload(Asset.current_user)
     ).filter(Asset.id == asset_id).first()
+
+@router.post("/{asset_id}/ai/summary", response_model=AssetLifecycleSummaryResponse)
+def summarize_asset_lifecycle(
+    asset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """AI tóm tắt vòng đời tài sản. EMPLOYEE chỉ dùng được với tài sản mình đang giữ. Chỉ đọc, không lưu gì."""
+    asset = db.query(Asset).options(
+        joinedload(Asset.department),
+        joinedload(Asset.current_user)
+    ).filter(Asset.id == asset_id).first()
+
+    if not asset:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Không tìm thấy tài sản với ID {asset_id}"
+        )
+
+    if current_user.role == UserRole.EMPLOYEE and asset.current_user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Nhân viên chỉ được tóm tắt tài sản đang được cấp phát cho mình."
+        )
+
+    return AssetLifecycleAIService.summarize(db, asset, current_user)
