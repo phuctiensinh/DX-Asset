@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Literal, Optional
 from pydantic import BaseModel, Field
 from decimal import Decimal
 from app.models.enums import AssetStatus
@@ -80,3 +80,14 @@ class TopCostlyItem(BaseModel):
     category: str
     total_repair_cost: float
     maintenance_count: int
+
+class AssetRiskExplanationResponse(BaseModel):
+    """AI (or rule-based fallback) explanation of an asset's current risk score. Never stored."""
+    asset_id: int
+    asset_code: str
+    asset_name: str
+    risk_score: float
+    risk_level: str
+    explanation: str
+    recommendations: List[str] = Field(default_factory=list, max_length=2)
+    source: Literal["AI", "RULE_BASED"]

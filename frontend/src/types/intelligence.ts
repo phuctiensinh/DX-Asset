@@ -92,3 +92,14 @@ export interface TopCostlyItem {
   total_repair_cost: number;
   maintenance_count: number;
 }
+
+export interface AssetRiskExplanation {
+  asset_id: number;
+  asset_code: string;
+  asset_name: string;
+  risk_score: number;
+  risk_level: RiskLevel;
+  explanation: string;
+  recommendations: string[];
+  source: 'AI' | 'RULE_BASED';
+}

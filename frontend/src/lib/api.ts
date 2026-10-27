@@ -10,6 +10,7 @@ import type {
   ProcessMiningSummary,
   ProcessMiningVariants,
 } from '@/types/process-mining';
+import type { AssetRiskExplanation } from '@/types/intelligence';
 import { refreshAccessToken } from '@/lib/oidc';
 
 export function getApiBaseUrl(): string {
@@ -206,6 +207,10 @@ export async function getTopCostly(limit: number = 5): Promise<any> {
 
 export async function getAssetIntelligenceDetail(assetId: number): Promise<any> {
   return fetchApi(`/intelligence/assets/${assetId}`);
+}
+
+export function explainAssetRisk(assetId: number): Promise<AssetRiskExplanation> {
+  return fetchApi<AssetRiskExplanation>(`/intelligence/assets/${assetId}/ai/explain`, { method: 'POST' });
 }
 
 export function simulateAllocation(request: AllocationRequest): Promise<AllocationResponse> {

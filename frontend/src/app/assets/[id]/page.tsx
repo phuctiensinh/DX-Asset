@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { Navbar } from '@/components/Navbar';
-import { fetchApi, getAssetIntelligenceDetail } from '@/lib/api';
+import { fetchApi, getAssetIntelligenceDetail, explainAssetRisk } from '@/lib/api';
 import { assetStatusLabel, riskLevelLabel } from '@/lib/labels';
-import { AssetIntelligenceDetailResponse } from '@/types/intelligence';
+import { AssetIntelligenceDetailResponse, AssetRiskExplanation } from '@/types/intelligence';
 import Link from 'next/link';
 import {
   Boxes,
@@ -27,6 +27,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 interface Asset {
@@ -62,6 +63,10 @@ function AssetDetailPageContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<number | null>(null);
+
+  const [riskExplanation, setRiskExplanation] = useState<AssetRiskExplanation | null>(null);
+  const [explaining, setExplaining] = useState<boolean>(false);
+  const [explainError, setExplainError] = useState<string | null>(null);
 
   const assetIdStr = params?.id as string;
   const assetId = parseInt(assetIdStr, 10);
@@ -107,7 +112,23 @@ function AssetDetailPageContent() {
 
   useEffect(() => {
     loadData();
+    setRiskExplanation(null);
+    setExplainError(null);
   }, [assetIdStr]);
+
+  // Called only when the user clicks the button; the AI never runs on page load
+  const handleExplainRisk = async () => {
+    if (explaining) return;
+    setExplaining(true);
+    setExplainError(null);
+    try {
+      setRiskExplanation(await explainAssetRisk(assetId));
+    } catch (err: any) {
+      setExplainError(err?.message || 'Không thể phân tích rủi ro lúc này. Vui lòng thử lại sau.');
+    } finally {
+      setExplaining(false);
+    }
+  };
 
   const formatVND = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -278,7 +299,18 @@ function AssetDetailPageContent() {
                     <BrainCircuit className="w-5 h-5 text-purple-600" />
                     <span>Báo cáo sức khỏe & rủi ro của tài sản</span>
                   </div>
-                  <span className="text-xs text-slate-400">Tính theo quy tắc từ lịch sử sự cố và bảo trì</span>
+                  <div className="flex items-center gap-3">
+                    <span className="hidden sm:inline text-xs text-slate-400">Tính theo quy tắc từ lịch sử sự cố và bảo trì</span>
+                    <button
+                      type="button"
+                      onClick={handleExplainRisk}
+                      disabled={explaining}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {explaining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      {explaining ? 'Đang phân tích...' : 'AI giải thích rủi ro'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* 5 KPI Cards for Intelligence */}
@@ -341,6 +373,50 @@ function AssetDetailPageContent() {
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center space-x-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                     <span>Tài sản vận hành bình thường, không có dấu hiệu cảnh báo bất thường.</span>
+                  </div>
+                )}
+
+                {/* AI Risk Explanation (suggestion only, generated on demand) */}
+                {explainError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{explainError}</span>
+                  </div>
+                )}
+                {riskExplanation && (
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl space-y-3 text-xs text-slate-800">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2 font-bold text-purple-800">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        <span>AI giải thích rủi ro</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${riskExplanation.source === 'AI' ? 'bg-purple-100 text-purple-800 border-purple-300' : 'bg-slate-100 text-slate-700 border-slate-300'}`}>
+                        {riskExplanation.source === 'AI' ? 'Ollama AI' : 'Phân tích dự phòng'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Mức rủi ro: </span>
+                      {riskLevelLabel(riskExplanation.risk_level)} ({riskExplanation.risk_score}/100)
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Giải thích:</div>
+                      <p className="leading-relaxed whitespace-pre-line">{riskExplanation.explanation}</p>
+                    </div>
+                    {riskExplanation.recommendations.length > 0 && (
+                      <div>
+                        <div className="font-semibold mb-1">Khuyến nghị:</div>
+                        <ol className="list-decimal list-inside space-y-1 pl-1">
+                          {riskExplanation.recommendations.map((rec, idx) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-500">
+                      {riskExplanation.source === 'AI'
+                        ? 'Nội dung do mô hình AI chạy cục bộ tạo từ số liệu phân tích ở trên. Vui lòng kiểm tra lại trước khi ra quyết định.'
+                        : 'AI hiện không khả dụng, đây là phần giải thích tạo tự động theo quy tắc từ số liệu ở trên.'}
+                    </div>
                   </div>
                 )}
               </div>

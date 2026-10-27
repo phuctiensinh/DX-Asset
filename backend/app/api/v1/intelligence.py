@@ -9,11 +9,13 @@ from app.models.asset import Asset
 from app.models.enums import UserRole
 from app.schemas.intelligence import (
     AssetIntelligenceDetailResponse,
+    AssetRiskExplanationResponse,
     IntelligenceSummaryResponse,
     RiskMatrixItem,
     TopFailureItem,
     TopCostlyItem,
 )
+from app.services.asset_ai import AssetAIService
 from app.services.asset_intelligence import AssetIntelligenceService
 
 router = APIRouter()
@@ -87,16 +89,7 @@ def get_top_costly(
     """Get top costly assets by total repair cost."""
     return AssetIntelligenceService.get_top_costly(db, limit=limit)
 
-@router.get(
-    "/assets/{asset_id}",
-    response_model=AssetIntelligenceDetailResponse
-)
-def get_asset_intelligence_detail(
-    asset_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Get deep-dive asset intelligence detail for a specific asset."""
+def _get_asset_with_access(db: Session, asset_id: int, current_user: User) -> Asset:
     asset = db.query(Asset).filter(Asset.id == asset_id).first()
     if not asset:
         raise HTTPException(
@@ -111,12 +104,40 @@ def get_asset_intelligence_detail(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Nhân viên chỉ được xem phân tích của tài sản đang được cấp phát cho mình."
             )
+    return asset
 
+def _get_detail_or_404(db: Session, asset_id: int) -> AssetIntelligenceDetailResponse:
     detail = AssetIntelligenceService.get_asset_intelligence_detail(db, asset_id)
     if not detail:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chưa có dữ liệu phân tích cho tài sản này."
         )
-
     return detail
+
+@router.get(
+    "/assets/{asset_id}",
+    response_model=AssetIntelligenceDetailResponse
+)
+def get_asset_intelligence_detail(
+    asset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get deep-dive asset intelligence detail for a specific asset."""
+    _get_asset_with_access(db, asset_id, current_user)
+    return _get_detail_or_404(db, asset_id)
+
+@router.post(
+    "/assets/{asset_id}/ai/explain",
+    response_model=AssetRiskExplanationResponse
+)
+def explain_asset_risk(
+    asset_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """AI giải thích mức rủi ro hiện tại của tài sản (cùng quyền với xem phân tích tài sản). Chỉ đọc, không lưu gì."""
+    asset = _get_asset_with_access(db, asset_id, current_user)
+    detail = _get_detail_or_404(db, asset_id)
+    return AssetAIService.explain_risk(db, asset, detail)
