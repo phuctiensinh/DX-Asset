@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DX-Asset — Hướng dẫn sử dụng</title>
+  <meta name="description" content="DX-Asset: nền tảng mã nguồn mở quản lý vòng đời tài sản số doanh nghiệp, có trợ lý AI chạy cục bộ bằng Ollama. Hướng dẫn cài đặt và sử dụng.">
+  <style>
+    :root {
+      --bg: #f8fafc; --surface: #ffffff; --text: #0f172a; --muted: #475569; --border: #e2e8f0;
+      --accent: #4f46e5; --accent-soft: #eef2ff; --code-bg: #0f172a; --code-text: #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1120; --surface: #111827; --text: #e5e7eb; --muted: #94a3b8; --border: #1f2937;
+        --accent: #818cf8; --accent-soft: #1e1b4b; --code-bg: #020617; --code-text: #e2e8f0;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    a { color: var(--accent); }
+    header.hero { background: linear-gradient(135deg, #312e81, #4f46e5); color: #fff; padding: 56px 16px 48px; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 40px); }
+    .hero p { margin: 0 0 20px; max-width: 680px; opacity: .92; }
+    .badges span { display: inline-block; margin: 0 6px 6px 0; padding: 3px 10px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; font-size: 13px; }
+    .btns a { display: inline-block; margin: 8px 8px 0 0; padding: 10px 16px; border-radius: 10px; background: #fff; color: #312e81; font-weight: 600; text-decoration: none; }
+    .btns a.ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); }
+    nav.toc { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 1px solid var(--border); }
+    nav.toc .wrap { display: flex; gap: 16px; overflow-x: auto; padding: 10px 16px; white-space: nowrap; font-size: 14px; }
+    nav.toc a { text-decoration: none; color: var(--muted); }
+    nav.toc a:hover { color: var(--accent); }
+    main section { padding: 36px 0 8px; }
+    h2 { font-size: 24px; margin: 0 0 12px; }
+    h3 { font-size: 18px; margin: 24px 0 8px; }
+    .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .card h3 { margin-top: 0; font-size: 16px; }
+    .card ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 15px; }
+    .note { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 8px; margin: 14px 0; }
+    pre { background: var(--code-bg); color: var(--code-text); padding: 12px 14px; border-radius: 10px; overflow-x: auto; font-size: 14px; }
+    code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+    p code, li code, td code { background: var(--accent-soft); padding: 1px 5px; border-radius: 5px; font-size: 14px; }
+    ol li, ul li { margin: 4px 0; }
+    details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin: 10px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; font-size: 15px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--accent-soft); }
+    .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .flow span { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; font-size: 14px; }
+    .flow b { color: var(--muted); }
+    footer { margin-top: 40px; padding: 24px 0 40px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h1>DX-Asset</h1>
+      <p>Nền tảng mã nguồn mở quản lý vòng đời tài sản số doanh nghiệp: cấp phát, báo sự cố, bảo trì, lịch sử, dashboard, phân tích quy trình và trợ lý AI chạy cục bộ bằng Ollama.</p>
+      <div class="badges"><span>Phiên bản 1.1.0</span><span>Giấy phép MIT</span><span>OLP 2026 · DX-OS</span><span>Giao diện tiếng Việt</span></div>
+      <div class="btns">
+        <a href="#cai-dat">Hướng dẫn cài đặt</a>
+        <a class="ghost" href="https://github.com/phuctiensinh/DX-Asset">Mã nguồn trên GitHub</a>
+        <a class="ghost" href="https://github.com/phuctiensinh/DX-Asset/releases">Các bản phát hành</a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Mục lục">
+    <div class="wrap">
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="#tinh-nang">Tính năng</a>
+      <a href="#ai">AI cục bộ</a>
+      <a href="#cai-dat">Cài đặt</a>
+      <a href="#tai-khoan">Tài khoản</a>
+      <a href="#su-dung">Sử dụng</a>
+      <a href="#lenh">Lệnh thường dùng</a>
+      <a href="#su-co">Xử lý sự cố</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <section id="gioi-thieu">
+      <h2>Giới thiệu</h2>
+      <p>DX-Asset giúp doanh nghiệp quản lý tập trung tài sản và thiết bị nội bộ (laptop, máy tính, màn hình, máy in, thiết bị mạng…) thay cho Excel, giấy tờ và tin nhắn: biết thiết bị đang ở đâu, ai đang giữ, đã bàn giao và sửa chữa những lần nào.</p>
+      <h3>Luồng nghiệp vụ chính</h3>
+      <div class="flow">
+        <span>Tạo tài sản &amp; mã QR</span><b>→</b><span>Cấp phát cho nhân viên</span><b>→</b><span>Báo sự cố kèm ảnh</span><b>→</b><span>IT xử lý &amp; bảo trì</span><b>→</b><span>Lưu lịch sử</span><b>→</b><span>Dashboard &amp; phân tích</span>
+      </div>
+    </section>
+
+    <section id="tinh-nang">
+      <h2>Tính năng theo 4 không gian DX-OS</h2>
+      <div class="grid">
+        <div class="card"><h3>H — Con người</h3><ul>
+          <li>4 vai trò: ADMIN, IT_ASSET_MANAGER, MANAGER, EMPLOYEE</li>
+          <li>Đăng nhập/đăng ký qua Keycloak</li>
+          <li>Quyền được kiểm tra ở backend</li>
+          <li>Quản lý người dùng, phòng ban</li></ul></div>
+        <div class="card"><h3>P — Quy trình</h3><ul>
+          <li>Thêm, sửa, tìm, lọc, thanh lý tài sản (không xóa lịch sử)</li>
+          <li>Cấp phát, thu hồi, chuyển giao</li>
+          <li>Báo sự cố kèm ảnh, phân công kỹ thuật viên</li>
+          <li>Phiếu bảo trì, ghi chi phí sửa chữa</li></ul></div>
+        <div class="card"><h3>D — Dữ liệu</h3><ul>
+          <li>Dashboard theo trạng thái, sự cố, phòng ban</li>
+          <li>Phân tích tài sản: điểm sức khỏe, mức rủi ro</li>
+          <li>Phân tích quy trình (Process Mining)</li>
+          <li>Mô phỏng "nếu… thì…" (chỉ tham khảo)</li></ul></div>
+        <div class="card"><h3>I — Trí tuệ nhân tạo</h3><ul>
+          <li>AI chạy cục bộ bằng Ollama</li>
+          <li>Chỉ gợi ý và diễn giải, con người quyết định</li>
+          <li>Có phương án dự phòng khi AI không sẵn sàng</li></ul></div>
+      </div>
+    </section>
+
+    <section id="ai">
+      <h2>AI chạy cục bộ (Ollama)</h2>
+      <p>AI dùng model nguồn mở <code>qwen2.5:3b</code> chạy ngay trên máy chủ, không gửi dữ liệu ra ngoài và không cần API key. Nguyên tắc: <b>Backend tính số liệu, AI chỉ diễn giải và gợi ý.</b></p>
+      <div class="table-wrap"><table>
+        <tr><th>Tính năng</th><th>Ở đâu</th></tr>
+        <tr><td>Gợi ý loại sự cố &amp; mức ưu tiên</td><td>Form báo sự cố → <b>Gợi ý bằng AI</b></td></tr>
+        <tr><td>Tóm tắt sự cố, gợi ý bước xử lý</td><td>Chi tiết sự cố</td></tr>
+        <tr><td>Giải thích rủi ro tài sản</td><td>Chi tiết tài sản → <b>AI giải thích rủi ro</b></td></tr>
+        <tr><td>Tóm tắt vòng đời tài sản</td><td>Chi tiết tài sản → <b>Tóm tắt vòng đời bằng AI</b></td></tr>
+        <tr><td>Báo cáo Process Mining</td><td>Phân tích quy trình → <b>Tạo báo cáo AI</b></td></tr>
+        <tr><td>Trợ lý hỏi đáp dữ liệu (hiểu câu hỏi tự nhiên)</td><td>Trang <b>Trợ lý AI</b></td></tr>
+      </table></div>
+      <div class="note">Ollama không truy cập cơ sở dữ liệu, không chạy SQL, không vượt qua phân quyền và không thay đổi dữ liệu. Khi Ollama tắt hoặc chậm, hệ thống tự dùng kết quả dự phòng theo quy tắc và ghi rõ nguồn trên giao diện.</div>
+    </section>
+
+    <section id="cai-dat">
+      <h2>Cài đặt bằng Docker (khuyến nghị)</h2>
+      <p><b>Yêu cầu:</b> Windows 10 (21H2+)/11, macOS 12+ hoặc Ubuntu 22.04/Debian 12+; RAM trống ~6 GB, ổ đĩa trống ~10 GB; có Internet ở lần cài đầu. Không cần cài Python, Node.js hay PostgreSQL.</p>
+
+      <h3>Bước 0 — Cài Git và Docker (một lần)</h3>
+      <details open><summary>Windows 10/11</summary>
+        <p>Mở <b>PowerShell bằng quyền Administrator</b> và chạy:</p>
+        <pre><code>wsl --install
+winget install -e --id Git.Git --accept-package-agreements --accept-source-agreements
+winget install -e --id Docker.DockerDesktop --accept-package-agreements --accept-source-agreements</code></pre>
+        <p><b>Khởi động lại máy</b>, mở <b>Docker Desktop</b>, bấm <b>Accept</b> và đợi hiện <b>Engine running</b>.</p>
+      </details>
+      <details><summary>macOS</summary>
+        <p>Cài Homebrew theo hướng dẫn tại <a href="https://brew.sh">brew.sh</a>, sau đó:</p>
+        <pre><code>brew install git
+brew install --cask docker
+open -a Docker</code></pre>
+      </details>
+      <details><summary>Ubuntu / Debian</summary>
+        <pre><code>sudo apt-get update &amp;&amp; sudo apt-get install -y git curl
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER</code></pre>
+        <p>Đăng xuất và đăng nhập lại sau lệnh cuối.</p>
+      </details>
+
+      <h3>Bước 1 — Tải mã nguồn</h3>
+      <pre><code>git clone https://github.com/phuctiensinh/DX-Asset.git
+cd DX-Asset</code></pre>
+
+      <h3>Bước 2 — Tạo file cấu hình</h3>
+      <pre><code># Windows (PowerShell)
+Copy-Item .env.example .env
+# macOS / Linux
+cp .env.example .env</code></pre>
+      <p>Giữ nguyên giá trị mặc định là chạy được trên máy cá nhân. Khi triển khai thật, bắt buộc đổi <code>SECRET_KEY</code>, <code>POSTGRES_PASSWORD</code>, <code>KEYCLOAK_ADMIN_PASSWORD</code>.</p>
+
+      <h3>Bước 3 — Build và khởi động</h3>
+      <pre><code>docker compose up -d --build</code></pre>
+      <p>Lần đầu mất khoảng 5–15 phút. Model AI (~1.9 GB) được tải ngầm sau đó; trong lúc chờ, các tính năng AI tạm dùng chế độ dự phòng.</p>
+
+      <h3>Bước 4 — Kiểm tra</h3>
+      <pre><code>docker compose ps -a</code></pre>
+      <p><code>dx_asset_postgres</code>, <code>dx_asset_keycloak</code>, <code>dx_asset_seaweedfs</code>, <code>dx_asset_ollama</code> ở trạng thái <code>healthy</code>; <code>dx_asset_backend</code>, <code>dx_asset_frontend</code> ở trạng thái <code>Up</code>; <code>dx_asset_ollama_pull</code> là <code>Exited (0)</code> (bình thường).</p>
+
+      <h3>Bước 5 — Mở ứng dụng</h3>
+      <div class="table-wrap"><table>
+        <tr><th>Dịch vụ</th><th>Địa chỉ</th></tr>
+        <tr><td>Ứng dụng web</td><td><code>http://localhost:3000</code></td></tr>
+        <tr><td>Tài liệu API (Swagger)</td><td><code>http://localhost:8000/docs</code></td></tr>
+        <tr><td>Trang quản trị Keycloak</td><td><code>http://localhost:8080</code></td></tr>
+      </table></div>
+      <div class="note">Luôn truy cập bằng <code>localhost</code>, không dùng <code>127.0.0.1</code> hay IP máy, nếu không sẽ bị lỗi đăng nhập 401.</div>
+      <p>Máy có card NVIDIA có thể bật GPU cho AI:</p>
+      <pre><code>docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build</code></pre>
+      <p>Hướng dẫn chạy dev local (backend, frontend chạy trực tiếp trên máy) xem trong <a href="https://github.com/phuctiensinh/DX-Asset#readme">README</a>.</p>
+    </section>
+
+    <section id="tai-khoan">
+      <h2>Tài khoản đăng nhập</h2>
+      <ul>
+        <li>Tại trang đăng nhập, bấm <b>Đăng ký tài khoản mới</b>; tài khoản mới có vai trò <b>Nhân viên</b>.</li>
+        <li>Hệ thống chỉ có <b>một</b> tài khoản ADMIN (chủ hệ thống); ADMIN đổi vai trò cho người dùng khác tại trang <b>Người dùng</b>. Chi tiết xem <a href="https://github.com/phuctiensinh/DX-Asset#tài-khoản-đăng-nhập">README</a>.</li>
+        <li>Mỗi máy có Keycloak riêng nên tài khoản không dùng chung giữa các máy.</li>
+      </ul>
+    </section>
+
+    <section id="su-dung">
+      <h2>Sử dụng nhanh</h2>
+      <ol>
+        <li><b>Tài sản</b>: thêm tài sản, xem chi tiết và mã QR, tìm kiếm, lọc theo trạng thái.</li>
+        <li><b>Cấp phát</b>: cấp tài sản cho nhân viên, thu hồi hoặc chuyển giao.</li>
+        <li><b>Sự cố</b>: nhân viên báo lỗi kèm ảnh; IT phân công, cập nhật trạng thái.</li>
+        <li><b>Bảo trì</b>: lập phiếu, bắt đầu/hoàn thành, ghi chi phí.</li>
+        <li><b>Tổng quan</b>, <b>Phân tích tài sản</b>, <b>Phân tích quy trình</b>: xem số liệu (ADMIN, IT_ASSET_MANAGER, MANAGER).</li>
+        <li><b>Trợ lý AI</b>: hỏi bằng tiếng Việt, ví dụ "Tài sản nào chưa được cấp phát?".</li>
+      </ol>
+    </section>
+
+    <section id="lenh">
+      <h2>Lệnh Docker thường dùng</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Mục đích</th><th>Lệnh</th></tr>
+        <tr><td>Xem log backend</td><td><code>docker compose logs -f backend</code></td></tr>
+        <tr><td>Dừng hệ thống (giữ dữ liệu)</td><td><code>docker compose stop</code></td></tr>
+        <tr><td>Khởi động lại</td><td><code>docker compose up -d</code></td></tr>
+        <tr><td>Build lại sau khi cập nhật mã nguồn</td><td><code>docker compose up -d --build</code></td></tr>
+        <tr><td>Xóa toàn bộ dữ liệu (cẩn thận)</td><td><code>docker compose down -v</code></td></tr>
+      </table></div>
+    </section>
+
+    <section id="su-co">
+      <h2>Xử lý sự cố thường gặp</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Hiện tượng</th><th>Cách xử lý</th></tr>
+        <tr><td><code>git</code>/<code>docker</code> báo không tìm thấy lệnh ngay sau khi cài</td><td>Đóng và mở lại PowerShell/Terminal.</td></tr>
+        <tr><td><code>error during connect</code></td><td>Docker Desktop chưa chạy: mở và đợi <b>Engine running</b>.</td></tr>
+        <tr><td>Docker báo thiếu WSL 2 / ảo hóa</td><td>Chạy <code>wsl --install</code> (Administrator), khởi động lại; bật Virtualization trong BIOS nếu cần.</td></tr>
+        <tr><td>Đăng nhập xong bị quay về trang Login (lỗi 401)</td><td>Dùng <code>localhost:3000</code>; xóa Local Storage của trang rồi thử lại; nếu Keycloak vừa khởi động, đợi ~1 phút.</td></tr>
+        <tr><td><code>port is already allocated</code></td><td>Cổng đang bị chương trình khác dùng; với PostgreSQL đổi <code>POSTGRES_PORT</code> trong <code>.env</code>.</td></tr>
+        <tr><td>Trợ lý AI chậm hoặc không trả lời</td><td>Model đang tải hoặc chạy bằng CPU; xem <code>docker compose logs ollama-pull</code>. Hệ thống tự dùng gợi ý dự phòng.</td></tr>
+      </table></div>
+      <p>Danh sách đầy đủ xem trong <a href="https://github.com/phuctiensinh/DX-Asset#readme">README</a>.</p>
+    </section>
+
+    <footer>
+      DX-Asset · Mã nguồn mở theo giấy phép MIT · Dự án dự thi Phần mềm Nguồn mở OLP 2026 ·
+      <a href="https://github.com/phuctiensinh/DX-Asset">github.com/phuctiensinh/DX-Asset</a>
+    </footer>
+  </main>
+</body>
+</html>
